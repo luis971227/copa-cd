@@ -93,5 +93,28 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'El aviso de actualización reaparece en cada apertura hasta instalar la nueva versión.'
+          body: 'Descarga con barra de progreso e instalación directa. Firma estable: las próximas actualizaciones ya no darán conflicto de paquete.'
           files: salida/CopaCD-${{ env.VER }}.apk
+
+  keystore:
+    runs-on: ubuntu-latest
+    outputs:
+      generado: ${{ steps.calc.outcome }}
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Generar keystore debug estable
+        id: calc
+        run: |
+          keytool -genkeypair -alias androiddebugkey \
+            -storepass android -keypass android \
+            -dname "CN=Copa CD, OU=CopaCD, O=CopaCD, L=Madrid, C=ES" \
+            -keystore debug.keystore -keyalg RSA -keysize 2048 -validity 10950 \
+            -storetype PKCS12
+          base64 -w0 debug.keystore > debug.keystore.b64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keystore-estable
+          path: debug.keystore.b64
