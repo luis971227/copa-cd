@@ -58,18 +58,17 @@ jobs:
           }
           EOF
 
-      - name: Firma estable (keystore persistente desde secrets)
-        env:
-          KS_B64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_B64 }}
+      - name: Firma estable (keystore persistente del repo)
         run: |
           mkdir -p ~/.android
-          if [ -n "$KS_B64" ]; then
-            echo "$KS_B64" | base64 -d > ~/.android/debug.keystore
-            cp ~/.android/debug.keystore platforms/android/debug.keystore
-            echo "firma estable aplicada"
+          if [ -n "${{ secrets.ANDROID_DEBUG_KEYSTORE_B64 }}" ]; then
+            echo "${{ secrets.ANDROID_DEBUG_KEYSTORE_B64 }}" | base64 -d > ~/.android/debug.keystore
+          elif [ -f .github/debug.keystore.b64 ]; then
+            base64 -d .github/debug.keystore.b64 > ~/.android/debug.keystore
           else
-            echo "⚠️ sin secret ANDROID_DEBUG_KEYSTORE_B64: firma efímera (las actualizaciones darán conflicto de paquete)"
+            echo "⚠️ sin keystore: firma efímera (las actualizaciones darán conflicto de paquete)"
           fi
+          if [ -f ~/.android/debug.keystore ]; then cp ~/.android/debug.keystore platforms/android/debug.keystore; echo "firma estable aplicada"; fi
 
       - name: Compilar APK debug
         run: cordova build android --no-telemetry
