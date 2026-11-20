@@ -10,6 +10,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Comprobar archivos necesarios
         run: |
           FALTAN=""
@@ -17,8 +19,6 @@ jobs:
           if [ ! -f www/assets/logo.png ]; then FALTAN="$FALTAN\n  - www/assets/logo.png  (sube el logo que está en D:\\AndroidApk\\reglamento-futbol\\www\\assets)"; fi
           if [ ! -d res/icon ]; then FALTAN="$FALTAN\n  - res/icon/  (sube la carpeta de iconos de D:\\AndroidApk\\reglamento-futbol\\res\\icon)"; fi
           if [ -n "$FALTAN" ]; then echo "FALTAN ARCHIVOS:$FALTAN"; exit 1; fi
-
-      - uses: actions/checkout@v4
 
       - uses: actions/setup-java@v4
         with:
