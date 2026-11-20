@@ -1403,7 +1403,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.4',APP_BUILD=5;
+var APP_VERSION='1.0.5',APP_BUILD=6;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null;
@@ -4449,7 +4449,7 @@ function renderSync(){
    +(nubeSesion?'<div class="acciones"><button class="btn '+(nubeAuto?'ro':'gh')+'" data-a="nube-auto" style="flex:1">🔁 Auto: '+(nubeAuto?'activada':'desactivada')+'</button><button class="btn ro" data-a="nube-subir" style="flex:1">☁️ Publicar mi copia</button><button class="btn ro" data-a="nube-bajar" style="flex:1">📥 Descargar y mezclar</button><button class="btn gh" data-a="nube-salir">Cerrar sesión nube</button></div>'
     +(nubeSesion?'<div class="nota">Con Auto activada, cada cambio local se publica solo y cada 45 s se revisa la nube; si otro dispositivo aportó datos, avisamos aquí. Sin internet sigue disponible el intercambio manual de abajo.</div>':'')
     :'<label class="nota" for="nube-email">Correo de Firebase</label><input id="nube-email" class="txt" type="email" autocomplete="username" placeholder="correo@ejemplo.com">'
-     +'<label class="nota" for="nube-pass">Contraseña de Firebase</label><input id="nube-pass" class="txt" type="password" autocomplete="current-password" placeholder="Contraseña">'
+     +'<label class="nota" for="nube-pass">Contraseña de Firebase</label><div style="position:relative"><input id="nube-pass" class="txt" type="password" autocomplete="current-password" placeholder="Contraseña" style="padding-right:46px"><button class="lg-eye" data-a="pass-ojo" data-t="nube-pass" aria-label="Mostrar contraseña" style="background:var(--chip);color:var(--tinta);border:1px solid var(--gris)">👁</button></div>'
      +'<div class="acciones"><button class="btn ro" data-a="nube-entrar" style="flex:1">Iniciar sesión</button><button class="btn gh" data-a="nube-crear" style="flex:1">Crear cuenta</button></div>')
    +'<div class="nota">Las cuentas Firebase son independientes de los usuarios locales de la APK. Toda persona con cuenta Firebase y el ID de una copa puede leer y aportar paquetes de esa copa; no uses esta nube para información privada.</div></details>'
    +(S.sesion&&!puede('sync')?'':'<details style="margin:10px 0"><summary style="font-weight:800;cursor:pointer">📲 Intercambio manual sin nube</summary>'
@@ -4681,14 +4681,16 @@ function nubeRespuesta(res){
   return datos;
  });
 }
-function nubeAutenticar(crear){
+function nubeAutenticar(crear,reintento){
  if(!guardarConfigNube())return;
  var email=document.getElementById('nube-email'),pass=document.getElementById('nube-pass');
  var correo=email?email.value.trim():'',clave=pass?pass.value:'';
  if(!correo||!clave){toast('Ingresa el correo y la contraseña de Firebase');return;}
  var accion=crear?'signUp':'signInWithPassword';
  var url='https://identitytoolkit.googleapis.com/v1/accounts:'+accion+'?key='+encodeURIComponent(nubeConfig.apiKey);
- fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:correo,password:clave,returnSecureToken:true})})
+ /* text/plain evita la petición OPTIONS del CORS (el WebView file:// a veces la pierde):
+    Firebase REST lee el cuerpo JSON sin fijarse en el encabezado. */
+ fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({email:correo,password:clave,returnSecureToken:true})})
   .then(nubeRespuesta).then(function(datos){
    if(!datos||!datos.idToken||!datos.localId)throw new Error('Firebase no devolvió una sesión válida');
    nubeSesion={token:datos.idToken,refreshToken:datos.refreshToken,expira:Date.now()+(+datos.expiresIn||3600)*1000,uid:datos.localId,email:datos.email||correo};
@@ -4696,6 +4698,10 @@ function nubeAutenticar(crear){
    renderSync();toast(crear?'Cuenta Firebase creada y sesión iniciada':'Sesión de nube iniciada');
   }).catch(function(e){
    var msg=String(e.message||e);
+   if(/fetch|NetworkError|Load failed/i.test(msg)){
+    if(!reintento){toast('Conexión inestable con Firebase… reintentando');setTimeout(function(){nubeAutenticar(crear,true);},1200);return;}
+    msg='Sin conexión con Firebase: revisa el internet del móvil (prueba WiFi si estás en datos)';
+   }
    if(msg==='EMAIL_EXISTS')msg='Ese correo ya tiene cuenta; inicia sesión';
    else if(msg==='EMAIL_NOT_FOUND'||msg==='INVALID_LOGIN_CREDENTIALS'||msg==='INVALID_PASSWORD')msg='Correo o contraseña incorrectos';
    else if(msg==='OPERATION_NOT_ALLOWED')msg='Activa Email/Password en Authentication de Firebase';
@@ -4757,10 +4763,10 @@ function nubePublicar(silencioso){
  try{destino=nubeUrl(S.idCopa)+'/'+encodeURIComponent(nubeSesion.uid)+'/dispositivos/'+encodeURIComponent(nubeDispositivo())+'.json';}
  catch(e){if(!silencioso)toast(e.message);return;}
  nubeToken().then(function(token){return fetch(destino+'?auth='+encodeURIComponent(token),{
-  method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(registro)
+  method:'PUT',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(registro)
  });}).then(nubeRespuesta).then(function(){
   if(!silencioso)toast('Copia de este dispositivo publicada ✓ · ID '+S.idCopa);
- }).catch(function(e){if(!silencioso)toast('No se pudo publicar: '+e.message);});
+ }).catch(function(e){if(!silencioso){var m=String(e.message||e);if(/fetch|NetworkError|Load failed/i.test(m))m='Sin conexión con Firebase: revisa el internet del móvil';toast('No se pudo publicar: '+m);}});
 }
 function nubeDescargar(silencioso){
  if(!nubeSesion){if(!silencioso)toast('Inicia sesión en Firebase primero');return;}
@@ -4807,7 +4813,7 @@ function nubeDescargar(silencioso){
   }
   if(errores)toast('Mezcla terminada: '+aplicados+' paquetes aplicados, '+errores+' incompatibles y '+ignorados+' ignorados');
   else toast(aplicados?'Mezcla terminada ✓ · '+aplicados+' paquetes revisados ('+ignorados+' ignorados)':'No hay datos nuevos · '+ignorados+' paquetes ignorados');
- }).catch(function(e){if(!silencioso)toast('No se pudo descargar la nube: '+e.message);});
+ }).catch(function(e){if(!silencioso){var m=String(e.message||e);if(/fetch|NetworkError|Load failed/i.test(m))m='Sin conexión con Firebase: revisa el internet del móvil';toast('No se pudo descargar la nube: '+m);}});
 }
 /* Unión de anotaciones por id. Cada móvil aporta sus propios registros; los
    borrados viajan como tumbas y un reinicio total gana por resetTs. */
