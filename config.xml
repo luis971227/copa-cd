@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.mitienda.pos.reglamento" version="1.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>Gestion Copa CD</name>
+    <description>
+        Manejo del torneo Copa CD (equipos, jornadas, goles, tabla y bases) sin internet.
+    </description>
+    <author email="dev@mitienda.internal">
+        MiTienda POS
+    </author>
+    <content src="index.html" />
+    <!-- Necesario para consultar Firebase y abrir la descarga de la APK actualizada en el navegador. -->
+    <access origin="*" />
+    <allow-intent href="https://*/*" />
+
+    <!-- Versiones fijadas para construir SIN internet con el kit offline de ..\mitienda-pos\build-offline\.
+         Deben coincidir con lo cacheado en el gradle-home del kit (no tocar sin actualizar ese cache). -->
+    <preference name="android-minSdkVersion" value="24" />
+    <preference name="android-targetSdkVersion" value="34" />
+    <preference name="android-compileSdkVersion" value="34" />
+    <preference name="android-buildToolsVersion" value="34.0.0" />
+    <preference name="GradleVersion" value="8.0.2" />
+    <preference name="AndroidGradlePluginVersion" value="8.0.0" />
+    <preference name="GradlePluginKotlinVersion" value="1.8.20" />
+    <preference name="AndroidXWebKitVersion" value="1.6.1" />
+
+    <!-- Icono del launcher: escudo oficial COPA CD sobre fondo blanco.
+         Regenerar PNG: powershell -NoProfile -ExecutionPolicy Bypass -File "res\icon\generar-icono.ps1"
+         (requiere res\icon\cresta-oficial.png, recortado del logo del PDF de las bases) -->
+    <icon background="res/icon/ic_launcher_background_ldpi.png" density="ldpi" foreground="res/icon/ic_launcher_foreground_ldpi.png" monochrome="res/icon/ic_launcher_monochrome_ldpi.png" src="res/icon/ic_launcher_ldpi.png" />
+    <icon background="res/icon/ic_launcher_background_mdpi.png" density="mdpi" foreground="res/icon/ic_launcher_foreground_mdpi.png" monochrome="res/icon/ic_launcher_monochrome_mdpi.png" src="res/icon/ic_launcher_mdpi.png" />
+    <icon background="res/icon/ic_launcher_background_hdpi.png" density="hdpi" foreground="res/icon/ic_launcher_foreground_hdpi.png" monochrome="res/icon/ic_launcher_monochrome_hdpi.png" src="res/icon/ic_launcher_hdpi.png" />
+    <icon background="res/icon/ic_launcher_background_xhdpi.png" density="xhdpi" foreground="res/icon/ic_launcher_foreground_xhdpi.png" monochrome="res/icon/ic_launcher_monochrome_xhdpi.png" src="res/icon/ic_launcher_xhdpi.png" />
+    <icon background="res/icon/ic_launcher_background_xxhdpi.png" density="xxhdpi" foreground="res/icon/ic_launcher_foreground_xxhdpi.png" monochrome="res/icon/ic_launcher_monochrome_xxhdpi.png" src="res/icon/ic_launcher_xxhdpi.png" />
+    <icon background="res/icon/ic_launcher_background_xxxhdpi.png" density="xxxhdpi" foreground="res/icon/ic_launcher_foreground_xxxhdpi.png" monochrome="res/icon/ic_launcher_monochrome_xxxhdpi.png" src="res/icon/ic_launcher_xxxhdpi.png" />
+</widget>
