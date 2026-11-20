@@ -80,5 +80,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Corrige la publicación del torneo a la nube y ajusta el panel de sincronización en pantallas estrechas.'
+          body: 'El aviso de actualización reaparece en cada apertura hasta instalar la nueva versión.'
           files: salida/CopaCD-${{ env.VER }}.apk

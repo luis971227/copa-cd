@@ -39,7 +39,7 @@ Al abrir la app, cada móvil consulta:
 https://api.github.com/repos/tunombre/copa-cd/releases/latest
 ```
 
-Es **público, sin API key ni token** (límite: 60 peticiones/hora por IP, más que suficiente para unos pocos móviles). Si el tag es mayor que `APP_VERSION`, aparece el modal **⬆️ Hay una actualización** con versión y notas. **⬇️ Descargar e instalar** abre el `browser_download_url` del asset `.apk` con `window.open(..., '_system')`: Android abre el navegador/Descargas y el usuario acepta la instalación (no se pide `REQUEST_INSTALL_PACKAGES`). **Ahora no** pospone el aviso 24 h (`mtp_copa_cd_act_snooze`).
+Es **público, sin API key ni token** (límite: 60 peticiones/hora por IP, más que suficiente para unos pocos móviles). Si el tag es mayor que `APP_VERSION`, aparece el modal **⬆️ Hay una actualización** con versión y notas. **⬇️ Descargar e instalar** abre el `browser_download_url` del asset `.apk` con `window.open(..., '_system')`: Android abre el navegador/Descargas y el usuario acepta la instalación (no se pide `REQUEST_INSTALL_PACKAGES`). **⏰ Ahora no** solo cierra el modal: desde la v1.0.3 el aviso reaparece en la próxima apertura mientras exista una versión mayor (sin periodo de gracia de 24 h).
 
 > Para el primer despliegue de esta APK (`1.0.1`) publica el Release `v1.0.1`: nadie verá el aviso, y cuando subas `v1.0.2` saltará.
 
