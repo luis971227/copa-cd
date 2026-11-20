@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="cdp-compartir" version="1.0.0">
+    <name>CdpCompartir</name>
+    <description>Escribe un fichero .json en la app y abre la hoja de compartir del sistema (WhatsApp, etc.) — necesario porque el WebView de Android no implementa navigator.share.</description>
+    <license>Apache 2.0</license>
+    <keywords>copa,cd,compartir,whatsapp,json</keywords>
+
+    <js-module src="www/cdpcompartir.js" name="CdpCompartir">
+        <clobbers target="cdpCompartir" />
+    </js-module>
+
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="CdpCompartir">
+                <param name="android-package" value="com.copacd.compartir.CdpCompartir" />
+            </feature>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/manifest/application">
+            <provider
+                android:name="androidx.core.content.FileProvider"
+                android:authorities="${applicationId}.cdpfiles"
+                android:exported="false"
+                android:grantUriPermissions="true">
+                <meta-data
+                    android:name="android.support.FILE_PROVIDER_PATHS"
+                    android:resource="@xml/cdp_file_paths" />
+            </provider>
+        </config-file>
+
+        <source-file src="src/android/CdpCompartir.java" target-dir="src/com/copacd/compartir" />
+        <resource-file src="src/android/cdp_file_paths.xml" target="res/xml/cdp_file_paths.xml" />
+        <framework src="androidx.core:core:1.10.0" />
+    </platform>
+</plugin>

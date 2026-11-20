@@ -1,0 +1,21 @@
+{
+  "name": "cdp-compartir",
+  "version": "1.0.0",
+  "description": "Compartir un fichero .json por la hoja del sistema (WhatsApp) desde la Copa CD.",
+  "license": "Apache-2.0",
+  "keywords": [
+    "cordova",
+    "copa-cd",
+    "share",
+    "json"
+  ],
+  "cordova": {
+    "id": "cdp-compartir",
+    "platforms": [
+      "android"
+    ]
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
