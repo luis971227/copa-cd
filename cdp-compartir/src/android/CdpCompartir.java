@@ -4,6 +4,7 @@ import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Base64;
 import android.util.Log;
 
 import androidx.core.content.FileProvider;
@@ -59,6 +60,9 @@ public class CdpCompartir extends CordovaPlugin {
     @Override
     public boolean execute(String accion, CordovaArgs args, final CallbackContext cb) throws JSONException {
         if (!"compartir".equals(accion)) {
+            if ("abrir".equals(accion)) { abrir(args, cb); return true; }
+            if ("anexar".equals(accion)) { anexar(args, cb); return true; }
+            if ("instalar".equals(accion)) { instalar(args, cb); return true; }
             cb.error("accion desconocida: " + accion);
             return false;
         }
@@ -111,5 +115,68 @@ public class CdpCompartir extends CordovaPlugin {
             }
         });
         return true;
+    }
+
+    private File archivoCompartible(String nombre) throws IOException {
+        Context ctx = cordova.getContext();
+        File dir = new File(ctx.getFilesDir(), "compartir");
+        if (!dir.exists() && !dir.mkdirs()) throw new IOException("No se pudo crear la carpeta de ficheros");
+        String limpio = nombre.replaceAll("[^A-Za-z0-9._-]", "_");
+        return new File(dir, limpio);
+    }
+
+    private void abrir(CordovaArgs args, final CallbackContext cb) {
+        final String nombre = args.optString(0) == null || args.optString(0).length() == 0 ? "descarga.apk" : args.optString(0);
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                try {
+                    File f = archivoCompartible(nombre);
+                    new FileOutputStream(f, false).close();
+                    cb.success(f.getName());
+                } catch (Throwable e) {
+                    cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+                }
+            }
+        });
+    }
+
+    private void anexar(CordovaArgs args, final CallbackContext cb) {
+        final String nombre = args.optString(0);
+        final String b64 = args.optString(1);
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                try {
+                    File f = archivoCompartible(nombre);
+                    byte[] datos = Base64.decode(b64, Base64.DEFAULT);
+                    FileOutputStream out = new FileOutputStream(f, true);
+                    out.write(datos);
+                    out.close();
+                    cb.success("ok");
+                } catch (Throwable e) {
+                    cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+                }
+            }
+        });
+    }
+
+    private void instalar(CordovaArgs args, final CallbackContext cb) {
+        final String nombre = args.optString(0);
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                try {
+                    Context ctx = cordova.getContext();
+                    File f = archivoCompartible(nombre);
+                    if (!f.exists()) throw new IOException("La descarga no está completa");
+                    Uri uri = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".cdpfiles", f);
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setDataAndType(uri, "application/vnd.android.package-archive");
+                    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    ctx.startActivity(i);
+                    cb.success("instalador");
+                } catch (Throwable e) {
+                    cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+                }
+            }
+        });
     }
 }

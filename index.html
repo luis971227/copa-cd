@@ -217,6 +217,11 @@ h4.t{margin:12px 0 4px;font-size:12.5px;text-transform:uppercase;color:var(--roj
 #actualiza.on{display:flex}
 #actualiza .carta-c{animation:cardIn .3s ease both;max-width:370px}
 #actualiza .ver{font-size:34px;font-weight:900;color:var(--rojo);text-align:center;margin:6px 0}
+#descarga{position:fixed;inset:0;z-index:86;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.62)}
+#descarga.on{display:flex}
+#descarga .carta-c{animation:cardIn .3s ease both;max-width:370px}
+#descarga .barra{height:12px;border-radius:99px;background:var(--chip);overflow:hidden;margin:6px 0}
+#descarga .barra>i{display:block;height:100%;width:0%;background:linear-gradient(135deg,var(--rojo),var(--hero2));border-radius:99px;transition:width .2s ease}
 #perm-usr{position:fixed;inset:0;z-index:71;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.55)}
 #perm-usr.on{display:flex}
 #perm-usr .carta-c{animation:none;max-width:370px}
@@ -974,6 +979,7 @@ body.en-login #toast{bottom:26px}
 <div id="foto-prev"><img alt=""><span>Pulsa en cualquier parte para cerrar</span></div>
 <div id="sync"></div>
 <div id="actualiza"></div>
+<div id="descarga"></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -3695,6 +3701,7 @@ function irA(v){if(!v||!permitida(v))return;
  S.ui.vista=v;cierraNav();window.scrollTo(0,0);render();
 }
 function atras(){
+  if(descargaUI){cerrarDescarga();return;}
   if(actualizaUI){descartarActualizacion();return;}
   if(fotoPrevAbierta()){cierraFotoPrev();return;}
   if(navAbierto){cierraNav();return;}
@@ -4154,8 +4161,9 @@ document.addEventListener('click',function(ev){
    case 'sync-cerrar':syncUI=false;renderSync();break;
    case 'gh-repo-guardar':if(guardarConfigGithub())renderSync();break;
    case 'ver-actualizacion':comprobarActualizacion(false);break;
-   case 'act-descargar':abrirDescargaActualizacion();break;
+   case 'act-descargar':abrirDescargaProgreso();break;
    case 'act-recordar':descartarActualizacion();break;
+   case 'dz-cancelar':cerrarDescarga();break;
    case 'sync-file':if(S.sesion&&!puede('sync')){toast('No tienes permiso para importar archivos');break;}document.getElementById('f-sync').click();break;
    case 'sync-txt-btn':if(S.sesion&&!puede('sync')){toast('No tienes permiso para sincronizar códigos');break;}var txSync=document.getElementById('sync-txt'),resSync=sincronizarTexto(txSync?txSync.value:'');if(!resSync.ok)toast(resSync.msg);else{syncUI=false;renderSync();}break;
    case 'nube-config':if(guardarConfigNube()){nubeAutoDetener();renderSync();toast('Configuración Firebase guardada en este dispositivo');}break;
@@ -4550,6 +4558,86 @@ function abrirDescargaActualizacion(){
  if(!actualizaUI||!/^https:\/\//i.test(actualizaUI.url||''))return;
  try{var w=window.open(actualizaUI.url,'_system');if(!w)window.location.href=actualizaUI.url;}
  catch(e){window.location.href=actualizaUI.url;}
+}
+
+/* Descarga de la APK con barra de progreso: se hace streaming del asset de
+   GitHub Releases a un archivo binario del plugin (base64 por trozos) y, al
+   terminar, se lanza el instalador del sistema con ACTION_VIEW + FileProvider.
+   Si el WebView no puede dar el stream o el plugin falla, se cae al navegador. */
+var descargaUI=null;
+function abrirDescargaProgreso(){
+ if(!actualizaUI||!/^https:\/\//i.test(actualizaUI.url||''))return;
+ var nombre='CopaCD-'+(actualizaUI.version||APP_VERSION)+'.apk';
+ var box=document.getElementById('descarga');
+ descargaUI={url:actualizaUI.url,nombre:nombre,controlador:new AbortController()};
+ box.innerHTML='<div class="carta-c"><div class="carta-top" style="background:var(--rojo)">'
+  +'<div class="cn">Descargando actualización</div><div class="ci">⏬</div><div class="ct">'+esc(nombre)+'</div></div><div class="carta-b">'
+  +'<div class="barra"><i id="dz-barra"></i></div>'
+  +'<div class="nota" id="dz-estado">Conectando…</div>'
+  +'<div class="acciones"><button class="btn gh" data-a="dz-cancelar" style="flex:1">Cancelar</button></div>'
+  +'</div></div>';
+ box.className='on';
+ fetch(actualizaUI.url,{cache:'no-store',signal:descargaUI.controlador.signal}).then(function(r){
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  var total=+r.headers.get('content-length')||0,montos=[];
+  pintaBarra(0,total);
+  if(!r.body){
+   return r.arrayBuffer().then(function(b){montos.push(new Uint8Array(b));return montos;});
+  }
+  var lector=r.body.getReader(),leido=0;
+  function paso(){
+   return lector.read().then(function(x){
+    if(x.done)return montos;
+    montos.push(x.value);leido+=x.value.length;
+    pintaBarra(leido,total);
+    return paso();
+   });
+  }
+  return paso();
+ }).then(function(montos){
+  var d=descargaUI;
+  if(!d)return montos;
+  function anexar(t){
+   var bytes=new Uint8Array(t),b64='',k,CH=8192;
+   for(k=0;k<bytes.length;k+=CH)b64+=String.fromCharCode.apply(null,bytes.subarray(k,Math.min(k+CH,bytes.length)));
+   b64=btoa(b64);
+   return new Promise(function(resolve,reject){cdpCompartir.anexar(d.nombre,b64,function(){resolve();},reject);});
+  }
+  var cadena=new Promise(function(resolve,reject){cdpCompartir.abrir(d.nombre,function(){resolve();},reject);});
+  var i;for(i=0;i<montos.length;i++)cadena=(function(c){return cadena.then(function(){return anexar(c);});})(montos[i]);
+  return cadena.then(function(){
+   var st=document.getElementById('dz-estado');if(st)st.textContent='Descarga completa ✓ · abriendo instalador…';
+   instalarYCerrar();
+  });
+ }).catch(function(e){
+  if(!descargaUI)return;
+  if(e&&e.name==='AbortError')return;
+  var st=document.getElementById('dz-estado');
+  if(st)st.textContent='No se pudo descargar ('+e.message+'). Abriendo el navegador…';
+  setTimeout(fallbackNavegador,900);
+ });
+}
+function instalarYCerrar(){
+ var d=descargaUI;if(!d)return;
+ cdpCompartir.instalar(d.nombre,'Actualización Copa CD',
+  function(){cerrarDescarga();},
+  function(){fallbackNavegador();});
+}
+function fallbackNavegador(){
+ cerrarDescarga();
+ abrirDescargaActualizacion();
+}
+function cerrarDescarga(){
+ var box=document.getElementById('descarga');
+ if(descargaUI&&descargaUI.controlador)descargaUI.controlador.abort();
+ descargaUI=null;
+ if(box){box.className='';box.innerHTML='';}
+}
+function pintaBarra(leido,total){
+ var bar=document.getElementById('dz-barra'),st=document.getElementById('dz-estado');
+ var pct=total?Math.min(100,Math.round(leido*100/total)):0;
+ if(bar)bar.style.width=pct+'%';
+ if(st)st.textContent=(leido/1048576).toFixed(1)+' MB'+(total?' de '+(total/1048576).toFixed(1)+' MB':'')+(total?' · '+pct+'%':'');
 }
 function nubeAutoGuardar(){try{localStorage.setItem('mtp_copa_cd_nube_auto',nubeAuto?'1':'');}catch(e){}}
 function nubeAutoDetener(){if(nubePoll){clearInterval(nubePoll);nubePoll=null;}}

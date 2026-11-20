@@ -3,6 +3,15 @@ var exec = require('cordova/exec');
 var CdpCompartir = {
   compartir: function(nombre, contenido, texto, success, error) {
     exec(success, error, 'CdpCompartir', 'compartir', [nombre, contenido || '', texto || '']);
+  },
+  abrir: function(nombre, success, error) {
+    exec(success, error, 'CdpCompartir', 'abrir', [nombre || 'descarga.apk']);
+  },
+  anexar: function(nombre, b64, success, error) {
+    exec(success, error, 'CdpCompartir', 'anexar', [nombre, b64]);
+  },
+  instalar: function(nombre, texto, success, error) {
+    exec(success, error, 'CdpCompartir', 'instalar', [nombre, texto || '']);
   }
 };
 
