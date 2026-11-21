@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'La descarga de actualizaciones abre el navegador automáticamente y la conexión con Firebase reintenta sola cuando la red falla.'
+          body: 'Pantalla de carga propia de la Copa CD al arrancar (adiós al robot de Cordova). Descarga por navegador y reintentos automáticos con WiFi inestable.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
