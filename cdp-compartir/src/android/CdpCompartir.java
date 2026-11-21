@@ -14,12 +14,17 @@ import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaArgs;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.PluginResult;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class CdpCompartir extends CordovaPlugin {
     private static final String TAG = "CdpCompartir";
@@ -62,6 +67,7 @@ public class CdpCompartir extends CordovaPlugin {
         if (!"compartir".equals(accion)) {
             if ("abrir".equals(accion)) { abrir(args, cb); return true; }
             if ("anexar".equals(accion)) { anexar(args, cb); return true; }
+            if ("bajar".equals(accion)) { bajar(args, cb); return true; }
             if ("instalar".equals(accion)) { instalar(args, cb); return true; }
             cb.error("accion desconocida: " + accion);
             return false;
@@ -157,6 +163,55 @@ public class CdpCompartir extends CordovaPlugin {
                 }
             }
         });
+    }
+
+    private void bajar(CordovaArgs args, final CallbackContext cb) {
+        final String url = args.optString(0);
+        final String nombre = args.optString(1);
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                HttpURLConnection cx = null;
+                try {
+                    if (url == null || url.length() == 0) throw new IOException("Falta la URL de descarga");
+                    File f = archivoCompartible(nombre);
+                    cx = (HttpURLConnection) new URL(url).openConnection();
+                    cx.setConnectTimeout(15000);
+                    cx.setReadTimeout(60000);
+                    cx.setInstanceFollowRedirects(true);
+                    cx.setRequestProperty("User-Agent", "copa-cd-apk");
+                    int codigo = cx.getResponseCode();
+                    if (codigo < 200 || codigo >= 300) throw new IOException("El servidor respondió HTTP " + codigo);
+                    long total = cx.getContentLength();
+                    InputStream in = cx.getInputStream();
+                    FileOutputStream out = new FileOutputStream(f, false);
+                    byte[] buf = new byte[65536];
+                    long leidos = 0;
+                    int n;
+                    while ((n = in.read(buf)) > 0) {
+                        out.write(buf, 0, n);
+                        leidos += n;
+                        PluginResult pr = new PluginResult(PluginResult.Status.OK, progresoJson(leidos, total));
+                        pr.setKeepCallback(true);
+                        cb.sendPluginResult(pr);
+                    }
+                    out.close();
+                    in.close();
+                    cb.success(f.getName());
+                } catch (Throwable e) {
+                    cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+                } finally {
+                    if (cx != null) cx.disconnect();
+                }
+            }
+        });
+    }
+
+    private JSONObject progresoJson(long leidos, long total) throws JSONException {
+        JSONObject o = new JSONObject();
+        o.put("leidos", leidos);
+        o.put("total", total);
+        o.put("pct", total > 0 ? Math.round(leidos * 100 / total) : 0);
+        return o;
     }
 
     private void instalar(CordovaArgs args, final CallbackContext cb) {

@@ -12,6 +12,15 @@ var CdpCompartir = {
   },
   instalar: function(nombre, texto, success, error) {
     exec(success, error, 'CdpCompartir', 'instalar', [nombre, texto || '']);
+  },
+  bajar: function(url, nombre, progreso, success, error) {
+    exec(function(x) {
+      if (x && typeof x === 'object' && x.pct !== undefined) {
+        if (progreso) progreso(x);
+        return;
+      }
+      success(x);
+    }, error, 'CdpCompartir', 'bajar', [url || '', nombre || 'descarga.apk']);
   }
 };
 

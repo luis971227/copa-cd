@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Pantalla de carga propia de la Copa CD al arrancar (adiós al robot de Cordova). Descarga por navegador y reintentos automáticos con WiFi inestable.'
+          body: 'Cargando negro con la cresta, descarga de actualizaciones dentro de la app con barra de progreso real (nativa) y aviso de versión nueva mientras usas la app.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
