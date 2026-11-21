@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.mitienda.pos.reglamento" version="1.0.5" android-versionCode="10005" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="com.mitienda.pos.reglamento" version="1.0.6" android-versionCode="10006" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>Gestion Copa CD</name>
     <description>
         Manejo del torneo Copa CD (equipos, jornadas, goles, tabla y bases) sin internet.

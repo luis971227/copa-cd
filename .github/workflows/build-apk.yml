@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Ojito para la contraseña de Firebase e inicio de sesión reforzado (reintento automático con red inestable).'
+          body: 'La descarga de actualizaciones abre el navegador automáticamente y la conexión con Firebase reintenta sola cuando la red falla.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
