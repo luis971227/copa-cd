@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Si la APK ya está descargada, Descargar e instalar va directo al instalador (sin re-bajar). Verificación de descarga completa antes de instalar. Login de Firebase nativo con dialog de sesión.'
+          body: 'Diagnóstico de login: si Firebase devuelve 403, la app muestra el motivo completo y cómo arreglarlo en la consola de Google/Firebase.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
