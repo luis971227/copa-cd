@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Login con ruta alternativa de Google y modo directo sin cuenta de Firebase: puedes publicar y descargar la copa con datos móviles aunque la red bloquee el acceso a Google.'
+          body: 'Muestra la versión instalada dentro de la app; el dialog de descarga se queda abierto al terminar con botones Instalar / Por navegador y avisos de Archivos → Descargas.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
