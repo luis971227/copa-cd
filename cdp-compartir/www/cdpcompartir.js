@@ -13,6 +13,9 @@ var CdpCompartir = {
   instalar: function(nombre, texto, success, error) {
     exec(success, error, 'CdpCompartir', 'instalar', [nombre, texto || '']);
   },
+  http: function(url, metodo, cuerpo, ct, success, error) {
+    exec(success, error, 'CdpCompartir', 'http', [url || '', metodo || 'GET', cuerpo || '', ct || '']);
+  },
   bajar: function(url, nombre, progreso, success, error) {
     exec(function(x) {
       if (x && typeof x === 'object' && x.pct !== undefined) {

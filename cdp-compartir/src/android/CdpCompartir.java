@@ -18,10 +18,12 @@ import org.apache.cordova.PluginResult;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -68,6 +70,7 @@ public class CdpCompartir extends CordovaPlugin {
             if ("abrir".equals(accion)) { abrir(args, cb); return true; }
             if ("anexar".equals(accion)) { anexar(args, cb); return true; }
             if ("bajar".equals(accion)) { bajar(args, cb); return true; }
+            if ("http".equals(accion)) { http(args, cb); return true; }
             if ("instalar".equals(accion)) { instalar(args, cb); return true; }
             cb.error("accion desconocida: " + accion);
             return false;
@@ -212,6 +215,53 @@ public class CdpCompartir extends CordovaPlugin {
         o.put("total", total);
         o.put("pct", total > 0 ? Math.round(leidos * 100 / total) : 0);
         return o;
+    }
+
+    private void http(CordovaArgs args, final CallbackContext cb) {
+        final String url = args.optString(0);
+        final String metodo = args.optString(1);
+        final String cuerpo = args.optString(2);
+        final String ct = args.optString(3);
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                HttpURLConnection cx = null;
+                try {
+                    if (url == null || url.length() == 0) throw new IOException("Falta la URL");
+                    cx = (HttpURLConnection) new URL(url).openConnection();
+                    cx.setConnectTimeout(15000);
+                    cx.setReadTimeout(60000);
+                    cx.setInstanceFollowRedirects(true);
+                    cx.setRequestMethod(metodo == null || metodo.length() == 0 ? "GET" : metodo);
+                    cx.setRequestProperty("User-Agent", "copa-cd-apk");
+                    if (ct != null && ct.length() > 0) cx.setRequestProperty("Content-Type", ct);
+                    if (cuerpo != null && cuerpo.length() > 0 && !"GET".equals(cx.getRequestMethod()) && !"HEAD".equals(cx.getRequestMethod())) {
+                        cx.setDoOutput(true);
+                        byte[] datos = cuerpo.getBytes("UTF-8");
+                        cx.setFixedLengthStreamingMode(datos.length);
+                        OutputStream out = cx.getOutputStream();
+                        out.write(datos);
+                        out.close();
+                    }
+                    int code = cx.getResponseCode();
+                    InputStream in = code >= 400 ? cx.getErrorStream() : cx.getInputStream();
+                    ByteArrayOutputStream bs = new ByteArrayOutputStream();
+                    if (in != null) {
+                        byte[] buf = new byte[65536];
+                        int n;
+                        while ((n = in.read(buf)) > 0) bs.write(buf, 0, n);
+                        in.close();
+                    }
+                    JSONObject r = new JSONObject();
+                    r.put("code", code);
+                    r.put("cuerpo", bs.toString("UTF-8"));
+                    cb.success(r);
+                } catch (Throwable e) {
+                    cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+                } finally {
+                    if (cx != null) cx.disconnect();
+                }
+            }
+        });
     }
 
     private void instalar(CordovaArgs args, final CallbackContext cb) {

@@ -217,6 +217,11 @@ h4.t{margin:12px 0 4px;font-size:12.5px;text-transform:uppercase;color:var(--roj
 #actualiza.on{display:flex}
 #actualiza .carta-c{animation:cardIn .3s ease both;max-width:370px}
 #actualiza .ver{font-size:34px;font-weight:900;color:var(--rojo);text-align:center;margin:6px 0}
+#carganube{position:fixed;inset:0;z-index:88;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.45)}
+#carganube.on{display:flex}
+#carganube .cn-c{background:var(--tar);border-radius:16px;padding:18px 22px;display:flex;align-items:center;gap:14px;box-shadow:0 12px 30px rgba(0,0,0,.35);animation:cardIn .25s ease both}
+#carganube .cn-anillo{width:28px;height:28px;border-radius:50%;border:3px solid var(--borde);border-top-color:var(--rojo);animation:girar .8s linear infinite;flex:none}
+#carganube .cn-msj{font-weight:600;color:var(--tinta)}
 #descarga{position:fixed;inset:0;z-index:86;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.62)}
 #descarga.on{display:flex}
 #descarga .carta-c{animation:cardIn .3s ease both;max-width:370px}
@@ -988,6 +993,7 @@ body.en-login #toast{bottom:26px}
 <div id="sync"></div>
 <div id="actualiza"></div>
 <div id="descarga"></div>
+<div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
 <div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
@@ -1412,7 +1418,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.8',APP_BUILD=9;
+var APP_VERSION='1.0.9',APP_BUILD=10;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null;
@@ -3710,6 +3716,8 @@ function irA(v){if(!v||!permitida(v))return;
  S.ui.vista=v;cierraNav();window.scrollTo(0,0);render();
 }
 function atras(){
+  var cbn=document.getElementById('carganube');
+  if(cbn&&cbn.className==='on'){cerrarCargandoNube();return;}
   if(descargaUI){cerrarDescarga();return;}
   if(actualizaUI){descartarActualizacion();return;}
   if(fotoPrevAbierta()){cierraFotoPrev();return;}
@@ -4704,6 +4712,24 @@ function guardarConfigNube(){
  if(anterior!==JSON.stringify(nubeConfig))nubeSesion=null;
  return true;
 }
+function httpNube(url,metodo,cuerpo,ct){
+
+ if(!(window.cdpCompartir&&cdpCompartir.http))return fetch(url,{method:metodo||'GET',headers:cuerpo?{'Content-Type':ct}:undefined,body:cuerpo||undefined});
+ return new Promise(function(resolve,reject){
+  cdpCompartir.http(url,metodo||'GET',cuerpo||'',ct||'',function(r){
+   var o=r;
+   if(typeof r==='string'){try{o=JSON.parse(r);}catch(e){reject(new Error('Respuesta desconocida del módulo nativo'));return;}}
+   if(!o||typeof o!=='object'||typeof o.code!=='number'){reject(new Error('Respuesta desconocida del módulo nativo'));return;}
+   resolve({ok:o.code>=200&&o.code<300,status:o.code,text:function(){return Promise.resolve(o.cuerpo||'');}});
+  },function(e){reject(new TypeError('fetch '+e));});
+ });
+}
+function cargandoNube(msj){
+ var box=document.getElementById('carganube');if(!box)return;
+ var t=document.getElementById('carganube-msj');if(t&&msj)t.textContent=msj;
+ box.className='on';
+}
+function cerrarCargandoNube(){var box=document.getElementById('carganube');if(box)box.className='';}
 function nubeRespuesta(res){
  return res.text().then(function(texto){
   var datos=null;try{datos=texto?JSON.parse(texto):null;}catch(e){}
@@ -4721,21 +4747,21 @@ function nubeAutenticar(crear,reintento){
  if(!correo||!clave){toast('Ingresa el correo y la contraseña de Firebase');return;}
  var accion=crear?'signUp':'signInWithPassword';
  var url='https://identitytoolkit.googleapis.com/v1/accounts:'+accion+'?key='+encodeURIComponent(nubeConfig.apiKey);
- /* text/plain evita la petición OPTIONS del CORS (el WebView file:// a veces la pierde):
-    Firebase REST lee el cuerpo JSON sin fijarse en el encabezado. */
- fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({email:correo,password:clave,returnSecureToken:true})})
+ cargandoNube(crear?'Creando cuenta…':'Iniciando sesión…');
+ httpNube(url,'POST',JSON.stringify({email:correo,password:clave,returnSecureToken:true}),'text/plain;charset=UTF-8')
   .then(nubeRespuesta).then(function(datos){
    if(!datos||!datos.idToken||!datos.localId)throw new Error('Firebase no devolvió una sesión válida');
    nubeSesion={token:datos.idToken,refreshToken:datos.refreshToken,expira:Date.now()+(+datos.expiresIn||3600)*1000,uid:datos.localId,email:datos.email||correo};
    nubeAutoIniciar();if(nubeAuto&&S.idCopa)nubePublicar(true);
-   renderSync();toast(crear?'Cuenta Firebase creada y sesión iniciada':'Sesión de nube iniciada');
+   cerrarCargandoNube();renderSync();toast(crear?'Cuenta Firebase creada y sesión iniciada':'Sesión de nube iniciada');
   }).catch(function(e){
    var msg=String(e.message||e);
    if(/fetch|NetworkError|Load failed/i.test(msg)){
     var intentos=typeof reintento==='number'?reintento:(reintento?1:0);
-    if(intentos<2){toast('Conexión lenta con Firebase… reintentando ('+(intentos+1)+' de 2)');setTimeout(function(){nubeAutenticar(crear,intentos+1);},intentos===0?1200:3500);return;}
+    if(intentos<2){cargandoNube('Conexión lenta con Firebase… reintentando ('+(intentos+1)+' de 2)');setTimeout(function(){nubeAutenticar(crear,intentos+1);},intentos===0?1200:3500);return;}
     msg='Sin conexión con Firebase: revisa el internet del móvil (prueba WiFi si estás en datos)';
    }
+   cerrarCargandoNube();
    if(msg==='EMAIL_EXISTS')msg='Ese correo ya tiene cuenta; inicia sesión';
    else if(msg==='EMAIL_NOT_FOUND'||msg==='INVALID_LOGIN_CREDENTIALS'||msg==='INVALID_PASSWORD')msg='Correo o contraseña incorrectos';
    else if(msg==='OPERATION_NOT_ALLOWED')msg='Activa Email/Password en Authentication de Firebase';
@@ -4749,7 +4775,7 @@ function nubeToken(){
  if(nubeSesion.expira>Date.now()+60000)return Promise.resolve(nubeSesion.token);
  if(!nubeSesion.refreshToken)return Promise.reject(new Error('La sesión de nube venció; inicia sesión otra vez'));
  var url='https://securetoken.googleapis.com/v1/token?key='+encodeURIComponent(nubeConfig.apiKey);
- return fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(nubeSesion.refreshToken)})
+ return httpNube(url,'POST','grant_type=refresh_token&refresh_token='+encodeURIComponent(nubeSesion.refreshToken),'application/x-www-form-urlencoded')
   .then(nubeRespuesta).then(function(datos){
    if(!datos||!datos.id_token)throw new Error('Firebase no pudo renovar la sesión');
    nubeSesion.token=datos.id_token;
@@ -4797,16 +4823,17 @@ function nubePublicar(silencioso){
  try{destino=nubeUrl(S.idCopa)+'/'+encodeURIComponent(nubeSesion.uid)+'/dispositivos/'+encodeURIComponent(nubeDispositivo())+'.json';}
  catch(e){if(!silencioso)toast(e.message);return;}
  function enviar(veces){
-  nubeToken().then(function(token){return fetch(destino+'?auth='+encodeURIComponent(token),{
-   method:'PUT',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify(registro)
-  });}).then(nubeRespuesta).then(function(){
-   if(!silencioso)toast('Copia de este dispositivo publicada ✓ · ID '+S.idCopa);
+  if(!silencioso)cargandoNube(veces?'Publicando tu copa… reintentando':'Publicando tu copa…');
+  nubeToken().then(function(token){return httpNube(destino+'?auth='+encodeURIComponent(token),'PUT',JSON.stringify(registro),'text/plain;charset=UTF-8');})
+  .then(nubeRespuesta).then(function(){
+   cerrarCargandoNube();if(!silencioso)toast('Copia de este dispositivo publicada ✓ · ID '+S.idCopa);
   }).catch(function(e){
    var m=String(e.message||e);
    if(/fetch|NetworkError|Load failed/i.test(m)){
-    if(veces<2){if(!silencioso)toast('Conexión lenta con Firebase… reintentando ('+(veces+1)+' de 2)');setTimeout(function(){enviar(veces+1);},veces===0?1200:3500);return;}
+    if(veces<2){if(!silencioso)cargandoNube('Conexión lenta… reintentando ('+(veces+1)+' de 2)');setTimeout(function(){enviar(veces+1);},veces===0?1200:3500);return;}
     m='Sin conexión con Firebase: revisa el internet del móvil (prueba WiFi si estás en datos)';
    }
+   cerrarCargandoNube();
    if(!silencioso)toast('No se pudo publicar: '+m);
   });
  }
@@ -4821,7 +4848,7 @@ function nubeDescargar(silencioso,reintento){
  var consulta='?auth='+encodeURIComponent(nubeSesion.token);
  nubeToken().then(function(token){
   consulta='?auth='+encodeURIComponent(token);
-  return fetch(nubeUrl(idCopaNube)+consulta);
+  return httpNube(nubeUrl(idCopaNube)+consulta,'GET');
  }).then(nubeRespuesta).then(function(registros){
   if(!registros||typeof registros!=='object'){if(!silencioso)toast('Aún no hay paquetes en la nube para esta copa');return;}
   var lista=[];

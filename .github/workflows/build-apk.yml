@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Cargando negro con la cresta, descarga de actualizaciones dentro de la app con barra de progreso real (nativa) y aviso de versión nueva mientras usas la app.'
+          body: 'Login de Firebase ahora nativo (sáltate las restricciones del WebView) con dialog de Iniciando sesión…, y descarga de actualizaciones 100% dentro de la app con barra de progreso.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
