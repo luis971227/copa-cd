@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Diagnóstico de login: si Firebase devuelve 403, la app muestra el motivo completo y cómo arreglarlo en la consola de Google/Firebase.'
+          body: 'Si la red del móvil bloquea Google (403), la app lo explica y pide WiFi. El instalador de APK ahora guarda también una copia en Descargas como respaldo y reintenta con los instaladores del sistema.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

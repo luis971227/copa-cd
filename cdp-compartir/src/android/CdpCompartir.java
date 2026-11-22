@@ -271,17 +271,56 @@ public class CdpCompartir extends CordovaPlugin {
                 try {
                     Context ctx = cordova.getContext();
                     File f = archivoCompartible(nombre);
-                    if (!f.exists()) throw new IOException("La descarga no está completa");
+                    if (!f.exists() || f.length() == 0) throw new IOException("La descarga no está completa");
+                    copiarADescargas(f);
                     Uri uri = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".cdpfiles", f);
-                    Intent i = new Intent(Intent.ACTION_VIEW);
-                    i.setDataAndType(uri, "application/vnd.android.package-archive");
-                    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    ctx.startActivity(i);
+                    lanzarInstalador(ctx, uri);
                     cb.success("instalador");
                 } catch (Throwable e) {
                     cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
                 }
             }
         });
+    }
+
+    private void lanzarInstalador(Context ctx, Uri uri) throws IOException {
+        try {
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setDataAndType(uri, "application/vnd.android.package-archive");
+            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            ctx.startActivity(i);
+            return;
+        } catch (Throwable e1) { }
+        String[] instaladores = {"com.google.android.packageinstaller", "com.android.packageinstaller"};
+        for (String paq : instaladores) {
+            try {
+                Intent i2 = new Intent(Intent.ACTION_VIEW);
+                i2.setPackage(paq);
+                i2.setDataAndType(uri, "application/vnd.android.package-archive");
+                i2.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                ctx.startActivity(i2);
+                return;
+            } catch (Throwable e2) { }
+        }
+        throw new IOException("Ningún instalador de Android respondió; instala la APK desde la carpeta Descargas del móvil");
+    }
+
+    private void copiarADescargas(File f) {
+        try {
+            Context ctx = cordova.getContext();
+            if (android.os.Build.VERSION.SDK_INT < 29) return;
+            android.content.ContentValues v = new android.content.ContentValues();
+            v.put(android.provider.MediaStore.Downloads.DISPLAY_NAME, f.getName());
+            v.put(android.provider.MediaStore.Downloads.MIME_TYPE, "application/vnd.android.package-archive");
+            android.net.Uri destino = ctx.getContentResolver().insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+            if (destino == null) return;
+            java.io.InputStream in = new java.io.FileInputStream(f);
+            java.io.OutputStream os = ctx.getContentResolver().openOutputStream(destino);
+            byte[] b = new byte[65536];
+            int n;
+            while ((n = in.read(b)) > 0) os.write(b, 0, n);
+            os.close();
+            in.close();
+        } catch (Throwable t) { }
     }
 }

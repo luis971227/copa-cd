@@ -995,7 +995,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.13</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.14</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1419,7 +1419,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.13',APP_BUILD=14;
+var APP_VERSION='1.0.14',APP_BUILD=15;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null;
@@ -4672,7 +4672,7 @@ function instalarYCerrar(){
   function(){
    cerrarDescarga();
    actualizaUI=null;renderActualiza();
-   toast('✓ Se abrió el instalador de Android · toca INSTALAR para actualizar');
+   toast('✓ APK descargada e instalador lanzado · si no se abrió nada: Archivos → Descargas → CopaCD…apk e instala');
   },
   function(){fallbackNavegador();});
 }
@@ -4775,7 +4775,8 @@ function nubeAutenticar(crear,reintento){
     msg='Sin conexión con Firebase: revisa el internet del móvil (prueba WiFi si estás en datos)';
    }
    cerrarCargandoNube();
-   if(/PERMISSION_DENIED|RESTRICTED|blocked|Precondition/i.test(msg))msg='Firebase bloqueó la petición (403): en Google Cloud Console → API y servicios → Credenciales quita las restricciones de tu API key; en Firebase → App Check, desactívalo si lo activaste. Detalle: '+msg.slice(0,140);
+   if(/<!DOCTYPE|<html|Error 403|unusual traffic/i.test(msg))msg='Tu red bloquea el acceso a Google (403). Prueba: conéctate por WiFi y vuelve a dar Iniciar sesión (la red de datos del operador está bloqueada o saturada). Si ya estás en WiFi, cambia de red o espera unos minutos';
+   else if(/PERMISSION_DENIED|RESTRICTED|blocked|Precondition/i.test(msg))msg='Firebase bloqueó la petición (403): en Google Cloud Console → API y servicios → Credenciales quita las restricciones de tu API key; en Firebase → App Check, desactívalo si lo activaste. Detalle: '+msg.slice(0,140);
    else if(/QUOTA|EXHAUSTED/i.test(msg))msg='Límite de intentos de Firebase alcanzado; espera unos minutos y prueba de nuevo';
    else if(msg==='EMAIL_EXISTS')msg='Ese correo ya tiene cuenta; inicia sesión';
    else if(msg==='EMAIL_NOT_FOUND'||msg==='INVALID_LOGIN_CREDENTIALS'||msg==='INVALID_PASSWORD')msg='Correo o contraseña incorrectos';
@@ -4848,7 +4849,8 @@ function nubePublicar(silencioso){
     if(veces<2){if(!silencioso)cargandoNube('Conexión lenta… reintentando ('+(veces+1)+' de 2)');setTimeout(function(){enviar(veces+1);},veces===0?1200:3500);return;}
     m='Sin conexión con Firebase: revisa el internet del móvil (prueba WiFi si estás en datos)';
    }
-   if(/PERMISSION_DENIED/i.test(m))m='Las reglas de la base de datos bloquean la publicación: pega las reglas de copas/paquetes en Firebase → Realtime Database → Reglas → Publicar';
+   if(/<!DOCTYPE|<html|Error 403|unusual traffic/i.test(m))m='Tu red bloquea el acceso a Google (403): prueba por WiFi y vuelve a publicar';
+   else if(/PERMISSION_DENIED/i.test(m))m='Las reglas de la base de datos bloquean la publicación: pega las reglas de copas/paquetes en Firebase → Realtime Database → Reglas → Publicar';
    cerrarCargandoNube();
    if(!silencioso)toast('No se pudo publicar: '+m);
   });
