@@ -995,7 +995,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.14</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.15</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1419,10 +1419,10 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.14',APP_BUILD=15;
+var APP_VERSION='1.0.15',APP_BUILD=16;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
-var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null;
+var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
 var actualizaUI=null,actualizaSnooze=0;
 var cron={pid:'',mins:10,seg:600,corriendo:false,t:null,a5:false};
 
@@ -4449,7 +4449,7 @@ function renderSync(){
  if(!syncUI){box.className='';box.innerHTML='';return;}
  box.className='on';
  var nubeEstado=nubeSesion?'<div class="nota">Conectado a Firebase como <b>'+esc(nubeSesion.email||'usuario')+'</b>.</div>'
-  :'<div class="nota">Inicia sesión con una cuenta de Firebase. Cada participante crea su propia cuenta la primera vez.</div>';
+  :'<div class="nota">Inicia sesión con una cuenta de Firebase, o usa el modo directo de abajo: Publicar/Descargar sin cuenta, con las reglas «modo directo» pegadas en Firebase → Reglas → Publicar.</div>';
  box.innerHTML='<div class="carta-c"><div class="carta-top" style="background:var(--rojo)">'
   +'<div class="cn">Sincronizar copa</div><div class="ci">🔄</div><div class="ct">Nube compartida o intercambio manual</div></div><div class="carta-b">'
   +'<div class="nota" style="margin-top:0">La nube guarda paquetes por ID de copa. Cada usuario puede publicar su copia y descargar los paquetes para mezclar los datos que falten. Los datos locales tienen prioridad; no se suben fotos, contraseñas ni cuentas locales.</div>'
@@ -4466,7 +4466,7 @@ function renderSync(){
    +nubeEstado
    +(nubeSesion?'<div class="acciones"><button class="btn '+(nubeAuto?'ro':'gh')+'" data-a="nube-auto" style="flex:1">🔁 Auto: '+(nubeAuto?'activada':'desactivada')+'</button><button class="btn ro" data-a="nube-subir" style="flex:1">☁️ Publicar mi copia</button><button class="btn ro" data-a="nube-bajar" style="flex:1">📥 Descargar y mezclar</button><button class="btn gh" data-a="nube-salir">Cerrar sesión nube</button></div>'
     +(nubeSesion?'<div class="nota">Con Auto activada, cada cambio local se publica solo y cada 45 s se revisa la nube; si otro dispositivo aportó datos, avisamos aquí. Sin internet sigue disponible el intercambio manual de abajo.</div>':'')
-    :'<label class="nota" for="nube-email">Correo de Firebase</label><input id="nube-email" class="txt" type="email" autocomplete="username" placeholder="correo@ejemplo.com">'
+    :'<div class="acciones"><button class="btn ro" data-a="nube-subir" style="flex:1">☁️ Publicar (modo directo)</button><button class="btn ro" data-a="nube-bajar" style="flex:1">📥 Descargar (modo directo)</button></div><div class="nota">Modo directo: publica y descarga sin cuenta de Firebase (requiere las reglas «modo directo» pegadas en Realtime Database → Reglas → Publicar). Con Auto sí hace falta cuenta:</div><label class="nota" for="nube-email">Correo de Firebase</label><input id="nube-email" class="txt" type="email" autocomplete="username" placeholder="correo@ejemplo.com">'
      +'<label class="nota" for="nube-pass">Contraseña de Firebase</label><div style="position:relative"><input id="nube-pass" class="txt" type="password" autocomplete="current-password" placeholder="Contraseña" style="padding-right:46px"><button class="lg-eye" data-a="pass-ojo" data-t="nube-pass" aria-label="Mostrar contraseña" style="background:var(--chip);color:var(--tinta);border:1px solid var(--gris)">👁</button></div>'
      +'<div class="acciones"><button class="btn ro" data-a="nube-entrar" style="flex:1">Iniciar sesión</button><button class="btn gh" data-a="nube-crear" style="flex:1">Crear cuenta</button></div>')
    +'<div class="nota">Las cuentas Firebase son independientes de los usuarios locales de la APK. Toda persona con cuenta Firebase y el ID de una copa puede leer y aportar paquetes de esa copa; no uses esta nube para información privada.</div></details>'
@@ -4753,14 +4753,17 @@ function nubeRespuesta(res){
   return datos;
  });
 }
-function nubeAutenticar(crear,reintento){
+function nubeAutenticar(crear,reintento,anfitrion){
  if(!guardarConfigNube())return;
  var email=document.getElementById('nube-email'),pass=document.getElementById('nube-pass');
  var correo=email?email.value.trim():'',clave=pass?pass.value:'';
  if(!correo||!clave){toast('Ingresa el correo y la contraseña de Firebase');return;}
  var accion=crear?'signUp':'signInWithPassword';
- var url='https://identitytoolkit.googleapis.com/v1/accounts:'+accion+'?key='+encodeURIComponent(nubeConfig.apiKey);
- cargandoNube(crear?'Creando cuenta…':'Iniciando sesión…');
+ var ruta1='https://identitytoolkit.googleapis.com/v1/accounts:'+accion+'?key='+encodeURIComponent(nubeConfig.apiKey);
+ var ruta2='https://www.googleapis.com/identitytoolkit/v3/relyingparty/'+(crear?'signupNewUser':'verifyPassword')+'?key='+encodeURIComponent(nubeConfig.apiKey);
+ var rutaAlt=anfitrion===2;
+ var url=rutaAlt?ruta2:ruta1;
+ cargandoNube(crear?'Creando cuenta…':(rutaAlt?'Iniciando sesión (ruta alternativa)…':'Iniciando sesión…'));
  httpNube(url,'POST',JSON.stringify({email:correo,password:clave,returnSecureToken:true}),'text/plain;charset=UTF-8')
   .then(nubeRespuesta).then(function(datos){
    if(!datos||!datos.idToken||!datos.localId)throw new Error('Firebase no devolvió una sesión válida');
@@ -4769,10 +4772,12 @@ function nubeAutenticar(crear,reintento){
    cerrarCargandoNube();renderSync();toast(crear?'Cuenta Firebase creada y sesión iniciada':'Sesión de nube iniciada');
   }).catch(function(e){
    var msg=String(e.message||e);
-   if(/fetch|NetworkError|Load failed/i.test(msg)){
+   var bloquea=/fetch|NetworkError|Load failed|<!DOCTYPE|<html|Error 403|unusual traffic/i.test(msg);
+   if(bloquea&&!rutaAlt){cargandoNube('Probando la ruta alternativa de Google…');setTimeout(function(){nubeAutenticar(crear,0,2);},900);return;}
+   if(bloquea){
     var intentos=typeof reintento==='number'?reintento:(reintento?1:0);
-    if(intentos<2){cargandoNube('Conexión lenta con Firebase… reintentando ('+(intentos+1)+' de 2)');setTimeout(function(){nubeAutenticar(crear,intentos+1);},intentos===0?1200:3500);return;}
-    msg='Sin conexión con Firebase: revisa el internet del móvil (prueba WiFi si estás en datos)';
+    if(intentos<2){cargandoNube('Conexión lenta con Firebase… reintentando ('+(intentos+1)+' de 2)');setTimeout(function(){nubeAutenticar(crear,intentos+1,anfitrion);},intentos===0?1200:3500);return;}
+    msg='Sin conexión con Firebase: esta red está bloqueando el acceso a Google (403). Prueba WiFi, o usa Publicar/Descargar en modo directo (sin cuenta), que usa otra ruta';
    }
    cerrarCargandoNube();
    if(/<!DOCTYPE|<html|Error 403|unusual traffic/i.test(msg))msg='Tu red bloquea el acceso a Google (403). Prueba: conéctate por WiFi y vuelve a dar Iniciar sesión (la red de datos del operador está bloqueada o saturada). Si ya estás en WiFi, cambia de red o espera unos minutos';
@@ -4825,7 +4830,9 @@ function nubeDispositivo(){
  return id;
 }
 function nubePublicar(silencioso){
- if(!nubeSesion){if(!silencioso)toast('Inicia sesión en Firebase primero');return;}
+ var anon=!nubeSesion;
+ if(anon&&silencioso)return;
+ if(anon&&!nubeConfirmado){nubeConfirmado=true;setTimeout(function(){nubeConfirmado=false;},8000);toast('Sin sesión de Firebase: pulsa de nuevo para publicar en modo directo (sin cuenta)');return;}
  var error=validarConfigNube();if(error){if(!silencioso)toast(error);return;}
  if(!S.idCopa||!S.equipos.length){if(!silencioso)toast('Crea o importa una copa antes de publicarla');return;}
  if(!/^CD-[A-HJ-NP-Z2-9]{6}$/.test(String(S.idCopa||''))){
@@ -4834,13 +4841,14 @@ function nubePublicar(silencioso){
   toast('ID de copa no válido para la nube · nuevo: '+S.idCopa);
  }
  var pack=paqueteNube();
- var registro={createdAt:Date.now(),uid:nubeSesion.uid,paquete:pack};
+ var uidFinal=anon?'anon':nubeSesion.uid;
+ var registro={createdAt:Date.now(),uid:uidFinal,paquete:pack};
  var destino;
- try{destino=nubeUrl(S.idCopa)+'/'+encodeURIComponent(nubeSesion.uid)+'/dispositivos/'+encodeURIComponent(nubeDispositivo())+'.json';}
+ try{destino=nubeUrl(S.idCopa)+'/'+encodeURIComponent(uidFinal)+'/dispositivos/'+encodeURIComponent(nubeDispositivo())+'.json';}
  catch(e){if(!silencioso)toast(e.message);return;}
  function enviar(veces){
   if(!silencioso)cargandoNube(veces?'Publicando tu copa… reintentando':'Publicando tu copa…');
-  nubeToken().then(function(token){return httpNube(destino+'?auth='+encodeURIComponent(token),'PUT',JSON.stringify(registro),'text/plain;charset=UTF-8');})
+  (anon?Promise.resolve(''):nubeToken()).then(function(token){return httpNube(destino+(anon?'':'?auth='+encodeURIComponent(token)),'PUT',JSON.stringify(registro),'text/plain;charset=UTF-8');})
   .then(nubeRespuesta).then(function(){
    cerrarCargandoNube();if(!silencioso)toast('Copia de este dispositivo publicada ✓ · ID '+S.idCopa);
   }).catch(function(e){
@@ -4850,7 +4858,7 @@ function nubePublicar(silencioso){
     m='Sin conexión con Firebase: revisa el internet del móvil (prueba WiFi si estás en datos)';
    }
    if(/<!DOCTYPE|<html|Error 403|unusual traffic/i.test(m))m='Tu red bloquea el acceso a Google (403): prueba por WiFi y vuelve a publicar';
-   else if(/PERMISSION_DENIED/i.test(m))m='Las reglas de la base de datos bloquean la publicación: pega las reglas de copas/paquetes en Firebase → Realtime Database → Reglas → Publicar';
+   else if(/PERMISSION_DENIED|Permission denied|Unauthorized|401/i.test(m))m='Las reglas de la base bloquean esto: si publicaste sin cuenta, pega en Firebase → Realtime Database → Reglas las reglas «modo directo» y pulsa Publicar';
    cerrarCargandoNube();
    if(!silencioso)toast('No se pudo publicar: '+m);
   });
@@ -4858,16 +4866,19 @@ function nubePublicar(silencioso){
  enviar(0);
 }
 function nubeDescargar(silencioso,reintento){
- if(!nubeSesion){if(!silencioso)toast('Inicia sesión en Firebase primero');return;}
+ var anon=!nubeSesion;
+ if(anon&&!silencioso&&!nubeConfirmado){nubeConfirmado=true;setTimeout(function(){nubeConfirmado=false;},8000);toast('Sin sesión de Firebase: pulsa de nuevo para descargar en modo directo (sin cuenta)');return;}
+ if(anon&&silencioso)return;
  var error=validarConfigNube();if(error){if(!silencioso)toast(error);return;}
  var idCopaNube=S.idCopa;
  if(!idCopaNube){var entradaId=document.getElementById('nube-id');idCopaNube=entradaId?entradaId.value.trim().toUpperCase():'';}
  if(!/^CD-[A-HJ-NP-Z2-9]{6}$/.test(idCopaNube)){if(!silencioso)toast('Escribe un ID de copa válido (CD-XXXXXX)');return;}
- var consulta='?auth='+encodeURIComponent(nubeSesion.token);
- nubeToken().then(function(token){
+ var consulta=nubeSesion?'?auth='+encodeURIComponent(nubeSesion.token):'';
+ var bajada=nubeSesion?nubeToken().then(function(token){
   consulta='?auth='+encodeURIComponent(token);
   return httpNube(nubeUrl(idCopaNube)+consulta,'GET');
- }).then(nubeRespuesta).then(function(registros){
+ }):httpNube(nubeUrl(idCopaNube)+consulta,'GET');
+ bajada.then(nubeRespuesta).then(function(registros){
   if(!registros||typeof registros!=='object'){if(!silencioso)toast('Aún no hay paquetes en la nube para esta copa');return;}
   var lista=[];
   Object.keys(registros).forEach(function(uid){
@@ -4908,6 +4919,8 @@ function nubeDescargar(silencioso,reintento){
    if(!reintento){if(!silencioso)toast('Conexión lenta con Firebase… reintentando');setTimeout(function(){nubeDescargar(silencioso,true);},3500);return;}
    m='Sin conexión con Firebase: revisa el internet del móvil';
   }
+  if(/<!DOCTYPE|<html|Error 403|unusual traffic/i.test(m))m='Tu red bloquea el acceso a Google (403): prueba por WiFi';
+  else if(/PERMISSION_DENIED|Permission denied|Unauthorized|401/i.test(m))m='Las reglas de la base exigen cuenta: pega en Firebase → Realtime Database → Reglas las reglas «modo directo» y pulsa Publicar';
   if(!silencioso)toast('No se pudo descargar la nube: '+m);
  });
 }

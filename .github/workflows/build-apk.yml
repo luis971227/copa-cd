@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Si la red del móvil bloquea Google (403), la app lo explica y pide WiFi. El instalador de APK ahora guarda también una copia en Descargas como respaldo y reintenta con los instaladores del sistema.'
+          body: 'Login con ruta alternativa de Google y modo directo sin cuenta de Firebase: puedes publicar y descargar la copa con datos móviles aunque la red bloquee el acceso a Google.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
