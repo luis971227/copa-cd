@@ -995,7 +995,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.10</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.11</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1419,7 +1419,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.10',APP_BUILD=11;
+var APP_VERSION='1.0.11',APP_BUILD=12;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null;
@@ -4585,10 +4585,12 @@ function abrirDescargaActualizacion(){
    GitHub Releases a un archivo binario del plugin (base64 por trozos) y, al
    terminar, se lanza el instalador del sistema con ACTION_VIEW + FileProvider.
    Si el WebView no puede dar el stream o el plugin falla, se cae al navegador. */
-var descargaUI=null;
+var descargaUI=null,descargaLista='';
 function abrirDescargaProgreso(){
  if(!actualizaUI||!/^https:\/\//i.test(actualizaUI.url||''))return;
  var nombre='CopaCD-'+(actualizaUI.version||APP_VERSION)+'.apk';
+ if(descargaLista===nombre){instalarYCerrar();return;}
+ descargaLista='';
  var box=document.getElementById('descarga');
  descargaUI={url:actualizaUI.url,nombre:nombre,controlador:new AbortController(),porTiempo:false};
  var temporizador=setTimeout(function(){if(descargaUI){descargaUI.porTiempo=true;descargaUI.controlador.abort();}},8000);
@@ -4646,12 +4648,16 @@ function abrirDescargaProgreso(){
 function bajarNativa(d){
  var st=document.getElementById('dz-estado');
  if(st)st.textContent='Descargando en segundo plano…';
+ var ultimo={leidos:0,total:0};
  cdpCompartir.bajar(d.url,d.nombre,function(x){
   if(!descargaUI)return;
+  ultimo.leidos=x.leidos||0;ultimo.total=x.total||0;
   pintaBarra(x.leidos||0,x.total||0);
  },function(){
+  if(ultimo.total>0&&ultimo.leidos!==ultimo.total)return;
   var st=document.getElementById('dz-estado');
   if(st)st.textContent='Descarga completa ✓ · abriendo instalador…';
+  descargaLista=d.nombre;
   instalarYCerrar();
  },function(e){
   if(!descargaUI)return;

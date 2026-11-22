@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Al terminar la descarga se abre el instalador solo y te avisa con toast para tocar INSTALAR. El dialog muestra tu versión actual vs la nueva y se cierra al instalar. Login de Firebase nativo con dialog de sesión.'
+          body: 'Si la APK ya está descargada, Descargar e instalar va directo al instalador (sin re-bajar). Verificación de descarga completa antes de instalar. Login de Firebase nativo con dialog de sesión.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
