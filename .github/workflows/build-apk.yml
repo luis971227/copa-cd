@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Los autogoles ahora aparecen en la tabla de estadisticas por jugador (columna AG) junto a goles, asistencias, paradas y tarjetas; en la tabla de posiciones ya cuentan para el marcador del rival.'
+          body: 'Challenge: al pedirlo el cron\u00f3metro del partido suma 2 minutos para jugarlo; si se gana quedan de alargue y si se pierde se quitan.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
