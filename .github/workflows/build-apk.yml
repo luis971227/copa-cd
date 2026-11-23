@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'El aviso de nueva version ahora se comprueba cada vez que la app vuelve al frente (antes solo al arrancar y cada 20 min).'
+          body: 'El instalador ahora se abre por la misma ruta que Android usa cuando tocas la APK descargada a mano (Descargas), con respaldos de sesion y FileProvider si el sistema no contesta.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

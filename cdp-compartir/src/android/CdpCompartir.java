@@ -279,7 +279,7 @@ public class CdpCompartir extends CordovaPlugin {
                     Context ctx = cordova.getContext();
                     File f = archivoCompartible(nombre);
                     if (!f.exists() || f.length() == 0) throw new IOException("La descarga no está completa");
-                    copiarADescargas(f);
+                    uriDescargas = copiarADescargas(f);
                     Uri uri = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".cdpfiles", f);
                     if (Build.VERSION.SDK_INT >= 26 && !puedeInstalar(ctx)) {
                         pedirPermisoInstalar(ctx);
@@ -290,6 +290,12 @@ public class CdpCompartir extends CordovaPlugin {
                        clasico ya no abre el instalador en equipos nuevos (por eso
                        "toco Instalar y no pasa nada"). Si el sistema no responde,
                        hay respaldo automatico con el ACTION_VIEW clasico. */
+                    if (uriDescargas != null) {
+                        Intent vD = new Intent(Intent.ACTION_VIEW);
+                        vD.setDataAndType(uriDescargas, "application/vnd.android.package-archive");
+                        vD.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        if (uiLanzar(ctx, vD)) { cb.success("instalador-descargas"); return; }
+                    }
                     sesionConfirmada = false;
                     ctxSesion = ctx; uriSesion = uri;
                     if (instalarSesionApi(ctx, f, cb)) {
@@ -319,7 +325,7 @@ public class CdpCompartir extends CordovaPlugin {
             CallbackContext local = cbSesion; cbSesion = null;
             if (local == null || sesionConfirmada) return;
             try {
-                lanzarInstalador(ctx, uri);
+                lanzarInstalador(ctx, uriDescargas != null ? uriDescargas : uri);
                 local.success("instalador-clasico");
             } catch (Throwable e) {
                 local.error("instalador: el sistema no respondio y el respaldo clasico tampoco; instala a mano desde Archivos -> Descargas");
@@ -397,6 +403,7 @@ public class CdpCompartir extends CordovaPlugin {
     private volatile boolean sesionConfirmada;
     private Context ctxSesion;
     private Uri uriSesion;
+    private Uri uriDescargas;
 
     /* Instalacion via PackageInstaller.Session: arma la sesion, copia la APK
        dentro y hace commit; el SISTEMA muestra el dialogo "Instalar". Así
@@ -438,7 +445,7 @@ public class CdpCompartir extends CordovaPlugin {
                             CallbackContext local2 = cbSesion; cbSesion = null;
                             try { c.unregisterReceiver(this); } catch (Throwable t) { }
                             if (local2 == null) return;
-                            try { lanzarInstalador(ctxSesion, uriSesion); local2.success("instalador-clasico"); }
+                            try { lanzarInstalador(ctxSesion, uriDescargas != null ? uriDescargas : uriSesion); local2.success("instalador-clasico"); }
                             catch (Throwable e2) { local2.error("instalador: " + (e2.getMessage() == null ? e2.getClass().getSimpleName() : e2.getMessage())); }
                             return;
                         }
@@ -509,15 +516,18 @@ public class CdpCompartir extends CordovaPlugin {
         throw new IOException("Ningún instalador de Android respondió; instala la APK desde la carpeta Descargas del móvil");
     }
 
-    private void copiarADescargas(File f) {
+    private Uri copiarADescargas(File f) {
         try {
             Context ctx = cordova.getContext();
-            if (android.os.Build.VERSION.SDK_INT < 29) return;
+            if (android.os.Build.VERSION.SDK_INT < 29) return null;
+            /* Si ya existe una copia previa del mismo nombre, se reutiliza (la
+               carga limpia el contenido), siguiendo el mismo camino que el
+               archivo descargado a mano: ContentResolver + Descargas. */
             android.content.ContentValues v = new android.content.ContentValues();
             v.put(android.provider.MediaStore.Downloads.DISPLAY_NAME, f.getName());
             v.put(android.provider.MediaStore.Downloads.MIME_TYPE, "application/vnd.android.package-archive");
             android.net.Uri destino = ctx.getContentResolver().insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
-            if (destino == null) return;
+            if (destino == null) return null;
             java.io.InputStream in = new java.io.FileInputStream(f);
             java.io.OutputStream os = ctx.getContentResolver().openOutputStream(destino);
             byte[] b = new byte[65536];
@@ -525,6 +535,8 @@ public class CdpCompartir extends CordovaPlugin {
             while ((n = in.read(b)) > 0) os.write(b, 0, n);
             os.close();
             in.close();
+            return destino;
         } catch (Throwable t) { }
+        return null;
     }
 }
