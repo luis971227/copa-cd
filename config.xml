@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.mitienda.pos.reglamento" version="1.0.19" android-versionCode="10019" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+<widget id="com.mitienda.pos.reglamento" version="1.0.20" android-versionCode="10020" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Permiso de Android para que la propia app pueda abrir el instalador de la APK descargada (sin Google, sin Play). -->
     <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest">
         <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />

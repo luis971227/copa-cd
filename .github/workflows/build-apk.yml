@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Acomodo de la ficha del partido: los chips de estadisticas (gol, autogol \U0001F945, asistencia, parada, amarilla, roja) quedan compactos y el nombre del jugador siempre visible.'
+          body: 'La versi\u00f3n de la APK se ve siempre en el encabezado (aparece al lado del t\u00edtulo COPA CD), adem\u00e1s de en el splash y en Sincronizar \u2192 Actualizaciones.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
