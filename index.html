@@ -996,7 +996,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.23</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.24</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1420,7 +1420,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.23',APP_BUILD=24;
+var APP_VERSION='1.0.24',APP_BUILD=25;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -2267,19 +2267,29 @@ function terminarPartido(){
  toast('Partido terminado: '+m[0]+'-'+m[1]);
  if(jornadaTerminada(nFin))avisoGanadorJornada(nFin);
 }
+function quienJuegaRegla(id){
+ if(id===8)return 'Regla aplicada · Cambios obligatorios: a los 5 minutos entran TODOS los cambios disponibles; \u00a1no se hacen más cambios ni antes ni después, así exista lesión!';
+ if(id===9)return 'Regla aplicada · Rival escoge fuera: el equipo CONTRARIO decide qué jugador NO juega el partido completo; ese jugador queda fuera. Si el equipo no tiene jugadores de sobra, la carta se invalida para ambos.';
+ if(id===10)return 'Regla aplicada · Rival escoge fijo: el equipo CONTRARIO decide qué jugador SÍ juega el partido completo; ese jugador no puede ser sustituido ni sacado. Si no hay suficientes jugadores, la carta se invalida para ambos.';
+ if(id===11)return 'Regla aplicada · Juego limpio: juega el escalafón de jugadores con MENOS tarjetas; en empate decide el equipo y los elegidos juegan los 10 minutos sin cambios; sólo pueden dar cambios jugadores totalmente limpios; si el equipo tiene jugadores justos o menos, la carta se invalida.';
+ return 'Regla aplicada';
+}
 function panelReglasCarta(p,puedeEditar){
   var id=cartaReglaId(p);
   if(!id)return '';
-  var info=cartaInfo(id),on=reglaAplicada(p,id);
+  var info=cartaInfo(id),on=reglaAplicada(p,id),decidida=p&&p.aplica&&p.aplica[id]!==undefined;
   var txt=id===8?'Cambios obligatorios a los 5 min':id===9?'Rival escoge quién NO juega':id===10?'Rival escoge quién SÍ juega':'Juego limpio (no juega quien tuvo amarilla)';
   var h='<div class="tar" style="margin-bottom:10px;border-left:4px solid var(--rojo)"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="flex:1;font-size:13px">⚙️ Aplicar regla · '+(info?info.ico+' ':'')+esc(txt)+'</b>';
-  if(puedeEditar){
-   h+='<button class="btn '+(on?'ro':'gh')+'" data-a="regla-set" data-p="'+p.id+'" data-v="1" style="padding:6px 10px;font-size:12px">✅ Aplicar</button>'
-    +'<button class="btn '+(!on?'ro':'gh')+'" data-a="regla-set" data-p="'+p.id+'" data-v="0" style="padding:6px 10px;font-size:12px">❌ No aplicar</button>';
-  }else h+='<span class="badge '+(on?'ok':'fuera')+'">'+(on?'Regla aplicada':'Regla NO aplicada · juego normal')+'</span>';
-  h+='</div><div class="nota" style="margin:6px 0 0">Si por falta de personal la dinámica no se puede jugar, elige <b>No aplicar</b> y el partido se juega normal. El marcador y las estadísticas cuentan igual.</div></div>';
+  if(puedeEditar&&!decidida){
+   h+='<button class="btn ro" data-a="regla-set" data-p="'+p.id+'" data-v="1" style="padding:6px 10px;font-size:12px">✅ Aplicar</button>'
+    +'<button class="btn gh" data-a="regla-set" data-p="'+p.id+'" data-v="0" style="padding:6px 10px;font-size:12px">❌ No aplicar</button>';
+  }else h+='<span class="badge '+(on?'ok':'fuera')+'">'+(on?'✅ Aplicada':'❌ No aplicada · juego normal')+'</span>';
+  h+='</div><div class="nota" style="margin:6px 0 0"><b>Según el reglamento, quién puede jugar o no:</b> '+esc(id===8?'Cambios obligatorios: a los 5 minutos entran TODOS los cambios disponibles; ¡no se hacen más cambios ni antes ni después, así exista lesión!':id===9?'El equipo CONTRARIO decide qué jugador NO juega el partido completo; ese jugador queda fuera. Si el equipo no tiene jugadores de sobra, la carta se invalida para ambos.':id===10?'El equipo CONTRARIO decide qué jugador SÍ juega el partido completo; ese jugador no puede ser sustituido ni sacado. Si no hay suficientes jugadores, la carta se invalida para ambos.':'Juego limpio: juega el escalafón de jugadores con MENOS tarjetas; en empate decide el equipo y los elegidos juegan los 10 minutos sin cambios; sólo pueden dar cambios jugadores totalmente limpios; si el equipo tiene jugadores justos o menos, la carta se invalida.');
+  if(!decidida)h+='. Si por falta de personal la dinámica no se puede jugar, elige ❌ No aplicar y el partido se juega normal (5 titulares + 3 suplentes). El marcador y las estadísticas cuentan igual. Al elegir, los botones se ocultan de esta vista y vuelven solo si reinicias el partido.';
+  h+='</div></div>';
   return h;
 }
+
 function renderPartido(){
  var box=document.getElementById('partido');if(!box)return;
  if(!S.ui.partido){box.className='partido';box.innerHTML='';return;}
@@ -2325,13 +2335,13 @@ function renderPartido(){
    +'<div class="nota" style="margin:7px 0 0">El cronómetro es orientativo: termina el partido cuando quieras con el botón de abajo.</div></div>';
  }
   h+='<div class="pj-bloque" style="border-radius:12px;border:1px solid var(--borde);margin-bottom:10px">'+bloqueEq(p,eL,1)+bloqueEq(p,eV,2)
-   +(function(){var jnC=jornadaDePartido(p.id),chH='<div class="tar" style="margin:8px 0 6px"><b style="font-size:13px">⏱ Challenge (2 min)</b><div class="nota" style="margin:4px 0 6px">Rondo de dominios con 3 jugadores. Al pedirlo el reloj del partido suma 2 minutos para jugarlo; si gana el equipo que lo pidió quedan de alargue, y si lo pierde se quitan y solo ese equipo no puede pedirlo en la próxima jornada (el rival conserva su derecho si no lo había pedido).</div>';
+   +(function(){var jnC=jornadaDePartido(p.id),chH='<div class="tar" style="margin:8px 0 6px"><b style="font-size:13px">⏱ Challenge (2 min)</b><div class="nota" style="margin:4px 0 6px">Rondo de dominios con 3 jugadores; al pedirlo el reloj del partido suma 2 minutos para jugarlo. Si gana el equipo que lo pidió quedan de alargue; si lo pierde se quitan y ese equipo no puede pedir challenge en la próxima jornada (el rival conserva su derecho si no lo había pedido). Al darle Ganó/Perdió el resultado se aplica y los botones se ocultan de esta vista; reaparecen solo si reinicias el partido.</div>';
     function row(eqId,lab){var ci=chalInfo(jnC,eqId),st=ci.estado,pu=ci.pid===p.id;var out='<div style="margin:6px 0"><b>'+esc(lab)+':</b> ';
      if(st==='disponible') out+=(pueArb&&jug)?'<button class="btn gh" data-a="chal-pedir" data-p="'+p.id+'" data-e="'+eqId+'" style="padding:5px 9px;font-size:12px">Pedir challenge</button>':'<span class="dash-ok">Disponible</span>';
-     else if(st==='bloqueado') out+='<span class="dash-no">No disponible (perdió jornada anterior)</span>';
-     else if(st==='pedido') out+='<span class="badge">Pedido'+(pu?' aquí':'')+'</span> '+(pu&&pueArb?'<button class="btn ro" data-a="chal-ganar" data-p="'+p.id+'" data-e="'+eqId+'" style="padding:5px 9px;font-size:12px">Ganó (+2 min)</button> <button class="btn" data-a="chal-perder" data-p="'+p.id+'" data-e="'+eqId+'" style="padding:5px 9px;font-size:12px">Perdió</button> <button class="btn gh" data-a="chal-quitar" data-p="'+p.id+'" data-e="'+eqId+'" style="padding:5px 9px;font-size:12px">Deshacer</button>':'');
-     else if(st==='perdido') out+='<span class="dash-no">Perdido'+(pu?' en este partido':'')+' (sin próxima jornada)</span>'+ (pu&&pueArb?' <button class="btn gh" data-a="chal-quitar" data-p="'+p.id+'" data-e="'+eqId+'" style="padding:5px 9px;font-size:12px">Deshacer</button>':'');
-     else if(st==='usado') out+='<span class="'+(ci.gano?'dash-ok':'dash-no')+'">'+(ci.gano?'Ganado (+2 min)':'Usado')+(pu?' en este partido':'')+'</span>'+ (pu&&pueArb?' <button class="btn gh" data-a="chal-quitar" data-p="'+p.id+'" data-e="'+eqId+'" style="padding:5px 9px;font-size:12px">Deshacer</button>':'');
+     else if(st==='bloqueado') out+='<span class="dash-no">🚫 Bloqueado: perdió el challenge la jornada anterior y NO puede pedirlo en esta jornada</span>';
+     else if(st==='pedido') out+='<span class="badge">Pedido'+(pu?' aquí':'')+'</span> '+(pu&&pueArb?'<button class="btn ro" data-a="chal-ganar" data-p="'+p.id+'" data-e="'+eqId+'" style="padding:5px 9px;font-size:12px">Ganó (+2 min)</button> <button class="btn" data-a="chal-perder" data-p="'+p.id+'" data-e="'+eqId+'" style="padding:5px 9px;font-size:12px">Perdió (bloquea la próxima jornada)</button> <button class="btn gh" data-a="chal-quitar" data-p="'+p.id+'" data-e="'+eqId+'" style="padding:5px 9px;font-size:12px">Deshacer</button>':'');
+     else if(st==='perdido') out+='<span class="dash-no">❌ Perdido'+(pu?' en este partido':'')+': sin alargue y este equipo NO puede pedir challenge en la próxima jornada</span>';
+     else if(st==='usado') out+='<span class="'+(ci.gano?'dash-ok':'dash-no')+'">'+(ci.gano?'✅ Ganado: +2 minutos de alargue'+(pu?' en este partido':''):'Usado')+'</span>';
      return out+'</div>';}
     chH+=row(p.local,corto(eL))+row(p.visitante,corto(eV))+'</div>';return chH;})()
    +(pueArb?'<div class="acciones">'
@@ -2402,21 +2412,25 @@ function tablaOrdenada(){return calculo().map(function(r){return r.e.id;});}
 function panelChallenge(n){
  var h='<div class="tar"><div style="display:flex;align-items:center;gap:8px"><h4 class="t" style="margin:0;flex:1">⏱ Challenge · Jornada '+n+'</h4>'
   +(esAdmin()&&puedeEditarJornada(n)?'<button class="btn gh" data-a="chal-edit" data-n="'+n+'" style="padding:6px 10px;font-size:12px">✏️ Editar</button>':'')
-  +'</div><div class="nota" style="margin:6px 0 8px">Cada equipo puede pedir 1 challenge por jornada, en cualquiera de sus partidos. Si gana el rondo de dominios con 3 jugadores, ese partido dura 2 minutos más; si lo pierde, solo el equipo que lo pidió queda sin pedirlo la jornada siguiente. El rival que no lo pidió conserva su derecho.</div>';
- for(var i=0;i<S.equipos.length;i++){
+  +'</div><div class="nota" style="margin:6px 0 8px">Cada equipo puede pedir 1 challenge por jornada, en cualquiera de sus partidos, y se juega como rondo de dominios con 3 jugadores. Si gana, ese partido se alarga 2 minutos; si lo pierde, <b>no hay alargue y ese equipo NO puede pedir challenge en la próxima jornada</b> (el rival que no lo pidió conserva su derecho).</div>';
+ var ped=0,gan=0,per=0,bloq=0,i;
+ for(i=0;i<S.equipos.length;i++){
   var e=S.equipos[i],ci=chalInfo(n,e.id),st=ci.estado,p=ci.pid?buscarPartido(ci.pid):null,op=eq(p?(p.local===e.id?p.visitante:p.local):0),dia=p?jornadaDePartido(p.id):n;
-  var match=p?' · J'+dia+' P'+(function(){var J=jornada(dia),k;for(k=0;k<J.partidos.length;k++)if(J.partidos[k].id===p.id)return k+1;return '?';})()+' vs '+corto(op):'';
+  var match=p?' contra '+esc(corto(op))+' (J'+dia+' P'+(function(){var J=jornada(dia),k;for(k=0;k<J.partidos.length;k++)if(J.partidos[k].id===p.id)return k+1;return '?';})()+')':'';
   var quien='';
-  if(st==='disponible')quien=jornadaTerminada(n)?'No puede pedirlo ahora: la jornada terminó.':'Puede pedirlo en uno de sus partidos.';
-  else if(st==='bloqueado')quien='No puede pedirlo: perdió el challenge de la Jornada '+ci.jornadaPerdida+match+'.';
-  else if(st==='pedido')quien='Pedido por '+corto(e)+match+(ci.solicitadoPor?' · anotado por '+ci.solicitadoPor:'')+'; no puede volver a pedirlo esta jornada y falta resolver.';
-  else if(st==='usado'&&ci.gano)quien='Pedido por '+corto(e)+match+' · ganó el reto, +2 minutos'+(ci.solicitadoPor?' · anotado por '+ci.solicitadoPor:'')+(ci.resueltoPor?' · resultado registrado por '+ci.resueltoPor:'')+'.';
-  else if(st==='perdido')quien='Pedido por '+corto(e)+match+' · perdió; no puede volver a pedirlo esta jornada y queda bloqueado para la siguiente.'+(ci.resueltoPor?' Resultado registrado por '+ci.resueltoPor+'.':'');
-  else if(st==='usado')quien=ci.gano?'Ya lo utilizó '+corto(e)+match+'; no puede pedirlo de nuevo esta jornada.':'Perdió '+corto(e)+match+'; no puede pedirlo en la siguiente jornada.';
+  if(st==='disponible')quien=jornadaTerminada(n)?'La jornada terminó: su challenge quedó sin usar.':'Aún puede pedirlo en uno de sus partidos de esta jornada.';
+  else if(st==='bloqueado')quien='🚫 No puede pedir challenge en esta Jornada '+n+': lo perdió en la Jornada '+ci.jornadaPerdida+match+'. Sanción del reglamento por perder el rondo.';
+  else if(st==='pedido')quien='⏳ Lo pidió '+corto(e)+match+'. Falta resolver: si gana, +2 minutos de alargue en ese partido; si pierde, no podrá pedirlo en la Jornada '+(n<4?(n+1):'siguiente (no hay más jornadas)')+'.';
+  else if(st==='usado'&&ci.gano)quien='✅ Lo pidió '+corto(e)+match+' y LO GANÓ: ese partido se alargó 2 minutos.'+(ci.resueltoPor?' Resultado anotado por '+ci.resueltoPor+'.':'');
+  else if(st==='perdido')quien='❌ Lo pidió '+corto(e)+match+' y LO PERDIÓ: ese partido quedó sin alargue y, por reglamento, este equipo NO puede pedir challenge en la Jornada '+(n<4?(n+1):'siguiente (no hay más jornadas)')+'.'+(ci.resueltoPor?' Resultado anotado por '+ci.resueltoPor+'.':'');
+  else if(st==='usado')quien='Ya lo usó '+corto(e)+match+': no puede volver a pedirlo esta jornada.';
+  if(st==='pedido')ped++;else if(st==='usado'&&ci.gano)gan++;else if(st==='perdido')per++;else if(st==='bloqueado')bloq++;
   h+='<div class="dash-row"><i class="pall" style="background:'+e.color+'"></i><span style="flex:1;min-width:0"><b>'+esc(corto(e))+'</b><small style="display:block;color:var(--gris2);font-size:11px;margin-top:2px">'+esc(quien)+'</small></span></div>';
  }
+ h+='<div class="nota" style="margin:0;font-size:11px"><b>Resumen de la Jornada '+n+':</b> '+ped+' pedido(s) por resolver · '+gan+' ganado(s) · '+per+' perdido(s) · '+bloq+' bloqueado(s) por haber perdido el de la jornada anterior.</div>';
  return h+'</div>';
 }
+
 function vistaJornada(){
   if(S.equipos.length<2)return vacio('Aún no hay torneo',rol()==='jugador'?'El torneo aún no está creado. Tu capitán lo pondrá en marcha.':(esAdmin()?'Crea los 4 equipos con sus jugadores para generar las 4 jornadas.':'El súper admin aún no crea la copa. Cuando la cree, aquí estará el calendario.'),esAdmin()?'crear':'',esAdmin()?'Crear torneo (4 equipos)':'');
  var h='',i,j=jornada(S.ui.jor);
@@ -3835,7 +3849,9 @@ document.addEventListener('click',function(ev){
     var aplicaR=el.getAttribute('data-v')==='1';
     if(!pR.aplica)pR.aplica={};
     pR.aplica[idR]=aplicaR;
-    guardar();render();toast(aplicaR?'Regla aplicada a este partido':'Regla NO aplicada: se juega normal');break;
+    guardar();render();
+    if(aplicaR)toast(quienJuegaRegla(idR));
+    else toast('❌ No aplicada: se juega normal (5 titulares + 3 suplentes, todos los activos pueden participar)');break;
    }
    case 'pt-iniciar':if(cron.pid&&!puedeArbitrar(cron.pid)){toast('Solo el árbitro de este partido puede iniciar');break;}if(!puedeEditarJornada(jornadaDePartido(cron.pid))){toast('Jornada terminada: solo lectura');break;}cronIniciar();break;
    case 'pt-pausar':if(cron.pid&&!puedeArbitrar(cron.pid)){toast('Solo el árbitro de este partido puede pausar');break;}cronPausar();break;
