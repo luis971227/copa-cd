@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Instalacion en 4 toques: el boton Ir a Descargas ahora abre Mis archivos de Samsung directo (sin el selector de apps), con instruccion paso a paso hasta el Instalar sin analizar de Google Play Protect, que es obligatorio y no se puede saltar.'
+          body: 'Instalacion: ahora primero sesion del sistema PackageInstaller (la que muestra el cartel Instalar? estandar con Play Protect) y la app muestra en VIVO el estado real: esperando tu confirmacion, bloqueado por seguridad, instalado o fallo.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

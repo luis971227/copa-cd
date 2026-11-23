@@ -13,6 +13,9 @@ var CdpCompartir = {
   abrirDescargas: function(nombre, success, error) {
     exec(success, error, 'CdpCompartir', 'descargas', [nombre || '']);
   },
+  escucharInstalador: function(success, error) {
+    exec(success, error, 'CdpCompartir', 'escuchar-instalador', []);
+  },
   instalar: function(nombre, texto, success, error) {
     exec(success, error, 'CdpCompartir', 'instalar', [nombre, texto || '']);
   },
