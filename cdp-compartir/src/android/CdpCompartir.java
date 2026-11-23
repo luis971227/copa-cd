@@ -1,5 +1,6 @@
 package com.copacd.compartir;
 
+import android.app.DownloadManager;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
