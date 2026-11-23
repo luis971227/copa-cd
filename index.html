@@ -1000,7 +1000,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.33</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.34</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1425,7 +1425,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.33',APP_BUILD=34;
+var APP_VERSION='1.0.34',APP_BUILD=35;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -4162,6 +4162,8 @@ document.addEventListener('keydown',function(ev){
  if(ev.key==='Enter'&&ev.target&&ev.target.id==='m-monto'){ev.preventDefault();var bm=document.querySelector('[data-a="monto-save"]');if(bm)bm.click();}
 },false);
 document.addEventListener('backbutton',function(){atras();},false);
+document.addEventListener('visibilitychange',function(){if(document.hidden===false)comprobarActualizacion(true,true);});
+document.addEventListener('resume',function(){comprobarActualizacion(true,true);},false);
 document.addEventListener('touchstart',function(ev){
  if(!ev.touches||!ev.touches.length)return;
  var t=ev.touches[0];swX=t.clientX;swY=t.clientY;swT=Date.now();swEdge=(swX<46&&swY>60);

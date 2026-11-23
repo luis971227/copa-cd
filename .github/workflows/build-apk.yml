@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Arreglado el chat del asistente IA (no abria la vista). La descarga de la APK ya no salta sola al navegador: reintenta dentro de la app y solo si fallo permanente ofrece Reintentar o Por navegador.'
+          body: 'El aviso de nueva version ahora se comprueba cada vez que la app vuelve al frente (antes solo al arrancar y cada 20 min).'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
