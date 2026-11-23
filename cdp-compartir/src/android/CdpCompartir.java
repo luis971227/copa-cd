@@ -369,7 +369,9 @@ public class CdpCompartir extends CordovaPlugin {
        info/esperando/bloqueado/instalado/fallo, con keepCallback. */
     private void escucharInstalador(final CallbackContext cb) {
         estadoCb = cb;
-        new PluginResult(PluginResult.Status.NO_RESULT);
+        PluginResult r = new PluginResult(PluginResult.Status.NO_RESULT);
+        r.setKeepCallback(true);
+        cb.sendPluginResult(r);
     }
 
     private void estadoInstalador(String estado, String detalle) {
@@ -379,7 +381,7 @@ public class CdpCompartir extends CordovaPlugin {
             org.json.JSONObject n = new org.json.JSONObject();
             n.put("estado", estado);
             n.put("detalle", detalle == null ? "" : detalle);
-            new PluginResult(PluginResult.Status.OK);
+            PluginResult r = new PluginResult(PluginResult.Status.OK);
             r.setKeepCallback(true);
             local.sendPluginResult(r);
         } catch (Throwable e) { }
