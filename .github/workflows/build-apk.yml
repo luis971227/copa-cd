@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Los usuarios (capitanes/admin, SIN contrasenas) ahora viajan en la nube: al entrar a un movil nuevo aparece la copa completa y los ususarios con clave inicial copa1234 y cambio obligatorio al primer uso.'
+          body: 'CORREGIDO: en un movil nuevo la copa oficial CD-VDF5J9 se descargaba sola al abrir la APK (la configuracion de fabrica se perdia y la descarga automatica nunca corria). Ahora descarga al abrir, reintentando cada 30 s, y tambien al iniciar sesion. Si el usuario todavia no existe te lo dice claramente.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
