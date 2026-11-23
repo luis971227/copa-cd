@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Observaciones con campo de escritura nuevo mas bonito y ancho. En la instalacion, el boton principal es Abrir Descargas (la via que funciona en Samsung) y el instalador directo queda como opcion secundaria.'
+          body: 'Observaciones rediseñada con el estilo de la app (titulo de seccion y tarjetas): campo de escritura nuevo mas bonito y ancho, y en la instalacion el boton principal es Abrir Descargas.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

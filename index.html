@@ -69,6 +69,12 @@ input.txt{width:100%;border:1px solid var(--gris);border-radius:8px;padding:9px;
 textarea.obs-ta{width:100%;box-sizing:border-box;border:1.5px solid var(--gris);border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.55;font-family:inherit;background:var(--inp);color:var(--tinta);min-height:120px;resize:vertical;margin:10px 0 2px;}
 textarea.obs-ta:focus{border-color:var(--rojo);outline:none}
 .obs-lbl{margin-top:16px;font-weight:800;font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:var(--tinta);display:block}
+.obs-item{padding:11px 2px;border-bottom:1px dashed var(--gris)}
+.obs-item:last-child{border-bottom:0;padding-bottom:2px}
+.obs-cb{display:flex;align-items:center;gap:6px}
+.obs-f{font-size:16px;line-height:1}
+.obs-au{font-weight:900;font-size:12px;letter-spacing:.3px;color:var(--rojo)}
+.obs-tx{margin-top:5px;font-size:13.5px;line-height:1.55;white-space:normal;word-break:break-word;overflow-wrap:anywhere}
 input.sm{width:54px;border:1px solid var(--gris);border-radius:6px;padding:6px;font-size:13px;text-align:center;background:var(--inp);color:var(--tinta)}
 select.sm2{border:1px solid var(--gris);border-radius:6px;padding:6px;font-size:13px;background:var(--inp);color:var(--tinta);max-width:150px}
 #nav{position:fixed;top:0;left:0;bottom:0;width:min(82vw,306px);display:flex;flex-direction:column;background:var(--nav);box-shadow:0 0 0 1px var(--borde),0 26px 60px rgba(0,0,0,.42);z-index:40;transform:translateX(-106%);transition:transform .36s cubic-bezier(.22,.61,.36,1);padding:calc(env(safe-area-inset-top) + 4px) 0 calc(env(safe-area-inset-bottom) + 12px);overflow-y:auto;border-radius:0 26px 26px 0}
@@ -1003,7 +1009,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.40</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.41</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1428,7 +1434,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.40',APP_BUILD=41;
+var APP_VERSION='1.0.41',APP_BUILD=42;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -4054,20 +4060,24 @@ function barraInferior(r){
 }
 function puedeObs(){var x=usrActual();return !!x&&(x.r==='superadmin'||x.r==='capitan');}
 function vistaObs(){
- var h='<div class="carta-c"><div class="carta-top" style="background:var(--rojo)"><div class="cn">Observaciones</div><div class="ci">📝</div><div class="ct">Notas de la copa · se guardan y van en la sincronización</div></div><div class="carta-b">';
+ var h='<h2 class="v">📝 Observaciones de la copa</h2>';
  var puedo=puedeObs();
- if(puedo)h+='<label class="obs-lbl" for="obs-txt">Nueva observación</label><textarea id="obs-txt" class="obs-ta" rows="4" placeholder="Escribe aquí lo que haya que anotar de la copa…"></textarea><div class="acciones"><button class="btn ro" data-a="obs-add" style="flex:1">➕ Añadir observación</button></div>';
- if(!(S.obs&&S.obs.length))h+='<div class="nota">Todavía no hay observaciones'+(puedo?'':': solo super admin y capitanes pueden escribirlas')+'.</div>';
+ if(puedo)h+='<div class="tar"><label class="obs-lbl" for="obs-txt">Nueva observación</label>'
+  +'<textarea id="obs-txt" class="obs-ta" rows="4" placeholder="Escribe aquí lo que haya que anotar de la copa…"></textarea>'
+  +'<div class="acciones"><button class="btn ro" data-a="obs-add" style="flex:1">➕ Añadir observación</button></div></div>';
+ if(!(S.obs&&S.obs.length))h+='<div class="tar"><div class="nota" style="margin:0">Todavía no hay observaciones'+(puedo?'':': solo super admin y capitanes pueden escribirlas')+'.</div></div>';
  else{
   var arr=S.obs.slice().sort(function(a,b){return (b.fecha||0)-(a.fecha||0);});
+  h+='<div class="tar">';
   for(var i=0;i<arr.length;i++){var o=arr[i];
    var fh=o.fecha?new Date(+o.fecha):null;
-   h+='<div class="nota" style="word-break:break-word;overflow-wrap:anywhere"><b>'+esc(o.autor||'—')+'</b>'+(fh?(' · '+('0'+fh.getDate()).slice(-2)+'/'+('0'+(fh.getMonth()+1)).slice(-2)+'/'+fh.getFullYear()):'')+'<br>'+esc(o.txt).replace(/\n/g,'<br>');
-   if(puedo)h+=' <button class="chip" data-a="obs-del" data-id="'+esc(o.id)+'">🗑 Borrar</button>';
+   h+='<div class="obs-item"><div class="obs-cb"><span class="obs-f">📄</span><span class="obs-au">'+esc(o.autor||'—')+(fh?(' · '+('0'+fh.getDate()).slice(-2)+'/'+('0'+(fh.getMonth()+1)).slice(-2)+'/'+fh.getFullYear()):'')+'</span></div>'
+    +'<div class="obs-tx">'+esc(o.txt).replace(/\n/g,'<br>')+'</div>';
+   if(puedo)h+='<button class="chip" data-a="obs-del" data-id="'+esc(o.id)+'" style="width:auto;flex:0 0 auto;margin-top:7px;padding:6px 14px">🗑 Borrar</button>';
    h+='</div>';
   }
+  h+='</div>';
  }
- h+='</div></div>';
  return h;
 }
 function agregarObs(){
