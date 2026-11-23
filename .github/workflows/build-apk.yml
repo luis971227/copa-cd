@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'El resumen de la jornada se abre solo cuando termina el ultimo partido y no dejas pasar a la siguiente hasta cerrarlo. Los botones del resumen ahora dicen Resumen jornada.'
+          body: 'Las sanciones ahora se aplican a la tabla al cierre de cada jornada (antes se guardaban hasta el final de la copa).'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

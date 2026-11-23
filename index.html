@@ -1000,7 +1000,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.31</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.32</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1425,7 +1425,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.31',APP_BUILD=32;
+var APP_VERSION='1.0.32',APP_BUILD=33;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -1851,6 +1851,7 @@ function faltantes(){var f=[],i;for(i=0;i<S.equipos.length;i++){var a=activos(S.
 function torneoListo(){return S.equipos.length>=4&&!faltantes().length;}
 function jornadaActual(){if(!S.jornadas.length)return 1;var i,k;for(i=0;i<S.jornadas.length;i++){var J=S.jornadas[i];for(k=0;k<J.partidos.length;k++)if(J.partidos[k].estado==='pendiente')return J.num;}return S.jornadas.length;}
 function jornadaTerminada(n){var J=jornada(n);if(!J)return true;for(var k=0;k<J.partidos.length;k++)if(J.partidos[k].estado==='pendiente')return false;return true;}
+function sancAplicaJornada(J){return !!J&&(!!J.cerrada||jornadaTerminada(J.num));}
 /* Jornada terminada queda en solo lectura para todos salvo el super admin,
    que puede corregir resultados y dinámicas de jornadas ya cerradas. */
 function puedeEditarJornada(n){var J=jornada(n);return !!J&&(!jornadaTerminada(n)||esAdmin());}
@@ -2531,7 +2532,7 @@ function vistaJornada(){
    +'<button class="btn gh" data-a="jor-reiniciar" data-n="'+j.num+'">↺ Reiniciar jornada '+j.num+'</button></div>';
  }
  h+=panelChallenge(j.num);
-  h+='<h2 class="v">Sanciones de la jornada (se restan al final de la copa)</h2>';
+  h+='<h2 class="v">Sanciones de la jornada (se aplican al cierre de la jornada)</h2>';
   h+='<div class="tar">';
   if(puede('sanciones')&&abierta){
    var eqSanc=equiposSancionables();
@@ -2718,10 +2719,10 @@ function ganadorJornada(n){
 }
 
 function calculo(){
- var f={},i,j,k,copaFin=jornadaTerminada(4);
+ var f={},i,j,k;
  for(i=0;i<S.equipos.length;i++){var e=S.equipos[i];f[e.id]={e:e,pj:0,g:0,emp:0,p:0,gf:0,gc:0,pts:0,ff:0};}
  for(i=0;i<S.jornadas.length;i++){var J=S.jornadas[i];
-  if(copaFin){for(k=0;k<J.sanciones.length;k++){var s=J.sanciones[k];if(f[s.eq])f[s.eq].pts+=s.pts;}}
+  if(sancAplicaJornada(J)){for(k=0;k<J.sanciones.length;k++){var s=J.sanciones[k];if(f[s.eq])f[s.eq].pts+=s.pts;}}
   for(k=0;k<J.partidos.length;k++){var p=J.partidos[k],a=f[p.local],b=f[p.visitante];
    if(!a||!b||p.estado==='nulo'||p.estado==='pendiente')continue;
    var m=mar(p);a.pj++;b.pj++;
@@ -2749,17 +2750,17 @@ function vistaTabla(){
   h+='<tr'+(i<3?' class="pod"':'')+'><td>'+(i+1)+'</td><td class="nom">'+(r.e.foto?'<img class="teq" data-pv="'+r.e.foto+'" src="'+r.e.foto+'" alt="">':'')+'<i style="background:'+r.e.color+'"></i>'+esc(corto(r.e))+'</td>'
    +'<td>'+r.pj+'</td><td>'+r.g+'</td><td>'+r.emp+'</td><td>'+r.p+'</td><td>'+r.gf+'</td><td>'+r.gc+'</td><td>'+(r.gf-r.gc)+'</td><td><b>'+(r.pts<0?r.pts:r.pts)+'</b></td></tr>';}
  h+='</table>';
- h+='<div class="nota">3 puntos por victoria, 1 por empate, 0 por derrota. Las sanciones (-3, etc.) se descuentan al <b>final de la copa</b> (al terminar las 4 jornadas). '
+ h+='<div class="nota">3 puntos por victoria, 1 por empate, 0 por derrota. Las sanciones se aplican a la tabla al <b>cierre de cada jornada</b> (cuando la jornada se cierra o termina). '
   +'Desempate: diferencia de goles → partidos entre ellos → penales. Los partidos por FF suman 3-0 pero sus goles NO cuentan en GF/GC; los nulos no puntúan.</div></div>';
  var conFF=0,i2;
  for(i=0;i<filas.length;i++)if(filas[i].ff>0)conFF+=filas[i].ff;
- h+='<h2 class="v">Sanciones registradas (aplican al final de la copa)</h2><div class="tar">';
+ h+='<h2 class="v">Sanciones registradas (aplicadas al cierre de cada jornada)</h2><div class="tar">';
  var alguna=false;
  for(i=0;i<S.jornadas.length;i++){var J=S.jornadas[i];
   for(i2=0;i2<J.sanciones.length;i2++){var s=J.sanciones[i2],e=eq(s.eq);alguna=true;
    h+='<div class="sanc"><b>'+s.pts+'</b><span>Jornada '+J.num+' · '+esc(e?corto(e):'—')+' · '+esc(s.motivo)+'</span></div>';}}
  if(!alguna)h+='<div class="nota">Ninguna sanción registrada.</div>';
- else if(!jornadaTerminada(4))h+='<div class="nota">⚠ Las sanciones se aplicarán a la tabla al finalizar la copa (4 jornadas).</div>';
+ else h+='<div class="nota">ℹ Las sanciones ya están aplicadas a la tabla: entran al cierre de su jornada.</div>';
  h+='</div>';
  if(conFF)h+='<div class="tar nota">Hay '+conFF+' FF registradas: cada una obliga a 4 cervezas al premio final (2x1 al ganador).</div>';
  return h;
@@ -3292,18 +3293,17 @@ function auditoriaPuntosIA(e,n){
  }
  var tabla=n?statsJornada(n):calculo(),fila=null;
  for(i=0;i<tabla.length;i++)if(tabla[i].e.id===e.id){fila=tabla[i];break;}
- var copaFin=jornadaTerminada(4);
- if(!n&&copaFin)for(i=0;i<S.jornadas.length;i++)for(k=0;k<S.jornadas[i].sanciones.length;k++){
+ if(!n)for(i=0;i<S.jornadas.length;i++)if(sancAplicaJornada(S.jornadas[i]))for(k=0;k<S.jornadas[i].sanciones.length;k++){
   var s=S.jornadas[i].sanciones[k];if(s.eq===e.id){agg.sanc+=+s.pts||0;sancLineas.push('J'+S.jornadas[i].num+': '+s.motivo+' ('+(s.pts>0?'+':'')+s.pts+' pts)');}
  }
- var puntos=n?agg.base:(agg.base+(copaFin?agg.sanc:0));
+ var puntos=n?agg.base:(agg.base+agg.sanc);
  var out=(n?'Puntos de '+corto(e)+' en la Jornada '+n+': ':'Puntos de '+corto(e)+' en la tabla general: ')
   +puntos+' pts = '+agg.g+' victoria'+(agg.g===1?'':'s')+' × 3 ('+(agg.g*3)+') + '+agg.emp+' empate'+(agg.emp===1?'':'s')+' × 1 ('+agg.emp+')';
  if(agg.ffGana)out+='; dentro de las victorias hay '+agg.ffGana+' FF a favor';
  if(agg.ffPierde)out+='; '+agg.ffPierde+' FF en contra dan 0 puntos';
  if(!n){
-  if(copaFin)out+='; sanciones '+(agg.sanc>0?'+':'')+agg.sanc+' pts';
-  else out+='; las sanciones todavía no se descuentan, se aplican al terminar la Jornada 4';
+  if(agg.sanc)out+='; sanciones '+(agg.sanc>0?'+':'')+agg.sanc+' pts (al cierre de su jornada)';
+  else out+='; sin sanciones aplicadas (se aplican al cierre de cada jornada)';
  }
  out+='. Total comprobado: '+(fila?fila.pts:'—')+' pts'+(n?' en la tabla de la jornada':' en la tabla general')+'.';
  if(fila&&fila.pts!==puntos)out+=' ⚠️ El desglose no coincide con la tabla; revisa los estados de los partidos y las sanciones.';
@@ -3742,7 +3742,7 @@ function contextoIA(){
  var i,k;
  for(i=0;i<S.equipos.length;i++)out+=(i?', ':'')+corto(S.equipos[i]);
  out+='\nClasificación:\n'+listaTablaIA();
- out+='\nAuditoría de puntos (fuente: partidos registrados; 3 por victoria/FF ganado, 1 por empate, 0 por derrota/nulo; las sanciones se aplican al terminar Jornada 4):\n';
+ out+='\nAuditoría de puntos (fuente: partidos registrados; 3 por victoria/FF ganado, 1 por empate, 0 por derrota/nulo; las sanciones se aplican al cierre de cada jornada):\n';
  for(i=0;i<S.equipos.length;i++)out+=auditoriaPuntosIA(S.equipos[i])+'\n';
  out+='\nJornadas:\n';
  for(i=0;i<S.jornadas.length;i++)out+=resultadosJornadaIA(S.jornadas[i].num)+'\n';
