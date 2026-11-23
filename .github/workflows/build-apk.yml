@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Correccion de errores mejorada: si reinicias una jornada y vuelves a publicar, los demas moviles borran automaticamente los datos viejos de esa jornada (goles, tarjetas, sanciones, challenge y estado).'
+          body: 'Los usuarios (capitanes/admin, SIN contrasenas) ahora viajan en la nube: al entrar a un movil nuevo aparece la copa completa y los ususarios con clave inicial copa1234 y cambio obligatorio al primer uso.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

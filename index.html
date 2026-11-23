@@ -1009,7 +1009,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.48</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.49</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1434,10 +1434,10 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.48',APP_BUILD=49;
+var APP_VERSION='1.0.49',APP_BUILD=50;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
-var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0;
+var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false;
 var actualizaUI=null,actualizaSnooze=0;
 var cron={pid:'',mins:10,seg:600,corriendo:false,t:null,a5:false};
 
@@ -5355,9 +5355,23 @@ function nubeUrl(id){
  var base=nubeConfig.databaseURL.replace(/\/+$/,'');
  return base+'/copas/'+encodeURIComponent(id)+'/paquetes.json';
 }
+function restaurarUsuariosNube(arr){
+ var out=[],i;
+ for(i=0;i<(arr||[]).length;i++){var us=arr[i];
+  if(!us||!us.u)continue;
+  var x=clonar(us);
+  if(x.p==='__reset__'){x.p='copa1234';x.debeCambiar=true;}
+  out.push(x);}
+ return out;
+}
 function sanearPaqueteNube(pack){
  var i,k;
- pack.datos.usuarios=[];
+ /* Usuarios viajan SIN clave: nombre, rol, equipo y permisos. En el destino la
+    clave se resetea a copa1234 pidiendo cambio al primer uso (debeCambiar). */
+ if(!(pack.datos.usuarios instanceof Array))pack.datos.usuarios=[];
+ for(i=0;i<pack.datos.usuarios.length;i++){var us=pack.datos.usuarios[i];
+  if(!us)continue;
+  us.p='__reset__';us.debeCambiar=true;}
  for(i=0;i<pack.datos.equipos.length;i++){
   var e=pack.datos.equipos[i];e.capitanes=[];
   for(k=0;k<(e.jugadores||[]).length;k++)delete e.jugadores[k].usuario;
@@ -5385,8 +5399,10 @@ function nubePublicar(silencioso){
   toast('ID de copa no válido para la nube · nuevo: '+S.idCopa);
  }
  var pack=paqueteNube();
+ if(nubeUsuariosBloq)pack.datos.usuarios=[];
  var uidFinal=anon?'anon':nubeSesion.uid;
  var registro={createdAt:Date.now(),uid:uidFinal,paquete:pack};
+ var intentosUsu=0;
  var destino;
  try{destino=nubeUrl(S.idCopa).replace(/\/paquetes\.json$/,'')+'/paquetes/'+encodeURIComponent(uidFinal)+'/dispositivos/'+encodeURIComponent(nubeDispositivo())+'.json';}
  catch(e){if(!silencioso)toast(e.message);return;}
@@ -5400,6 +5416,12 @@ function nubePublicar(silencioso){
    if(/fetch|NetworkError|Load failed/i.test(m)){
     if(veces<2){if(!silencioso)cargandoNube('Conexión lenta… reintentando ('+(veces+1)+' de 2)');setTimeout(function(){enviar(veces+1);},veces===0?1200:3500);return;}
     m='Sin conexión con Firebase: revisa el internet del móvil (prueba WiFi si estás en datos)';
+   }
+   if(/PERMISSION_DENIED|Permission denied|Unauthorized|401/i.test(m)&&!intentosUsu&&(registro.paquete&&registro.paquete.datos&&registro.paquete.datos.usuarios&&(registro.paquete.datos.usuarios.length>0))){
+    intentosUsu=1;nubeUsuariosBloq=true;
+    var reg2=clonar(registro);reg2.paquete.datos.usuarios=[];registro=reg2;
+    toast('⚠️ La nube aun no acepta usuarios (reglas viejas): pega en Firebase → Reglas las reglas nuevas para que viajen');
+    enviar(veces);return;
    }
    if(/<!DOCTYPE|<html|Error 403|unusual traffic/i.test(m))m='Tu red bloquea el acceso a Google (403): prueba por WiFi y vuelve a publicar';
    else if(/Invalid path|Invalid token/i.test(m))m='Ruta inválida: borra en Nube la URL de Realtime Database y vulvela a pegar SIN espacios ni `/` al final, luego Guardar y Publica';
@@ -5556,8 +5578,9 @@ if(!el.nombre&&er.nombre)el.nombre=er.nombre;
   }
  }
  if(d.usuarios)for(i=0;i<d.usuarios.length;i++){var ur=d.usuarios[i],ya=false,u2;
+  if(!ur||!ur.u)continue;
   for(u2=0;u2<S.usuarios.length;u2++)if(S.usuarios[u2].u===ur.u)ya=true;
-  if(!ya){S.usuarios.push(clonar(ur));st.usu++;}}
+  if(!ya){var usuN=clonar(ur);if(usuN.p==='__reset__'){usuN.p='copa1234';usuN.debeCambiar=true;}S.usuarios.push(usuN);st.usu++;}}
  if(d.obs&&d.obs.length){
   if(!S.obs)S.obs=[];
   var oids={},q2,nObs=0;
@@ -5591,7 +5614,7 @@ function aplicarSync(obj){
    S.jornadas=datos.jornadas?clonar(datos.jornadas):[];
    if(!S.jornadas.length&&S.equipos.length>=2)generar();
    S.seq=(datos.seq&&datos.seq>(S.seq||1))?datos.seq:(S.seq||1);
-   S.usuarios=(datos.usuarios&&datos.usuarios.length)?clonar(datos.usuarios):(S.usuarios||[]);
+   var usuR=restaurarUsuariosNube(datos.usuarios);S.usuarios=(usuR.length)?usuR:(S.usuarios||[]);
    S.ordenLugares=(datos.ordenLugares&&datos.ordenLugares.length)?clonar(datos.ordenLugares):[];
    S.obs=(datos.obs&&datos.obs.length)?clonar(datos.obs):(S.obs||[]);
    normalizarOrden();
