@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Asistente IA mejorado y humanizado: responde cualquier pregunta de la copa (estadísticas por jugador y equipo, goles, asistencias, paradas, autogoles, tarjetas, challenge con contra quién, historiales entre equipos, quién va arriba o abajo, quién juega o no según la carta 8/9/10/11 y reglamento)'
+          body: 'Instalador arreglado: el dialogo del sistema ahora si se abre (Android 13/14/15) con respaldo automatico si el sistema no contesta. Nuevo: boton Cerrar jornada con resumen completo (puntos, goleadores, tarjetas, challenge) y felicitacion al ganador.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

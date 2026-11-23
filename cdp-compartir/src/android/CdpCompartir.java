@@ -288,8 +288,14 @@ public class CdpCompartir extends CordovaPlugin {
                     }
                     /* Via moderna PackageInstaller (Android 12-15): el ACTION_VIEW
                        clasico ya no abre el instalador en equipos nuevos (por eso
-                       "toco Instalar y no pasa nada"). Si falla, respaldo clasico. */
-                    if (instalarSesionApi(ctx, f, cb)) return;
+                       "toco Instalar y no pasa nada"). Si el sistema no responde,
+                       hay respaldo automatico con el ACTION_VIEW clasico. */
+                    sesionConfirmada = false;
+                    ctxSesion = ctx; uriSesion = uri;
+                    if (instalarSesionApi(ctx, f, cb)) {
+                        esperarInstaladorSesion(ctx, uri, cb);
+                        return;
+                    }
                     lanzarInstalador(ctx, uri);
                     cb.success("instalador");
                 } catch (Throwable e) {
@@ -297,6 +303,28 @@ public class CdpCompartir extends CordovaPlugin {
                 }
             }
         });
+    }
+
+    /* Espera hasta 8 s la respuesta del sistema (STATUS_PENDING_USER_ACTION o
+       resultado final) tras el commit de la sesion. Si el receptor no contesta
+       (pasa en algunos equipos), lanza el instalador clasico con FileProvider
+       para que el usuario nunca se quede colgado en "abriendo instalador...". */
+    private void esperarInstaladorSesion(final Context ctx, final Uri uri, final CallbackContext cb) {
+        cordova.getThreadPool().execute(new Runnable() { public void run() {
+            for (int i = 0; i < 80; i++) {
+                if (sesionConfirmada) return;
+                if (cbSesion == null) return;
+                try { Thread.sleep(100); } catch (InterruptedException e) { break; }
+            }
+            CallbackContext local = cbSesion; cbSesion = null;
+            if (local == null || sesionConfirmada) return;
+            try {
+                lanzarInstalador(ctx, uri);
+                local.success("instalador-clasico");
+            } catch (Throwable e) {
+                local.error("instalador: el sistema no respondio y el respaldo clasico tampoco; instala a mano desde Archivos -> Descargas");
+            }
+        }});
     }
 
     private boolean puedeInstalar(Context ctx) {
@@ -366,6 +394,9 @@ public class CdpCompartir extends CordovaPlugin {
 
     private android.content.BroadcastReceiver receptorSesion;
     private CallbackContext cbSesion;
+    private volatile boolean sesionConfirmada;
+    private Context ctxSesion;
+    private Uri uriSesion;
 
     /* Instalacion via PackageInstaller.Session: arma la sesion, copia la APK
        dentro y hace commit; el SISTEMA muestra el dialogo "Instalar". Así
@@ -397,8 +428,18 @@ public class CdpCompartir extends CordovaPlugin {
                         if (ext == null || !ext.containsKey(PackageInstaller.EXTRA_STATUS)) return;
                         int estado = ext.getInt(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
                         if (estado == PackageInstaller.STATUS_PENDING_USER_ACTION) {
-                            Intent act = (Intent) ext.getParcelable(Intent.EXTRA_INTENT);
-                            if (act != null) { act.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); uiLanzar(c, act); }
+                            Intent act = null;
+                            try { act = (Intent) ext.getParcelable(Intent.EXTRA_INTENT); } catch (Throwable te) { act = null; }
+                            if (act != null) {
+                                act.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                if (uiLanzar(c, act)) { sesionConfirmada = true; return; }
+                            }
+                            /* La confirmacion del sistema no se pudo abrir: respaldo clasico al toca */
+                            CallbackContext local2 = cbSesion; cbSesion = null;
+                            try { c.unregisterReceiver(this); } catch (Throwable t) { }
+                            if (local2 == null) return;
+                            try { lanzarInstalador(ctxSesion, uriSesion); local2.success("instalador-clasico"); }
+                            catch (Throwable e2) { local2.error("instalador: " + (e2.getMessage() == null ? e2.getClass().getSimpleName() : e2.getMessage())); }
                             return;
                         }
                         CallbackContext local = cbSesion; cbSesion = null;
@@ -413,7 +454,10 @@ public class CdpCompartir extends CordovaPlugin {
                 }
             };
             IntentFilter filtro = new IntentFilter("COPACD_INSTALADOR_ESTADO");
-            if (android.os.Build.VERSION.SDK_INT >= 33) ctx.registerReceiver(receptorSesion, filtro, Context.RECEIVER_NOT_EXPORTED);
+            /* El remitente del estado de instalacion es el SISTEMA (PackageInstaller),
+               por eso el receptor debe ser EXPORTED: con NOT_EXPORTED Android 13/14
+               lo bloqueaba y el dialogo de instalacion nunca se abria. */
+            if (android.os.Build.VERSION.SDK_INT >= 33) ctx.registerReceiver(receptorSesion, filtro, Context.RECEIVER_EXPORTED);
             else ctx.registerReceiver(receptorSesion, filtro);
             ses.commit(pende.getIntentSender());
             ses.close();

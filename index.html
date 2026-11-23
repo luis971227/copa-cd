@@ -967,6 +967,10 @@ body.en-login #toast{bottom:26px}
 #chal .chal-row:last-of-type{border-bottom:0}
 #chal .chal-controls{display:flex;gap:6px;margin-top:7px;align-items:center}
 #chal .chal-controls select{flex:1;min-width:0}
+#cerrarjor{position:fixed;inset:0;z-index:75;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(8,8,12,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#cerrarjor.on{display:flex;animation:fadeIn .24s ease both}
+#cerrarjor .carta-c{animation:sheetIn .42s cubic-bezier(.2,.8,.3,1) both;border-radius:26px;max-width:480px;max-height:90dvh;overflow:auto}
+@media (max-width:600px){#cerrarjor{align-items:flex-end;padding:0}#cerrarjor .carta-c{width:100%;max-width:none;border-radius:26px 26px 0 0;padding-bottom:calc(6px + env(safe-area-inset-bottom));box-shadow:0 -18px 60px rgba(0,0,0,.45)}#cerrarjor .carta-top{padding-top:27px;position:relative}#cerrarjor .carta-top:before{content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);width:44px;height:4px;border-radius:99px;background:rgba(255,255,255,.55)}}
 @media (max-width:600px){#chal{align-items:flex-end;padding:0}#chal .carta-c{width:100%;max-width:none;border-radius:26px 26px 0 0;padding-bottom:calc(6px + env(safe-area-inset-bottom));box-shadow:0 -18px 60px rgba(0,0,0,.45)}#chal .carta-top{padding-top:27px;position:relative}#chal .carta-top:before{content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);width:44px;height:4px;border-radius:99px;background:rgba(255,255,255,.55)}}
 </style>
 </head>
@@ -996,10 +1000,11 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.28</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.29</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
+<div id="cerrarjor"></div>
 <pre id="bases-brutas" hidden>
 ===== PAGINA 1 =====
 COPA CD
@@ -1416,11 +1421,11 @@ function reiniciarPartido(pid){
  return {ok:true,msg:'Partido reiniciado'};
 }
 var S=null,toastT=null,lpT=null,lpFired=false,lpEl=null,lpX=0,lpY=0,transT=null;
-var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEdge=false,avisarAtras=0,userPrefill=null,permUI=null,cocapUI=null,arbUI=null,quitarUI=null,chalUI=null,vKeyUlt='';
+var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEdge=false,avisarAtras=0,userPrefill=null,permUI=null,cocapUI=null,arbUI=null,quitarUI=null,chalUI=null,cerrarUI=null,vKeyUlt='';
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.28',APP_BUILD=29;
+var APP_VERSION='1.0.29',APP_BUILD=30;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -2514,6 +2519,10 @@ function vistaJornada(){
  var jp=0,tp=j.partidos.length;
  for(i=0;i<j.partidos.length;i++)if(j.partidos[i].estado!=='pendiente')jp++;
  h+='<div class="tar" style="padding:8px 10px"><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:800"><span>Jornada '+j.num+' de 4</span><span style="color:var(--gris2)">'+jp+' / '+tp+' partidos registrados</span></div></div>';
+ if(jornadaTerminada(j.num)){
+  if(esAdmin()&&!j.cerrada)h+='<div class="acciones" style="margin:10px 0 4px"><button class="btn ro" data-a="jor-cerrar" data-n="'+j.num+'" style="flex:1">🏁 Cerrar jornada '+j.num+' y ver el resumen</button></div>';
+  if(j.cerrada)h+='<div class="acciones" style="margin:10px 0 4px"><button class="btn gh" data-a="jor-resumen" data-n="'+j.num+'" style="flex:1">📋 Ver resumen de la Jornada '+j.num+'</button></div>';
+ }
  var resJor=resumenGanadorJornada(j.num);
  if(resJor)h+='<div class="tar" style="border:1px solid var(--borde);margin-top:8px"><div style="display:flex;align-items:center;gap:9px"><span style="font-size:22px">🏆</span><div style="flex:1"><b style="font-size:14px">'+esc(resJor.titulo)+'</b><div class="nota" style="margin:3px 0 0">'+esc(resJor.detalle)+'</div></div></div></div>';
  for(i=0;i<j.partidos.length;i++)h+=htmlPartido(j.partidos[i],i);
@@ -3909,6 +3918,76 @@ function renderArb(){
  h+='</div><div class="acciones" style="margin-top:10px"><button class="btn gh" data-a="arb-set" data-p="'+p.id+'" data-u="">Dejar sin árbitro</button><button class="btn gh" data-a="arb-cerrar" style="flex:1">Cancelar</button></div></div></div>';
  box.innerHTML=h;
 }
+function resumenJornadaCerradaHTML(n){
+ var J=jornada(n);if(!J)return '';
+ var i,k;
+ var gol={},asist={},agol={},parad={},amar={},roj={};
+ var nombreJ=function(id){var a,b;for(a=0;a<S.equipos.length;a++){var js=S.equipos[a].jugadores||[];for(b=0;b<js.length;b++)if(js[b].id===id)return js[b];}return null;};
+ for(i=0;i<J.partidos.length;i++){var p=J.partidos[i];
+  if(p.estado==='nulo'||p.estado==='pendiente')continue;
+  for(k=0;k<p.goles.length;k++){var gl=p.goles[k],jn=nombreJ(gl.jug);if(!jn)continue;
+   if(gl.autogol)agol[jn.nombre]=(agol[jn.nombre]||0)+1;else gol[jn.nombre]=(gol[jn.nombre]||0)+1;}
+  for(k=0;k<p.asist.length;k++){var asj=nombreJ(p.asist[k].jug);if(asj)asist[asj.nombre]=(asist[asj.nombre]||0)+1;}
+  for(k=0;k<p.paradas.length;k++){var prj=nombreJ(p.paradas[k].jug);if(prj)parad[prj.nombre]=(parad[prj.nombre]||0)+(+p.paradas[k].n||1);}
+  for(k=0;k<p.tarjetas.length;k++){var tj=nombreJ(p.tarjetas[k].jug);if(!tj)continue;
+   if(p.tarjetas[k].tipo==='amarilla')amar[tj.nombre]=(amar[tj.nombre]||0)+1;else roj[tj.nombre]=(roj[tj.nombre]||0)+1;}
+ }
+ var tab=ordenarTabla(statsJornada(n),J.partidos);
+ var filas='';
+ for(i=0;i<tab.length;i++){var r=tab[i];
+  filas+='<div class="dash-row"><i class="pall" style="background:'+r.e.color+'"></i><span style="flex:1;font-weight:800">'+esc(corto(r.e))+(i===0?' 🥇':'')+'</span><span style="color:var(--gris2);font-size:11.5px">'+r.g+'G '+r.emp+'E '+r.p+'P · GF '+r.gf+' · GC '+r.gc+'</span><b style="min-width:54px;text-align:right">'+r.pts+' pts</b></div>';
+ }
+ var g=ganadorJornada(n),msgWin;
+ if(g&&!g.empate)msgWin='🏆 ¡Felicidades a <b>'+esc(g.nombre)+'</b>!<br>Ganaron la Jornada '+n+' ('+esc(g.detalle)+').<br><br><b>🍻 Ya pueden ir a buscar sus cervezas a casa del Yoyo borrachos.</b>';
+ else if(g)msgWin='🤝 La Jornada '+n+' quedó empatada entre '+esc(g.nombres.join(' y '))+'.<br><br><b>🍻 Las cervezas de esta jornada se quedan en la casa del Yoyo… por ahora.</b>';
+ else msgWin='🏁 Jornada '+n+' cerrada.';
+ function listaMd(o,titulo,suf){
+  var ks=[],nm;for(nm in o)ks.push([nm,o[nm]]);
+  if(!ks.length)return '';
+  ks.sort(function(x,y){return y[1]-x[1];});
+  var arr=[],q;for(q=0;q<ks.length&&q<8;q++)arr.push(esc(ks[q][0])+' ('+ks[q][1]+(suf?' '+suf:'')+')');
+  return '<div class="nota" style="margin:4px 0"><b>'+titulo+'</b><br>'+arr.join(' · ')+'</div>';
+ }
+ var det='';
+ for(i=0;i<J.partidos.length;i++){var pD=J.partidos[i],aD=eq(pD.local),bD=eq(pD.visitante),icD=pD.carta?cartaInfo(pD.carta):null;
+  var estD='Pendiente';
+  if(pD.estado==='nulo')estD='Nulo (0-0)';
+  else if(pD.estado==='ff_local')estD='FF 3-0';
+  else if(pD.estado==='ff_visitante')estD='FF 3-0';
+  else if(pD.estado!=='pendiente')estD=mar(pD)[0]+'-'+mar(pD)[1];
+  det+='· P'+(i+1)+' '+(aD?esc(corto(aD)):'—')+' vs '+(bD?esc(corto(bD)):'—')+' — '+estD+(icD?' ('+esc(icD.t)+')':'')+'<br>';}
+ var chalH='<div class="nota" style="white-space:pre-wrap;margin:4px 0">'+esc(challengeIA(n))+'</div>';
+ var snt='',san=0;
+ for(i=0;i<J.sanciones.length;i++){var sC=J.sanciones[i],eC=eq(sC.eq);san+=(+sC.pts||0);
+  snt+='· '+(eC?esc(corto(eC)):'—')+': '+esc(sC.motivo)+' ('+sC.pts+' pts)<br>';}
+ var h='<div style="text-align:center;padding:6px 0 2px"><div style="font-size:15px;font-weight:800">'+msgWin+'</div></div>';
+ h+='<div style="margin-top:8px"><b>Puntos de la Jornada '+n+'</b></div>'+filas;
+ h+=listaMd(gol,'Goleadores de la jornada','gol'+(Object.keys(gol).length===1&&gol[Object.keys(gol)[0]]===1?'':'es'));
+ h+='';var asistH=listaMd(asist,'Asistencias',''),paraH=listaMd(parad,'Paradas',''),aH=listaMd(agol,'Autogoles','');
+ if(asistH)h+=asistH;if(paraH)h+=paraH;if(aH)h+=aH;
+ if(Object.keys(amar).length||Object.keys(roj).length){
+  var arrT=[],km;
+  for(km in amar)arrT.push(esc(km)+' '+amar[km]+'🟨');
+  for(km in roj)arrT.push(esc(km)+' '+roj[km]+'🟥');
+  h+='<div class="nota" style="margin:4px 0"><b>Tarjetas de la jornada</b><br>'+arrT.join(' · ')+'</div>';
+ }
+ h+='<div style="margin-top:8px"><b>Challenge · Jornada '+n+'</b></div>'+chalH;
+ h+='<div style="margin-top:8px"><b>Partidos</b></div><div class="nota" style="margin:4px 0">'+det+'</div>';
+ if(snt)h+='<div class="nota" style="margin:4px 0"><b>Sanciones de la jornada ('+san+' pts)</b><br>'+snt+'</div>';
+ if(J.cerrada)h+='<div class="nota" style="margin:8px 0 0;text-align:right;color:var(--gris2);font-size:11px">Cerrada'+(J.cerrada.por?' por '+esc(J.cerrada.por):'')+' · '+new Date(J.cerrada.fecha).toLocaleString()+'</div>';
+ return h;
+}
+function renderCerrarJor(){
+ var box=document.getElementById('cerrarjor');if(!box)return;
+ if(!cerrarUI){box.className='';box.innerHTML='';return;}
+ var n=+cerrarUI.n,J=jornada(n),h='';
+ if(!J){cerrarUI=null;box.className='';box.innerHTML='';return;}
+ box.className='on';
+ h='<div class="carta-c"><div class="carta-top" style="background:linear-gradient(135deg,#8C1614,#3A0808)"><div class="cn">Jornada '+n+'</div><div class="ci">🏁</div><div class="ct">Cierre de la jornada</div></div><div class="carta-b">'
+ +resumenJornadaCerradaHTML(n)
+ +'<div class="acciones" style="margin-top:12px"><button class="btn ro" data-a="cj-cerrar" style="width:100%">Cerrar</button></div></div></div>';
+ box.innerHTML=h;
+}
 function renderChal(){
  var box=document.getElementById('chal');if(!box)return;
  if(!chalUI||!esAdmin()||!puedeEditarJornada(chalUI.n)){chalUI=null;box.className='';box.innerHTML='';return;}
@@ -3962,7 +4041,7 @@ function render(){
     if(cab)cab.style.display=enBases?'flex':'none';
     if(bnav){bnav.className='bnav';bnav.innerHTML='';}
     ses.hidden=true;ses.innerHTML='';
-    permUI=null;cocapUI=null;arbUI=null;quitarUI=null;chalUI=null;var pu0=document.getElementById('perm-usr');if(pu0){pu0.className='';pu0.innerHTML='';}
+    permUI=null;cocapUI=null;arbUI=null;quitarUI=null;chalUI=null;cerrarUI=null;var pu0=document.getElementById('perm-usr');if(pu0){pu0.className='';pu0.innerHTML='';}
     renderCocap();renderArb();renderQuitar();renderChal();
     aplicarTema();guardar();transicion();return;
   }
@@ -3973,7 +4052,7 @@ function render(){
     if(cab)cab.style.display='none';
     if(bnav){bnav.className='bnav';bnav.innerHTML='';}
     ses.hidden=true;ses.innerHTML='';
-    permUI=null;cocapUI=null;arbUI=null;quitarUI=null;chalUI=null;var pu1=document.getElementById('perm-usr');if(pu1){pu1.className='';pu1.innerHTML='';}
+    permUI=null;cocapUI=null;arbUI=null;quitarUI=null;chalUI=null;cerrarUI=null;var pu1=document.getElementById('perm-usr');if(pu1){pu1.className='';pu1.innerHTML='';}
     renderCocap();renderArb();renderQuitar();renderChal();
     aplicarTema();guardar();transicion();return;
   }
@@ -4045,6 +4124,7 @@ function atras(){
   if(navAbierto){cierraNav();return;}
  if(syncUI){syncUI=false;renderSync();return;}
  if(chalUI){chalUI=null;renderChal();return;}
+ if(cerrarUI){cerrarUI=null;renderCerrarJor();return;}
  if(quitarUI){quitarUI=null;renderQuitar();return;}
  if(cartaUI){cartaUI=null;render();return;}
  if(permUI){permUI=null;render();return;}
@@ -4059,7 +4139,7 @@ function atras(){
  }else{avisarAtras=ahora;toast('Pulsa atrás otra vez para salir de la app');}
 }
 function moverPestana(dir){
- if(S.ui.partido||cartaUI||syncUI||quitarUI||chalUI)return;
+ if(S.ui.partido||cartaUI||syncUI||quitarUI||chalUI||cerrarUI)return;
   var ps=[],i;for(i=0;i<PESTANYAS.length;i++)if(PESTANYAS[i].r.indexOf(rol())>=0&&!bloqueoVista(PESTANYAS[i].v)&&!capBloqueo(PESTANYAS[i].v))ps.push(PESTANYAS[i]);
  var idx=-1;for(i=0;i<ps.length;i++)if(ps[i].v===S.ui.vista)idx=i;
  if(idx<0)return;
@@ -4091,6 +4171,7 @@ document.addEventListener('click',function(ev){
    if(ev.target&&ev.target.closest&&ev.target.closest('#foto-prev')){cierraFotoPrev();return;}
    if(ev.target&&ev.target.id==='quitar'){quitarUI=null;renderQuitar();return;}
    if(ev.target&&ev.target.id==='chal'){chalUI=null;renderChal();return;}
+   if(ev.target&&ev.target.id==='cerrarjor'){cerrarUI=null;renderCerrarJor();return;}
    if(fotoPrevAbierta()){cierraFotoPrev();return;}
    if(ev.target&&ev.target.getAttribute&&ev.target.getAttribute('data-pv')){fotoPrev(ev.target.getAttribute('data-pv'));return;}
    if(navAbierto&&ev.target&&ev.target.closest&&!ev.target.closest('#nav,#nav-btn'))cierraNav();
@@ -4358,6 +4439,21 @@ document.addEventListener('click',function(ev){
      if(!puedeEditarJornada(nEditPrev)){toast('Jornada terminada: solo lectura');break;}
      chalUI={n:nEditPrev};renderChal();break;
     case 'chal-cerrar':chalUI=null;renderChal();break;
+    case 'jor-cerrar':{
+     if(!esAdmin()){toast('Solo el super admin puede cerrar la jornada');break;}
+     var nCJ=+el.getAttribute('data-n'),JC=nCJ?jornada(nCJ):null;
+     if(!JC||!jornadaTerminada(nCJ)){toast('Aún faltan partidos por registrar en esta jornada');break;}
+     if(JC.cerrada){cerrarUI={n:nCJ};renderCerrarJor();break;}
+     JC.cerrada={fecha:Date.now(),por:S.sesion?(S.sesion.u||''):''};
+     guardar();
+     var gCJ=null;try{gCJ=ganadorJornada(nCJ);}catch(eg){gCJ=null;}
+     try{if(window.cdpCompartir&&cdpCompartir.notificar)cdpCompartir.notificar('🏆 Jornada '+nCJ+' cerrada',(gCJ&&!gCJ.empate)?('¡'+gCJ.nombre+' ganó la jornada! A por las cervezas a casa del Yoyo borrachos 🍻'):'Cierre de la jornada '+nCJ+': mira el resumen completo en la app');}catch(en){}
+     cerrarUI={n:nCJ};
+     render();renderCerrarJor();
+     toast('🏁 Jornada '+nCJ+' cerrada · resumen listo');
+     break;}
+    case 'jor-resumen':cerrarUI={n:+el.getAttribute('data-n')};renderCerrarJor();break;
+    case 'cj-cerrar':cerrarUI=null;renderCerrarJor();break;
     case 'chal-set':{
      if(!esAdmin()){toast('Solo el super admin puede editar challenges');break;}
      var ncs=+el.getAttribute('data-n'),ecs=+el.getAttribute('data-e'),sSel=document.getElementById('chal-estado-'+ecs),pSel=document.getElementById('chal-pid-'+ecs);
