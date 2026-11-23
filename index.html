@@ -1009,7 +1009,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.42</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.43</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1434,7 +1434,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.42',APP_BUILD=43;
+var APP_VERSION='1.0.43',APP_BUILD=44;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -3774,7 +3774,6 @@ function contextoIA(){
  out+='\nJornadas:\n';
  for(i=0;i<S.jornadas.length;i++)out+=resultadosJornadaIA(S.jornadas[i].num)+'\n';
  out+='Sanciones:\n'+sancionesIA();
- out+='Sanciones:\n'+sancionesIA();
  out+='\nFair play (menos penalización es mejor):\n'+fairIA();
  out+='\nChallenge de la jornada '+(S.ui.jor||jornadaActual())+'\n'+challengeIA();
  out+='\nMonto por jugador: '+money(S.monto||0)+' (por equipo: monto × jugadores).';
@@ -3782,12 +3781,20 @@ function contextoIA(){
 }
 function preguntarNubeIA(q){
  if(!S.ia||!S.ia.url||!S.ia.key)return null;
- var body={model:S.ia.model||'gpt-4o-mini',messages:[
-  {role:'system',content:'Eres el asistente de la app Copa CD (torneo de fútbol). Habla en español, cercano y natural, como una persona del torneo. Contesta ÚNICAMENTE lo que se te pregunta, en una o dos frases si es posible: no agregues listas, tablas, datos ni sugerencias que no se hayan pedido. Si el dato no está, dilo en una frase. Datos de la copa:\n'+contextoIA()},
-  {role:'user',content:q}]};
- return fetch(S.ia.url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.ia.key},body:JSON.stringify(body)})
-  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-  .then(function(j){return (j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||'';});
+ var msgs=[
+  {role:'system',content:'Eres el asistente de la app Copa CD (torneo de fútbol). Habla en español, cercano y natural, como una persona del torneo. Contesta ÚNICAMENTE lo que se te pregunta, en una o dos frases si es posible: no agregues listas, tablas, datos ni sugerencias que no se hayan pedido. Si el dato no está, dilo en una frase. Datos de la copa:\n'+contextoIA()}];
+ var i,hist=asistMsgs.slice(-7);
+ for(i=0;i<hist.length;i++)msgs.push({role:hist[i].r==='me'?'user':'assistant',content:hist[i].t});
+ var cuerpo=JSON.stringify({model:S.ia.model||'gpt-4o-mini',messages:msgs});
+ function parsear(r){
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return r.text().then(function(tx){var j;try{j=JSON.parse(tx);}catch(e){throw new Error('Respuesta no válida de la IA');}
+   var t=(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||'';
+   if(!t)throw new Error('La IA no devolvió texto');return t;});
+ }
+ return httpNube(S.ia.url,'POST',cuerpo,'application/json').then(parsear)
+  .catch(function(e){if(String(e.message||e).indexOf('fetch')!==0)return Promise.reject(e);
+   return fetch(S.ia.url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.ia.key},body:cuerpo}).then(parsear);});
 }
 function enviarAsistente(q){
  q=String(q||'').trim();if(!q)return;

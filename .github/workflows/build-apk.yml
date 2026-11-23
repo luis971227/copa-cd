@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Arreglo clave de la instalacion: el boton Abrir Descargas ahora copia el APK nuevo a la carpeta Descargas antes de abrirla, y borra las copias viejas de Copa CD para que no se pueda instalar una version antigua por error.'
+          body: 'Asistente IA en la nube mejorado: memoria de conversacion (seguimientos tipo y en asistencias), peticion por la ruta nativa del movil (mejor con datos) y respaldo por navegador.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
