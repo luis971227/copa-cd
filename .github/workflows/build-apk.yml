@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Nuevo: estadística de AUTOGOL en los partidos (chip 🥅 junto al gol); el autogol suma el gol al equipo rival y no cuenta como gol del jugador.'
+          body: 'La app ahora pide el permiso de Android \u00abInstalar apps desconocidas\u00bb y abre los Ajustes solo cuando hace falta, para que el bot\u00f3n Instalar s\u00ed abra el instalador de la APK.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

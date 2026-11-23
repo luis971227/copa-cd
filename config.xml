@@ -1,5 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.mitienda.pos.reglamento" version="1.0.17" android-versionCode="10017" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="com.mitienda.pos.reglamento" version="1.0.18" android-versionCode="10018" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Permiso de Android para que la propia app pueda abrir el instalador de la APK descargada (sin Google, sin Play). -->
+    <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest">
+        <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    </edit-config>
     <name>Gestion Copa CD</name>
     <description>
         Manejo del torneo Copa CD (equipos, jornadas, goles, tabla y bases) sin internet.

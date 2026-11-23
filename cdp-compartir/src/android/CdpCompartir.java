@@ -3,7 +3,10 @@ package com.copacd.compartir;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
 import android.util.Base64;
 import android.util.Log;
 
@@ -274,6 +277,11 @@ public class CdpCompartir extends CordovaPlugin {
                     if (!f.exists() || f.length() == 0) throw new IOException("La descarga no está completa");
                     copiarADescargas(f);
                     Uri uri = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".cdpfiles", f);
+                    if (Build.VERSION.SDK_INT >= 26 && !puedeInstalar(ctx)) {
+                        pedirPermisoInstalar(ctx);
+                        cb.error("permiso-instalar: Android pide autorizar 'Instalar apps desconocidas' para Copa CD. Se abrieron los Ajustes: activa el permiso, vuelve a la app y toca Instalar otra vez");
+                        return;
+                    }
                     lanzarInstalador(ctx, uri);
                     cb.success("instalador");
                 } catch (Throwable e) {
@@ -281,6 +289,20 @@ public class CdpCompartir extends CordovaPlugin {
                 }
             }
         });
+    }
+
+    private boolean puedeInstalar(Context ctx) {
+        try { return ctx.getPackageManager().canRequestPackageInstalls(); }
+        catch (Throwable e) { return true; }
+    }
+
+    private void pedirPermisoInstalar(Context ctx) {
+        try {
+            Intent s = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+            s.setData(Uri.parse("package:" + ctx.getPackageName()));
+            s.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            ctx.startActivity(s);
+        } catch (Throwable e) { Log.w("CdpCompartir", "No se pudo abrir Ajustes de instalacion", e); }
     }
 
     private void lanzarInstalador(Context ctx, Uri uri) throws IOException {
