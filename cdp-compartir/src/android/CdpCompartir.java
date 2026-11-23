@@ -319,12 +319,14 @@ public class CdpCompartir extends CordovaPlugin {
 
     private void notificar(CordovaArgs args, final CallbackContext cb) {
         try {
-            final String titulo = args.optString(0, "Copa CD");
-            final String texto = args.optString(1, "");
+            String t0 = args.optString(0);
+            String x0 = args.optString(1);
+            final String titulo = (t0 == null || t0.length() == 0) ? "Copa CD" : t0;
+            final String texto = (x0 == null) ? "" : x0;
             Context ctx = cordova.getContext();
-            if (Build.VERSION.SDK_INT >= 33 && cordova.checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
+            if (Build.VERSION.SDK_INT >= 33 && !cordova.hasPermission("android.permission.POST_NOTIFICATIONS")) {
                 pendienteNotif = new String[]{titulo, texto};
-                cordova.requestPermissions(this, 7788, new String[]{"android.permission.POST_NOTIFICATIONS"});
+                cordova.requestPermission(this, 7788, "android.permission.POST_NOTIFICATIONS");
                 cb.success("pendiente");
                 return;
             }
