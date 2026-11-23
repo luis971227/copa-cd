@@ -1000,7 +1000,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.38</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.39</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1425,7 +1425,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.38',APP_BUILD=39;
+var APP_VERSION='1.0.39',APP_BUILD=40;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -1441,15 +1441,17 @@ var PESTANYAS=[
  {v:'jugadores',i:'👥',t:'Jugadores',r:['superadmin','capitan','jugador']},
  {v:'fairplay',i:'⚖️',t:'Fair play',r:['superadmin','capitan','jugador']},
  {v:'historial',i:'🏆',t:'Histórico',r:['superadmin','capitan','jugador']},
+ {v:'obs',i:'📝',t:'Observaciones',r:['superadmin','capitan','jugador']},
  {v:'equipos',i:'👕',t:'Equipos',r:['superadmin','capitan']},
  {v:'usuarios',i:'🔑',t:'Admin',r:['superadmin']}];
-function porDefecto(){return{v:1,seq:1,capTs:0,ordenLugares:[],equipos:[],jornadas:[],historial:[],tema:'claro',usuarios:[],sesion:null,ui:{vista:'dashboard',jor:1,ab:''}};}
+function porDefecto(){return{v:1,seq:1,capTs:0,ordenLugares:[],equipos:[],jornadas:[],historial:[],tema:'claro',usuarios:[],obs:[],sesion:null,ui:{vista:'dashboard',jor:1,ab:''}};}
 function cargar(){try{var j=localStorage.getItem(CLAVE);S=j?JSON.parse(j):porDefecto();}catch(e){S=porDefecto();}
  if(!S||typeof S!=='object')S=porDefecto();
  if(!S.ui)S.ui={vista:'dashboard',jor:1,ab:''};
  if(!S.ui.vista)S.ui.vista='dashboard';
  if(typeof S.ui.jor!=='number'||isNaN(S.ui.jor)||S.ui.jor<1||S.ui.jor>4)S.ui.jor=1;
  if(!S.jornadas)S.jornadas=[];
+ if(!S.obs)S.obs=[];
  if(!S.equipos)S.equipos=[];
  if(S.equipos.length>=2&&S.equipos.length<=4&&S.jornadas.length===0)generar();
  if(!S.seq)S.seq=1;
@@ -4047,6 +4049,38 @@ function barraInferior(r){
  h+='<button class="bn-menu" data-a="nav-toggle"><b>☰</b>Menú</button>';
  return h;
 }
+function puedeObs(){var x=usrActual();return !!x&&(x.r==='superadmin'||x.r==='capitan');}
+function vistaObs(){
+ var h='<div class="carta-c"><div class="carta-top" style="background:var(--rojo)"><div class="cn">Observaciones</div><div class="ci">📝</div><div class="ct">Notas de la copa · se guardan y van en la sincronización</div></div><div class="carta-b">';
+ var puedo=puedeObs();
+ if(puedo)h+='<label class="nota" for="obs-txt">Nueva observación</label><textarea id="obs-txt" class="txt" rows="3" placeholder="Ej: el partido J3 P2 se pasa al viernes a las 7"></textarea><div class="acciones"><button class="btn ro" data-a="obs-add" style="flex:1">➕ Añadir observación</button></div>';
+ if(!(S.obs&&S.obs.length))h+='<div class="nota">Todavía no hay observaciones'+(puedo?'':': solo super admin y capitanes pueden escribirlas')+'.</div>';
+ else{
+  var arr=S.obs.slice().sort(function(a,b){return (b.fecha||0)-(a.fecha||0);});
+  for(var i=0;i<arr.length;i++){var o=arr[i];
+   var fh=o.fecha?new Date(+o.fecha):null;
+   h+='<div class="nota" style="word-break:break-word;overflow-wrap:anywhere"><b>'+esc(o.autor||'—')+'</b>'+(fh?(' · '+('0'+fh.getDate()).slice(-2)+'/'+('0'+(fh.getMonth()+1)).slice(-2)+'/'+fh.getFullYear()):'')+'<br>'+esc(o.txt).replace(/\n/g,'<br>');
+   if(puedo)h+=' <button class="chip" data-a="obs-del" data-id="'+esc(o.id)+'">🗑 Borrar</button>';
+   h+='</div>';
+  }
+ }
+ h+='</div></div>';
+ return h;
+}
+function agregarObs(){
+ if(!puedeObs()){toast('Solo super admin y capitanes pueden escribir observaciones');return;}
+ var ta=document.getElementById('obs-txt'),t=ta?String(ta.value||'').trim():'';
+ if(!t){toast('Escribe la observación primero');return;}
+ if(!S.obs)S.obs=[];
+ S.obs.push({id:'o'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),txt:t.slice(0,2000),autor:usrActual().u,fecha:Date.now()});
+ guardar();render();toast('Observación guardada ✓');
+}
+function borrarObs(id){
+ if(!puedeObs()){toast('Solo super admin y capitanes pueden borrar observaciones');return;}
+ if(!(S.obs&&S.obs.length))return;
+ var id2=id,q;for(q=0;q<S.obs.length;q++)if(S.obs[q].id===id2){S.obs.splice(q,1);break;}
+ guardar();render();toast('Observación borrada');
+}
 function autoResumenJornada(){
  if(cerrarUI||cartaUI||syncUI||quitarUI||chalUI||permUI||cocapUI||arbUI)return;
  if(S.ui.partido)return;
@@ -4097,6 +4131,7 @@ function render(){
   case 'equipos':h=vistaEquipos();break;
   case 'usuarios':h=vistaUsuarios();break;
   case 'asistente':h=vistaAsistente();break;
+  case 'obs':h=vistaObs();break;
   case 'bases':h=vistaBases();break;
   default:h=vistaJornada();
  }
@@ -4634,6 +4669,8 @@ document.addEventListener('click',function(ev){
    case 'dz-reintentar':descargaLista='';abrirDescargaProgreso();break;
    case 'dz-navegador':fallbackNavegador();break;
    case 'dz-carpeta':abrirCarpetaDescargas();break;
+   case 'obs-add':agregarObs();break;
+   case 'obs-del':borrarObs(el.getAttribute('data-id'));break;
    case 'act-ver-repo':try{window.open('https://github.com/'+(githubRepo||GITHUB_REPO)+'/releases','_system');}catch(e){toast('Sin visor de red: abre github.com/'+(githubRepo||GITHUB_REPO)+'/releases en tu navegador');}break;
    case 'sync-file':if(S.sesion&&!puede('sync')){toast('No tienes permiso para importar archivos');break;}document.getElementById('f-sync').click();break;
    case 'sync-txt-btn':if(S.sesion&&!puede('sync')){toast('No tienes permiso para sincronizar códigos');break;}var txSync=document.getElementById('sync-txt'),resSync=sincronizarTexto(txSync?txSync.value:'');if(!resSync.ok)toast(resSync.msg);else{syncUI=false;renderSync();}break;
@@ -4893,7 +4930,7 @@ function b64dec(s){return decodeURIComponent(escape(atob(s)));}
 function clonar(x){return JSON.parse(JSON.stringify(x));}
 function paqueteSync(sinFotos){
 var zi,zp;for(zi=0;zi<S.jornadas.length;zi++)for(zp=0;zp<S.jornadas[zi].partidos.length;zp++)asegurarIdsStats(S.jornadas[zi].partidos[zp]);
-var d={equipos:clonar(S.equipos),jornadas:clonar(S.jornadas),seq:S.seq,usuarios:clonar(S.usuarios),ordenLugares:clonar(S.ordenLugares||[]),nube:clonar(nubeConfig),githubRepo:githubRepo||''};
+var d={equipos:clonar(S.equipos),jornadas:clonar(S.jornadas),seq:S.seq,usuarios:clonar(S.usuarios),obs:clonar(S.obs||[]),ordenLugares:clonar(S.ordenLugares||[]),nube:clonar(nubeConfig),githubRepo:githubRepo||''};
   if(sinFotos){var i,k;for(i=0;i<d.equipos.length;i++){d.equipos[i].foto=null;for(k=0;k<d.equipos[i].jugadores.length;k++)d.equipos[i].jugadores[k].foto=null;}}
  return {app:'copacd',v:1,idCopa:S.idCopa||'',ts:Date.now(),tsCap:S.capTs||0,datos:d};
 }
@@ -5431,7 +5468,7 @@ function mezclarAnotaciones(pl,pr,st){
  }
 }
 function mezclar(d,tsCap){
- var st={jug:0,fotos:0,res:0,cart:0,usu:0,cap:0,sanc:0,ann:0},i,k,t,q,w;
+ var st={jug:0,fotos:0,res:0,cart:0,usu:0,cap:0,sanc:0,ann:0,obs:0},i,k,t,q,w;
  if(d.nube&&(!nubeConfig.apiKey||!nubeConfig.databaseURL))guardarConfigNubeObj(d.nube);
  if(d.githubRepo&&!githubRepo)guardarConfigGithubObj(d.githubRepo);
  if(d.ordenLugares&&d.ordenLugares.length&&(!S.ordenLugares||!S.ordenLugares.length)){S.ordenLugares=clonar(d.ordenLugares);normalizarOrden();}
@@ -5475,6 +5512,12 @@ if(!el.nombre&&er.nombre)el.nombre=er.nombre;
  if(d.usuarios)for(i=0;i<d.usuarios.length;i++){var ur=d.usuarios[i],ya=false,u2;
   for(u2=0;u2<S.usuarios.length;u2++)if(S.usuarios[u2].u===ur.u)ya=true;
   if(!ya){S.usuarios.push(clonar(ur));st.usu++;}}
+ if(d.obs&&d.obs.length){
+  if(!S.obs)S.obs=[];
+  var oids={},q2,nObs=0;
+  for(q2=0;q2<S.obs.length;q2++)oids[S.obs[q2].id]=1;
+  for(q2=0;q2<d.obs.length;q2++){var on=d.obs[q2];if(on&&on.id&&!oids[on.id]){S.obs.push(clonar(on));nObs++;st.obs++;}}
+ }
  if(d.seq&&d.seq>S.seq)S.seq=d.seq;
  return st;
 }
@@ -5488,6 +5531,7 @@ function resumenSync(st){
   if(st.cap)partes.push('+'+st.cap+' '+(st.cap>1?'capitanes':'capitán'));
  if(st.sanc)partes.push('+'+st.sanc+' sanción'+(st.sanc>1?'es':''));
  if(st.usu)partes.push('+'+st.usu+' usuario'+(st.usu>1?'s':''));
+ if(st.obs)partes.push('+'+st.obs+' observaci'+(st.obs>1?'ones':'ón'));
  return partes.length?('Sincronizado ✓ · '+partes.join(' · ')):'Todo ya estaba al día ✓';
 }
 function aplicarSync(obj){
@@ -5503,6 +5547,7 @@ function aplicarSync(obj){
    S.seq=(datos.seq&&datos.seq>(S.seq||1))?datos.seq:(S.seq||1);
    S.usuarios=(datos.usuarios&&datos.usuarios.length)?clonar(datos.usuarios):(S.usuarios||[]);
    S.ordenLugares=(datos.ordenLugares&&datos.ordenLugares.length)?clonar(datos.ordenLugares):[];
+   S.obs=(datos.obs&&datos.obs.length)?clonar(datos.obs):(S.obs||[]);
    normalizarOrden();
    S.capTs=obj.tsCap||obj.capTs||0;
    guardarConfigNubeObj(datos.nube);

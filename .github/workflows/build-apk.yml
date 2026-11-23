@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Nuevo boton Abrir Descargas: abre la carpeta Descargas de Android para instalar el APK con un toque (la via manual que funciona), con aviso del Bloqueo automatico de Samsung si el instalador no aparece.'
+          body: 'Nueva seccion Observaciones: notas de la copa escritas por super admin y capitanes, guardadas en el movil y sincronizadas con la nube para actualizarlas desde cualquier dispositivo.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
