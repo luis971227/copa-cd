@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Nueva seccion Observaciones: notas de la copa escritas por super admin y capitanes, guardadas en el movil y sincronizadas con la nube para actualizarlas desde cualquier dispositivo.'
+          body: 'Observaciones con campo de escritura nuevo mas bonito y ancho. En la instalacion, el boton principal es Abrir Descargas (la via que funciona en Samsung) y el instalador directo queda como opcion secundaria.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

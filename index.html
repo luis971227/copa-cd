@@ -66,6 +66,9 @@ h2.v{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--ro
 .tabla tr.pod td:first-child{font-weight:900;color:var(--rojo)}
 .nota{font-size:11.5px;color:var(--gris2);margin-top:7px;line-height:1.5}
 input.txt{width:100%;border:1px solid var(--gris);border-radius:8px;padding:9px;font-size:14px;background:var(--inp);color:var(--tinta)}
+textarea.obs-ta{width:100%;box-sizing:border-box;border:1.5px solid var(--gris);border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.55;font-family:inherit;background:var(--inp);color:var(--tinta);min-height:120px;resize:vertical;margin:10px 0 2px;}
+textarea.obs-ta:focus{border-color:var(--rojo);outline:none}
+.obs-lbl{margin-top:16px;font-weight:800;font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:var(--tinta);display:block}
 input.sm{width:54px;border:1px solid var(--gris);border-radius:6px;padding:6px;font-size:13px;text-align:center;background:var(--inp);color:var(--tinta)}
 select.sm2{border:1px solid var(--gris);border-radius:6px;padding:6px;font-size:13px;background:var(--inp);color:var(--tinta);max-width:150px}
 #nav{position:fixed;top:0;left:0;bottom:0;width:min(82vw,306px);display:flex;flex-direction:column;background:var(--nav);box-shadow:0 0 0 1px var(--borde),0 26px 60px rgba(0,0,0,.42);z-index:40;transform:translateX(-106%);transition:transform .36s cubic-bezier(.22,.61,.36,1);padding:calc(env(safe-area-inset-top) + 4px) 0 calc(env(safe-area-inset-bottom) + 12px);overflow-y:auto;border-radius:0 26px 26px 0}
@@ -1000,7 +1003,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.39</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.40</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1425,7 +1428,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.39',APP_BUILD=40;
+var APP_VERSION='1.0.40',APP_BUILD=41;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -4053,7 +4056,7 @@ function puedeObs(){var x=usrActual();return !!x&&(x.r==='superadmin'||x.r==='ca
 function vistaObs(){
  var h='<div class="carta-c"><div class="carta-top" style="background:var(--rojo)"><div class="cn">Observaciones</div><div class="ci">📝</div><div class="ct">Notas de la copa · se guardan y van en la sincronización</div></div><div class="carta-b">';
  var puedo=puedeObs();
- if(puedo)h+='<label class="nota" for="obs-txt">Nueva observación</label><textarea id="obs-txt" class="txt" rows="3" placeholder="Ej: el partido J3 P2 se pasa al viernes a las 7"></textarea><div class="acciones"><button class="btn ro" data-a="obs-add" style="flex:1">➕ Añadir observación</button></div>';
+ if(puedo)h+='<label class="obs-lbl" for="obs-txt">Nueva observación</label><textarea id="obs-txt" class="obs-ta" rows="4" placeholder="Escribe aquí lo que haya que anotar de la copa…"></textarea><div class="acciones"><button class="btn ro" data-a="obs-add" style="flex:1">➕ Añadir observación</button></div>';
  if(!(S.obs&&S.obs.length))h+='<div class="nota">Todavía no hay observaciones'+(puedo?'':': solo super admin y capitanes pueden escribirlas')+'.</div>';
  else{
   var arr=S.obs.slice().sort(function(a,b){return (b.fecha||0)-(a.fecha||0);});
@@ -5170,7 +5173,7 @@ function finalDescarga(msg){
  if(box)box.innerHTML='<div class="carta-c"><div class="carta-top" style="background:var(--rojo)">'
   +'<div class="cn">Descarga terminada</div><div class="ci">⏬️</div><div class="ct">'+esc(d.nombre)+'</div></div><div class="carta-b">'
   +'<div class="nota" id="dz-estado">'+esc(msg)+'</div>'
-  +'<div class="acciones"><button class="btn ro" data-a="dz-instalar" style="flex:1">📲 Instalar</button><button class="btn gh" data-a="dz-carpeta" style="flex:1">📂 Abrir Descargas</button></div>'
+  +'<div class="acciones"><button class="btn ro" data-a="dz-carpeta" style="flex:1">📂 Abrir Descargas (instalar)</button><button class="btn gh" data-a="dz-instalar" style="flex:1">📲 Instalador directo</button></div>'
   +'<div class="acciones"><button class="btn gh" data-a="dz-navegador" style="flex:1">🌐 Por navegador</button><button class="btn gh" data-a="dz-cancelar" style="flex:1">Cerrar</button></div>'
   +'<div class="nota">Consejo: abre Descargas y toca '+esc(d.nombre)+' → Instalar → «Instalar de todas formas». Si Android no abre nada: Ajustes → Seguridad y privacidad → Bloqueo automático → desactívalo o permite instalar apps.</div>'
   +'</div></div>';
