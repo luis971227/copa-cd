@@ -290,6 +290,10 @@ public class CdpCompartir extends CordovaPlugin {
                        clasico ya no abre el instalador en equipos nuevos (por eso
                        "toco Instalar y no pasa nada"). Si el sistema no responde,
                        hay respaldo automatico con el ACTION_VIEW clasico. */
+                    Intent vIP = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+                    vIP.setDataAndType(uri, "application/vnd.android.package-archive");
+                    vIP.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    if (uiLanzar(ctx, vIP)) { cb.success("instalador-directo"); return; }
                     if (uriDescargas != null) {
                         Intent vD = new Intent(Intent.ACTION_VIEW);
                         vD.setDataAndType(uriDescargas, "application/vnd.android.package-archive");

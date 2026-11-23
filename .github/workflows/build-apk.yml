@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'El asistente IA guarda el tema de la conversacion (pregunta y en asistencias... y responde). Las rojas ya cuentan para Juego limpio, y en Jugadores aparece el lider en rojas.'
+          body: 'Instalador reforzado: primero ACTION_INSTALL_PACKAGE oficial, luego la via Descargas, sesion del sistema y respaldos; el dialog ahora dice por que via fue y que hacer si el cartel de Android no aparece.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
