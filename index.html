@@ -1009,7 +1009,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.46</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.47</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1434,9 +1434,9 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.46',APP_BUILD=47;
+var APP_VERSION='1.0.47',APP_BUILD=48;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
-var NUBE_DEFAULT={apiKey:'',databaseURL:''};
+var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0;
 var actualizaUI=null,actualizaSnooze=0;
 var cron={pid:'',mins:10,seg:600,corriendo:false,t:null,a5:false};
@@ -4997,7 +4997,7 @@ function cargarConfigNube(){
   nubeConfig=guardada?JSON.parse(guardada):clonar(base);
   if(!nubeConfig||typeof nubeConfig!=='object')nubeConfig=clonar(base);
  }catch(e){nubeConfig=clonar(base);}
- try{nubeAuto=localStorage.getItem('mtp_copa_cd_nube_auto')==='1';}catch(e){nubeAuto=false;}
+ try{var nvAuto=localStorage.getItem('mtp_copa_cd_nube_auto');nubeAuto=(nvAuto===null)?true:('1'===nvAuto);}catch(e){nubeAuto=true;}
  try{actualizaSnooze=+localStorage.getItem('mtp_copa_cd_act_snooze')||0;}catch(e){actualizaSnooze=0;}
  try{githubRepo=localStorage.getItem('mtp_copa_cd_github_repo')||GITHUB_REPO||'';}catch(e){githubRepo=GITHUB_REPO||'';}
 }
@@ -5250,7 +5250,7 @@ function nubeAutoProgramar(){
  nubePublicarPendiente=setTimeout(function(){nubePublicarPendiente=null;nubePublicar(true);},900);
 }
 function validarConfigNube(){
- if(!nubeConfig.apiKey||!nubeConfig.databaseURL)return 'Completa la API key y la URL de Realtime Database';
+ if(!nubeConfig.databaseURL)return 'Completa la URL de Realtime Database';
  try{
   var u=new URL(nubeConfig.databaseURL);
   if(u.protocol!=='https:'||u.pathname!=='/'||u.search||u.hash||
@@ -5417,6 +5417,7 @@ function nubeDescargar(silencioso,reintento){
  var error=validarConfigNube();if(error){if(!silencioso)toast(error);return;}
  var idCopaNube=S.idCopa;
  if(!idCopaNube){var entradaId=document.getElementById('nube-id');idCopaNube=entradaId?entradaId.value.trim().toUpperCase():'';}
+ if(!idCopaNube&&NUBE_ID_DEFECTO)idCopaNube=NUBE_ID_DEFECTO;
  if(!/^CD-[A-HJ-NP-Z2-9]{6}$/.test(idCopaNube)){if(!silencioso)toast('Escribe un ID de copa válido (CD-XXXXXX)');return;}
  var consulta=nubeSesion?'?auth='+encodeURIComponent(nubeSesion.token):'';
  var bajada=nubeSesion?nubeToken().then(function(token){
@@ -5773,6 +5774,13 @@ S.sesion=null;S.ui.vista='dashboard';
 if(S.equipos.length>=2&&S.jornadas.length<4)generar();
 render();
 nubeAutoIniciar();
+var introTri=0;
+var introT=setInterval(function(){
+ if(S.idCopa||introTri>10){clearInterval(introT);return;}
+ introTri++;
+ if(nubeAuto&&!validarConfigNube())nubeDescargar(true);
+},30000);
+if(!S.idCopa&&nubeAuto&&!validarConfigNube())setTimeout(function(){nubeDescargar(true);},2500);
 setTimeout(function(){
  var a=document.getElementById('arranque');
  if(!a)return;
