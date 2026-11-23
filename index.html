@@ -41,10 +41,10 @@ h2.v{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--ro
 .pj-bloque{border-top:1px solid var(--gris);padding:8px 10px;background:var(--suave)}
 .pj-eqt{display:flex;align-items:center;gap:7px;margin:4px 0 5px;font-weight:900;font-size:13.5px}
 .pj-eqt small{color:var(--gris2);font-weight:700}
-.jug{display:flex;align-items:center;gap:5px;padding:2.5px 0}
-.jug .nm{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jug{display:flex;align-items:center;gap:3px;padding:2.5px 0;flex-wrap:wrap}
+.jug .nm{flex:1;min-width:88px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .jug .nm i{color:var(--gris2);font-style:normal;font-size:11px;margin-right:4px}
-.mk{border:1px solid var(--gris);background:var(--chip);border-radius:8px;min-width:40px;padding:5px 4px;font-size:12.5px;font-weight:800;color:var(--chip-txt);text-align:center;cursor:pointer}
+.mk{border:1px solid var(--gris);background:var(--chip);border-radius:8px;min-width:31px;padding:5px 2px;font-size:12px;font-weight:800;color:var(--chip-txt);text-align:center;cursor:pointer}
 .mk.on{background:var(--rojo);border-color:var(--rojo);color:#fff}
 .mk.on.am{background:#F2C230;border-color:#F2C230;color:#3a2f00}
 .mk.on.ro{background:#C81E1E;border-color:#C81E1E;color:#fff}
@@ -786,7 +786,7 @@ h2.v:before{width:3px;height:15px;margin-top:2px;border-radius:99px;background:l
 [data-tema=oscuro] .pj-mar{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),var(--e1)}
 .pj-bloque{background:linear-gradient(180deg,var(--suave),var(--tar))}
 .pj-id{border-radius:8px;font-size:9.5px;letter-spacing:.4px}
-.mk{min-width:43px;min-height:34px;padding:7px 6px;border-radius:11px;font-weight:900;border:1px solid var(--hair);box-shadow:var(--e1);transition:transform .14s ease,background .2s ease,box-shadow .2s ease}
+.mk{min-width:31px;min-height:32px;padding:7px 3px;font-size:12px;border-radius:10px;font-weight:900;border:1px solid var(--hair);box-shadow:var(--e1);transition:transform .14s ease,background .2s ease,box-shadow .2s ease}
 .mk:active{transform:scale(.94)}
 .mk.on{box-shadow:0 5px 14px rgba(245,43,39,.28)}
 .mk.on.am{box-shadow:0 5px 14px rgba(242,194,48,.35)}
@@ -995,7 +995,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.18</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.19</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1419,7 +1419,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.18',APP_BUILD=19;
+var APP_VERSION='1.0.19',APP_BUILD=20;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;

@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'La app ahora pide el permiso de Android \u00abInstalar apps desconocidas\u00bb y abre los Ajustes solo cuando hace falta, para que el bot\u00f3n Instalar s\u00ed abra el instalador de la APK.'
+          body: 'Acomodo de la ficha del partido: los chips de estadisticas (gol, autogol \U0001F945, asistencia, parada, amarilla, roja) quedan compactos y el nombre del jugador siempre visible.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
