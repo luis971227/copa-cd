@@ -1000,7 +1000,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.30</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.31</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1425,7 +1425,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.30',APP_BUILD=31;
+var APP_VERSION='1.0.31',APP_BUILD=32;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -2520,8 +2520,8 @@ function vistaJornada(){
  for(i=0;i<j.partidos.length;i++)if(j.partidos[i].estado!=='pendiente')jp++;
  h+='<div class="tar" style="padding:8px 10px"><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:800"><span>Jornada '+j.num+' de 4</span><span style="color:var(--gris2)">'+jp+' / '+tp+' partidos registrados</span></div></div>';
  if(jornadaTerminada(j.num)){
-  if(esAdmin()&&!j.cerrada)h+='<div class="acciones" style="margin:10px 0 4px"><button class="btn ro" data-a="jor-cerrar" data-n="'+j.num+'" style="flex:1">🏁 Cerrar jornada '+j.num+' y ver el resumen</button></div>';
-  if(j.cerrada)h+='<div class="acciones" style="margin:10px 0 4px"><button class="btn gh" data-a="jor-resumen" data-n="'+j.num+'" style="flex:1">📋 Ver resumen de la Jornada '+j.num+'</button></div>';
+  if(esAdmin()&&!j.cerrada)h+='<div class="acciones" style="margin:10px 0 4px"><button class="btn ro" data-a="jor-cerrar" data-n="'+j.num+'" style="flex:1">🏁 Resumen jornada '+j.num+' (cierra la jornada)</button></div>';
+  if(j.cerrada)h+='<div class="acciones" style="margin:10px 0 4px"><button class="btn gh" data-a="jor-resumen" data-n="'+j.num+'" style="flex:1">📋 Resumen jornada '+j.num+'</button></div>';
  }
  var resJor=resumenGanadorJornada(j.num);
  if(resJor)h+='<div class="tar" style="border:1px solid var(--borde);margin-top:8px"><div style="display:flex;align-items:center;gap:9px"><span style="font-size:22px">🏆</span><div style="flex:1"><b style="font-size:14px">'+esc(resJor.titulo)+'</b><div class="nota" style="margin:3px 0 0">'+esc(resJor.detalle)+'</div></div></div></div>';
@@ -4030,6 +4030,15 @@ function barraInferior(r){
  h+='<button class="bn-menu" data-a="nav-toggle"><b>☰</b>Menú</button>';
  return h;
 }
+function autoResumenJornada(){
+ if(cerrarUI||cartaUI||syncUI||quitarUI||chalUI||permUI||cocapUI||arbUI)return;
+ if(S.ui.partido)return;
+ var n=typeof S.ui.jor==='number'?S.ui.jor:jornadaActual();
+ var J=jornada(n);if(!J)return;
+ if(!jornadaTerminada(n))return;
+ var v=S.ui.resumenVisto||0;if(v>=n)return;
+ S.ui.resumenVisto=n;cerrarUI={n:n};renderCerrarJor();
+}
 function render(){
   var app=document.getElementById('app'),h='',r=rol(),nav=document.getElementById('nav'),ses=document.getElementById('sesion'),navBtn=document.getElementById('nav-btn'),cab=document.getElementById('cab'),bnav=document.getElementById('bnav'),i;
   document.body.classList.toggle('en-login',!r||!!(S.sesion&&S.sesion.debeCambiar));
@@ -4100,6 +4109,7 @@ function render(){
  renderArb();
  renderQuitar();
  renderChal();
+ autoResumenJornada();
  guardar();
  if(S.ui.vista==='asistente'){var lgIA=document.getElementById('ia-log');if(lgIA)lgIA.scrollTop=lgIA.scrollHeight;}
  transicion();
@@ -4124,7 +4134,7 @@ function atras(){
   if(navAbierto){cierraNav();return;}
  if(syncUI){syncUI=false;renderSync();return;}
  if(chalUI){chalUI=null;renderChal();return;}
- if(cerrarUI){cerrarUI=null;renderCerrarJor();return;}
+ if(cerrarUI){S.ui.resumenVisto=Math.max(S.ui.resumenVisto||0,+cerrarUI.n);cerrarUI=null;renderCerrarJor();return;}
  if(quitarUI){quitarUI=null;renderQuitar();return;}
  if(cartaUI){cartaUI=null;render();return;}
  if(permUI){permUI=null;render();return;}
@@ -4171,7 +4181,7 @@ document.addEventListener('click',function(ev){
    if(ev.target&&ev.target.closest&&ev.target.closest('#foto-prev')){cierraFotoPrev();return;}
    if(ev.target&&ev.target.id==='quitar'){quitarUI=null;renderQuitar();return;}
    if(ev.target&&ev.target.id==='chal'){chalUI=null;renderChal();return;}
-   if(ev.target&&ev.target.id==='cerrarjor'){cerrarUI=null;renderCerrarJor();return;}
+   if(ev.target&&ev.target.id==='cerrarjor'){S.ui.resumenVisto=Math.max(S.ui.resumenVisto||0,+cerrarUI.n);cerrarUI=null;renderCerrarJor();return;}
    if(fotoPrevAbierta()){cierraFotoPrev();return;}
    if(ev.target&&ev.target.getAttribute&&ev.target.getAttribute('data-pv')){fotoPrev(ev.target.getAttribute('data-pv'));return;}
    if(navAbierto&&ev.target&&ev.target.closest&&!ev.target.closest('#nav,#nav-btn'))cierraNav();
@@ -4199,6 +4209,7 @@ document.addEventListener('click',function(ev){
    case 'hist-abrir':var hid=+el.getAttribute('data-i');S.ui.histAbierto=(S.ui.histAbierto===hid?'':hid);render();break;
   case 'hist-del':if(!puede('historial')){toast('No tienes permiso para borrar del histórico');break;}if(confirm('¿Borrar este torneo del histórico? Se eliminarán sus estadísticas para siempre.')){S.historial.splice(+el.getAttribute('data-i'),1);S.ui.histAbierto='';render();toast('Torneo borrado del histórico');}break;
    case 'jor':var nJ=+el.getAttribute('data-n');
+    if(cerrarUI){toast('Cierra primero el resumen de la jornada');break;}
     if(nJ>jornadaActual()){toast('Primero termina la Jornada '+jornadaActual());break;}
     S.ui.jor=nJ;S.ui.ab='';render();break;
    case 'abrir':if(!puede('jugar')){toast('No tienes permiso para jugar la jornada');break;}abrirPartido(el.getAttribute('data-p'));break;
@@ -4453,7 +4464,7 @@ document.addEventListener('click',function(ev){
      toast('🏁 Jornada '+nCJ+' cerrada · resumen listo');
      break;}
     case 'jor-resumen':cerrarUI={n:+el.getAttribute('data-n')};renderCerrarJor();break;
-    case 'cj-cerrar':cerrarUI=null;renderCerrarJor();break;
+    case 'cj-cerrar':S.ui.resumenVisto=Math.max(S.ui.resumenVisto||0,+cerrarUI.n);cerrarUI=null;renderCerrarJor();break;
     case 'chal-set':{
      if(!esAdmin()){toast('Solo el super admin puede editar challenges');break;}
      var ncs=+el.getAttribute('data-n'),ecs=+el.getAttribute('data-e'),sSel=document.getElementById('chal-estado-'+ecs),pSel=document.getElementById('chal-pid-'+ecs);

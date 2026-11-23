@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Arreglado el aviso de BLOQUEADO por challenge perdido: ya no se distorsiona ni sale de la pantalla, el texto salta de linea en todas las vistas.'
+          body: 'El resumen de la jornada se abre solo cuando termina el ultimo partido y no dejas pasar a la siguiente hasta cerrarlo. Los botones del resumen ahora dicen Resumen jornada.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
