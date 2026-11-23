@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'La versi\u00f3n de la APK se ve siempre en el encabezado (aparece al lado del t\u00edtulo COPA CD), adem\u00e1s de en el splash y en Sincronizar \u2192 Actualizaciones.'
+          body: 'El bot\u00f3n Instalar ahora lanza el instalador desde el hilo principal de Android con instaladores reales y selector como respaldo; adem\u00e1s la app notifica en el tel\u00e9fono cuando hay una versi\u00f3n nueva disponible.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

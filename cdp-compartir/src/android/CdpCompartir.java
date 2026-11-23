@@ -75,6 +75,7 @@ public class CdpCompartir extends CordovaPlugin {
             if ("bajar".equals(accion)) { bajar(args, cb); return true; }
             if ("http".equals(accion)) { http(args, cb); return true; }
             if ("instalar".equals(accion)) { instalar(args, cb); return true; }
+            if ("notificar".equals(accion)) { notificar(args, cb); return true; }
             cb.error("accion desconocida: " + accion);
             return false;
         }
@@ -305,14 +306,82 @@ public class CdpCompartir extends CordovaPlugin {
         } catch (Throwable e) { Log.w("CdpCompartir", "No se pudo abrir Ajustes de instalacion", e); }
     }
 
-    private void lanzarInstalador(Context ctx, Uri uri) throws IOException {
+    private String[] pendienteNotif;
+
+    @Override
+    public void onRequestPermissionResult(int code, String[] perms, int[] results) throws JSONException {
+        if (code == 7788 && pendienteNotif != null) {
+            String[] datos = pendienteNotif;
+            pendienteNotif = null;
+            if (results != null && results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) notificarYa(datos[0], datos[1]);
+        }
+    }
+
+    private void notificar(CordovaArgs args, final CallbackContext cb) {
         try {
-            Intent i = new Intent(Intent.ACTION_VIEW);
-            i.setDataAndType(uri, "application/vnd.android.package-archive");
-            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-            ctx.startActivity(i);
-            return;
-        } catch (Throwable e1) { }
+            final String titulo = args.optString(0, "Copa CD");
+            final String texto = args.optString(1, "");
+            Context ctx = cordova.getContext();
+            if (Build.VERSION.SDK_INT >= 33 && cordova.checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
+                pendienteNotif = new String[]{titulo, texto};
+                cordova.requestPermissions(this, 7788, new String[]{"android.permission.POST_NOTIFICATIONS"});
+                cb.success("pendiente");
+                return;
+            }
+            notificarYa(titulo, texto);
+            cb.success("notificado");
+        } catch (Throwable e) { cb.error(e.getMessage() == null ? "no se pudo notificar" : e.getMessage()); }
+    }
+
+    private void notificarYa(String titulo, String texto) {
+        try {
+            Context ctx = cordova.getContext();
+            android.app.NotificationManager nm = (android.app.NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm == null) return;
+            String idCanal = "actualizaciones";
+            if (Build.VERSION.SDK_INT >= 26) {
+                android.app.NotificationChannel canal = new android.app.NotificationChannel(idCanal, "Actualizaciones de Copa CD", android.app.NotificationManager.IMPORTANCE_DEFAULT);
+                canal.setDescription("Avisos de nuevas versiones de la APK");
+                nm.createNotificationChannel(canal);
+            }
+            android.content.Intent abrir = ctx.getPackageManager().getLaunchIntentForPackage(ctx.getPackageName());
+            if (abrir == null) abrir = new android.content.Intent();
+            android.app.PendingIntent pende = android.app.PendingIntent.getActivity(ctx, 2001, abrir, android.app.PendingIntent.FLAG_IMMUTABLE);
+            android.app.Notification.Builder nb = Build.VERSION.SDK_INT >= 26 ? new android.app.Notification.Builder(ctx, idCanal) : new android.app.Notification.Builder(ctx);
+            nb.setSmallIcon(ctx.getApplicationInfo().icon).setContentTitle(titulo).setContentText(texto)
+              .setAutoCancel(true).setContentIntent(pende)
+              .setStyle(new android.app.Notification.BigTextStyle().bigText(texto));
+            nm.notify(2001, nb.build());
+        } catch (Throwable e) { Log.w("CdpCompartir", "fallo notificar", e); }
+    }
+
+    /* Lanza la actividad en el hilo de UI (obligatorio en varios telefonos) y
+       avisa con el boolean si realmente se lanzo; bloquea hasta 1 segundo. */
+    private boolean uiLanzar(final Context ctx, final Intent intent) {
+        final java.util.concurrent.atomic.AtomicBoolean lanzado = new java.util.concurrent.atomic.AtomicBoolean(false);
+        try {
+            cordova.getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try { ctx.startActivity(intent); lanzado.set(true); }
+                    catch (Throwable e) { Log.w("CdpCompartir", "fallo lanzar instalador", e); }
+                }
+            });
+        } catch (Throwable e) { return false; }
+        for (int j = 0; j < 20 && !lanzado.get(); j++) {
+            try { Thread.sleep(50); } catch (InterruptedException e) { break; }
+        }
+        return lanzado.get();
+    }
+
+    private void lanzarInstalador(final Context ctx, final Uri uri) throws IOException {
+        Intent base = new Intent(Intent.ACTION_VIEW);
+        base.setDataAndType(uri, "application/vnd.android.package-archive");
+        base.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (uiLanzar(ctx, base)) return;
+        Intent elegir = Intent.createChooser(base, "Instalar actualización de Copa CD");
+        elegir.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (uiLanzar(ctx, elegir)) return;
         String[] instaladores = {"com.google.android.packageinstaller", "com.android.packageinstaller"};
         for (String paq : instaladores) {
             try {
@@ -320,9 +389,8 @@ public class CdpCompartir extends CordovaPlugin {
                 i2.setPackage(paq);
                 i2.setDataAndType(uri, "application/vnd.android.package-archive");
                 i2.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                ctx.startActivity(i2);
-                return;
-            } catch (Throwable e2) { }
+                if (uiLanzar(ctx, i2)) return;
+            } catch (Throwable e3) { }
         }
         throw new IOException("Ningún instalador de Android respondió; instala la APK desde la carpeta Descargas del móvil");
     }
