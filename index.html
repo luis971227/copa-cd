@@ -996,7 +996,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.27</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.28</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1420,7 +1420,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.27',APP_BUILD=28;
+var APP_VERSION='1.0.28',APP_BUILD=29;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -3225,7 +3225,10 @@ function guardarPass(){
 /* ---------- asistente IA (local + nube opcional) ---------- */
 var asistMsgs=[];
 function asistSaludo(){
- if(!asistMsgs.length)asistMsgs.push({r:'bot',t:'¡Hola! Soy el asistente de Copa CD. Pregúntame lo que quieras del torneo o del reglamento y te contesto directo, sin vueltas.'});
+ if(!asistMsgs.length)asistMsgs.push({r:'bot',t:elegirIA([
+  '¡Hola! Soy el asistente de Copa CD ⚽ Pregúntame lo que quieras: resultados, puntos, goleadores, autogoles, tarjetas, challenge, árbitros o reglas. Con el nombre de un equipo te doy hasta el desglose partido por partido.',
+  '¡Qué más! Aquí está tu asistente de la copa 🤙 Puedo contarte resultados, tabla, goleadores, tarjetas, challenge, quién juega o no según la carta… lo que sea del torneo: dime y te respondo al tirito.'
+ ])});
 }
 function normIA(s){s=String(s||'').toLowerCase();try{s=s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');}catch(e){}return s;}
 function listaTablaIA(){
@@ -3368,21 +3371,28 @@ function proximoIA(){
    return 'El próximo partido es de la Jornada '+n+': '+(a?corto(a):'—')+' contra '+(b?corto(b):'—')+'.';}}
  return 'No quedan partidos pendientes: la copa está completa.';
 }
-function challengeIA(estado){
- var base='El challenge es un reto que cada equipo puede pedir una vez por jornada. Si el equipo que lo pidió gana, ese partido se juega 2 minutos más; si pierde, solo ese equipo se queda sin poder pedirlo la jornada siguiente. El rival que no lo pidió conserva su derecho.';
- if(!estado)return base;
- var n=S.ui.jor||jornadaActual(),J=jornada(n);
- if(!J)return base;
+function challengeIA(n){
+ if(!n)n=S.ui.jor||jornadaActual();
+ var J=jornada(n);
+ if(!J)return 'Todavía no hay calendario, así que todavía no hay challenge. 📅';
  var out='Challenge de la Jornada '+n+':\n',i;
- for(i=0;i<S.equipos.length;i++){var e=S.equipos[i],ci=chalInfo(n,e.id),st=ci.estado,tx;
-  if(st==='usado')tx=ci.gano?'ganado (+2 min en su partido)':'usado';
-  else if(st==='pedido')tx='pedido, falta resolver el rondo';
-  else if(st==='perdido')tx='perdido (sin challenge la próxima jornada)';
-  else if(st==='bloqueado')tx='no disponible: perdió el challenge anterior';
-  else tx='disponible';
-  out+='· '+corto(e)+': '+tx+'\n';}
+ for(i=0;i<S.equipos.length;i++){
+  var e=S.equipos[i],ci=chalInfo(n,e.id),st=ci.estado;
+  var p=ci.pid?buscarPartido(ci.pid):null;
+  var op=p?eq(p.local===e.id?p.visitante:p.local):null;
+  var contra=op?' contra '+corto(op):'';
+  var tx;
+  if(st==='disponible')tx=jornadaTerminada(n)?'la jornada terminó y se quedó con el challenge sin usar.':'aún puede pedirlo';
+  else if(st==='bloqueado')tx='🚫 bloqueado: lo perdió en la J'+ci.jornadaPerdida+' y esta jornada NO puede pedirlo.';
+  else if(st==='pedido')tx='⏳ lo pidió'+contra+', falta resolver el rondo: si gana suma 2 minutos a ese partido; si pierde, se bloquea la próxima.';
+  else if(st==='usado'&&ci.gano)tx='✅ lo ganó'+contra+': su partido se alargó 2 minutos.';
+  else if(st==='perdido')tx='❌ lo perdió'+contra+': sin alargue y NO puede pedir challenge en la J'+(n<4?(n+1):'—')+'.';
+  else tx='ya lo usó'+contra+' esta jornada.';
+  out+='· '+corto(e)+': '+tx+'\n';
+ }
  return out.replace(/\n$/,'');
 }
+
 function cartasIA(n){
  var J=jornada(n);if(!J)return 'No existe la Jornada '+n+'.';
  var out='Cartas de la Jornada '+n+':\n',i,fal=0;
@@ -3419,47 +3429,304 @@ function buscarReglamentoIA(q){
  for(i=0;i<sc.length&&out.length<3;i++){k=sc[i].i;if(seen[k])continue;seen[k]=1;out.push(lines[k].trim());}
  return out.join(' ');
 }
+function elegirIA(arr){if(!arr||!arr.length)return '';return arr[Math.floor(Math.random()*arr.length)];}
+function unidadIA(tipo){var m={g:'goles',ag:'autogoles',a:'asistencias',p:'paradas',am:'amarillas',ro:'rojas'};return m[tipo]||tipo;}
+function pluralIA(tipo,v){var u=unidadIA(tipo);if(v===1)return u.replace(/es$/,'').replace(/s$/,'');return u;}
+function topsIA(tipo){
+ var est=calcEstadisticas(),arr=[],id,i;
+ for(id in est)if(est[id][tipo]>0)arr.push(est[id]);
+ arr.sort(function(a,b){return (b[tipo]-a[tipo])||(b.g-a.g)||String(a.j.nombre).localeCompare(String(b.j.nombre));});
+ var u=unidadIA(tipo);
+ if(!arr.length)return elegirIA(['Todavía no hay nada registrado en '+u+': en cuanto empiece a haber, te lo muestro aquí. 📋','Aún no tengo '+u+' que mostrarte: no se ha registrado ninguno todavía.']);
+ var out=elegirIA(['Ahí va el top de '+u+':','Los más destacados en '+u+':','Mira el top de '+u+' hasta ahora:'])+'\n';
+ for(i=0;i<arr.length&&i<5;i++)out+=(i+1)+'. '+arr[i].j.nombre+' ('+corto(arr[i].e)+') — '+arr[i][tipo]+' '+pluralIA(tipo,arr[i][tipo])+'\n';
+ return out.replace(/\n$/,'');
+}
+function buscarJugadorIA(q){
+ var t=normIA(q),i,k,r=[];
+ for(i=0;i<S.equipos.length;i++){
+  var ee=S.equipos[i],js=ee.jugadores||[];
+  for(k=0;k<js.length;k++){
+   var j=js[k],nombre=normIA(j.nombre||'');
+   if(!nombre)continue;
+   var pts=0;
+   if(j.dorsal){var md=t.match(/\b(?:dorsal|camiseta|numero)\s*0?(\d{1,2})\b/);if(md&&+md[1]===+j.dorsal)pts+=3;}
+   if(t.indexOf(nombre)>=0)pts+=4;
+   var parts=nombre.split(/\s+/),cu=0;
+   for(var w=0;w<parts.length;w++)if(parts[w].length>=4&&t.indexOf(parts[w])>=0)cu++;
+   if(cu)pts+=cu;
+   if(pts>0)r.push({j:j,p:pts});
+  }
+ }
+ if(!r.length)return null;
+ r.sort(function(a,b){return b.p-a.p;});
+ if(r.length>1&&r[0].p===r[1].p)return null;
+ return r[0].j;
+}
+function statsJugadorIA(j){
+ var est=calcEstadisticas(),x=est[j.id];
+ if(!x)return '';
+ var l=[];
+ l.push(x.g+' gol'+(x.g===1?'':'es'));
+ if(x.a)l.push(x.a+' asistencia'+(x.a===1?'':'s'));
+ if(x.ag)l.push(x.ag+' autogol'+(x.ag===1?'':'es'));
+ if(x.p)l.push(x.p+' parada'+(x.p===1?'':'s'));
+ if(x.am)l.push(x.am+' amarilla'+(x.am===1?'':'s')+' 🟨');
+ if(x.ro)l.push(x.ro+' roja'+(x.ro===1?'':'s')+' 🟥');
+ var base=elegirIA(['Así le va a '+j.nombre+':','Lo de '+j.nombre+' va así:','Aquí tienes los números de '+j.nombre+' ('+corto(x.e)+'):'])+'\n· '+l.join(' · ');
+ if(!x.g&&!x.a&&!x.ag&&!x.p&&!x.am&&!x.ro)base+='\n'+elegirIA(['Todavía va limpio: ni goles ni tarjetas… y eso también es dato 😅','Aún no tiene números, pero seguro en el próximo aparece. 😉']);
+ return base;
+}
+function tablaPosDe(id){
+ var arr=calculo(),i;
+ for(i=0;i<arr.length;i++)if(arr[i].e.id===id)return {pos:i+1,r:arr[i],total:arr.length};
+ return null;
+}
+function statsEquipoIA(e){
+ var t=tablaPosDe(e.id);
+ if(!t)return 'No tengo a '+corto(e)+' en la tabla todavía.';
+ var r=t.r;
+ return corto(e)+' va '+t.pos+'º de '+t.total+' en la tabla, con '+r.pts+' puntos en '+r.pj+' partido'+(r.pj===1?'':'s')+' ('+r.g+' ganados, '+r.emp+' empatados, '+r.p+' perdidos; goles a favor '+r.gf+' y en contra '+r.gc+').';
+}
+function golesEquipoIA(e){
+ var est=calcEstadisticas(),g=[],au=[],as=[],id,i;
+ for(id in est){var x=est[id];if(x.e.id!==e.id)continue;
+  if(x.g)g.push(est[id]);
+  if(x.ag)au.push(est[id]);
+  if(x.a)as.push(est[id]);}
+ if(!g.length&&!as.length&&!au.length)return corto(e)+' todavía no suma goles ni asistencias en la copa.';
+ g.sort(function(a,b){return b.g-a.g;});as.sort(function(a,b){return b.a-a.a;});
+ var out=corto(e)+':\n';
+ if(g.length){out+='· Goles: ';for(i=0;i<g.length;i++)out+=g[i].j.nombre+' ('+g[i].g+')'+(i<g.length-1?', ':'\n');}
+ if(as.length){out+='· Asistencias: ';for(i=0;i<as.length;i++)out+=as[i].j.nombre+' ('+as[i].a+')'+(i<as.length-1?', ':'\n');}
+ if(au.length){out+='· Autogoles: ';for(i=0;i<au.length;i++)out+=au[i].j.nombre+' ('+au[i].ag+')'+(i<au.length-1?', ':'\n');}
+ return out.replace(/\n$/,'');
+}
+function tarjetasEquipoIA(e){
+ var fp=calcFairPlay(),i,f=null;
+ for(i=0;i<fp.length;i++)if(fp[i].e.id===e.id)f=fp[i];
+ if(!f)return 'No tengo tarjetas de '+corto(e)+' todavía.';
+ var est=calcEstadisticas(),lista=[],id;
+ for(id in est){var x=est[id];if(x.e.id===e.id&&(x.am||x.ro))lista.push(x);}
+ if(!lista.length)return 'Ninguna tarjeta para '+corto(e)+': van limpios hasta ahora. 👏';
+ lista.sort(function(a,b){return (b.am*2+b.ro*6)-(a.am*2+a.ro*6)||b.ro-a.ro;});
+ var out='Tarjetas de '+corto(e)+': '+f.am+' amarilla'+(f.am===1?'':'s')+' y '+f.ro+' roja'+(f.ro===1?'':'s')+' (penalización fair play: '+f.penal+' pts).\n';
+ for(i=0;i<lista.length;i++)out+='· '+lista[i].j.nombre+': '+lista[i].am+'🟨 / '+lista[i].ro+'🟥\n';
+ return out.replace(/\n$/,'');
+}
+function sancionesEquipoIA(e){
+ var out='',i,k,any=false;
+ for(i=0;i<S.jornadas.length;i++){var J=S.jornadas[i];
+  for(k=0;k<J.sanciones.length;k++){var sn=J.sanciones[k];if(sn.eq!==e.id)continue;any=true;
+   out+='· Jornada '+J.num+': '+sn.motivo+' ('+sn.pts+' pts)\n';}}
+ if(!any)return corto(e)+' '+elegirIA(['no tiene ninguna sanción registrada. 👏','está sin sanciones hasta ahora. 👌']);
+ return 'Sanciones de '+corto(e)+':\n'+out.replace(/\n$/,'');
+}
+function challengeEquipoIA(e){
+ var n=S.ui.jor||jornadaActual(),ci=chalInfo(n,e.id),st=ci.estado;
+ var p=ci.pid?buscarPartido(ci.pid):null;
+ var op=p?eq(p.local===e.id?p.visitante:p.local):null;
+ var contra=op?' contra '+corto(op):'';
+ if(st==='disponible')return corto(e)+' todavía tiene su challenge disponible en la Jornada '+n+': puede pedirlo en cualquiera de sus partidos. 🎯';
+ if(st==='bloqueado')return corto(e)+' 🚫 está bloqueado en la Jornada '+n+': perdió el rondo en la J'+ci.jornadaPerdida+' y por reglamento no puede pedir challenge esta jornada.';
+ if(st==='pedido')return corto(e)+' pidió challenge'+contra+' en la Jornada '+n+' y falta resolverlo: si gana el rondo suma 2 minutos a ese partido; si pierde, se queda sin poder pedirlo la próxima.';
+ if(st==='usado'&&ci.gano)return corto(e)+' pidió challenge'+contra+' y LO GANÓ: ese partido se jugó con 2 minutos extra. ✅';
+ if(st==='perdido')return corto(e)+' pidió challenge'+contra+' y LO PERDIÓ: su partido quedó sin alargue y NO puede pedir challenge en la jornada '+(n<4?(n+1):'(no hay más)')+'.';
+ return corto(e)+' ya usó su challenge de la Jornada '+n+contra+'.';
+}
+function proximosEquipoIA(e){
+ var out='',i,k,any=false;
+ for(i=0;i<S.jornadas.length;i++){var J=S.jornadas[i];
+  for(k=0;k<J.partidos.length;k++){var p=J.partidos[k];
+   if(p.local!==e.id&&p.visitante!==e.id)continue;
+   if(p.estado!=='pendiente')continue;
+   var r=eq(p.local===e.id?p.visitante:p.local);if(!r)continue;
+   var AB=arribaAbajo(p),posAB='';
+   if(AB)posAB=AB.arriba===e.id?' va arriba: puede pedir balón o portería':' va abajo';
+   out+='· J'+J.num+' contra '+corto(r)+': pendiente, y '+corto(e)+posAB+'\n';any=true;
+  }
+ }
+ if(!any)return 'A '+corto(e)+' no le quedan partidos pendientes: ya tiene jugada toda la copa. 🏁';
+ return 'Lo que le falta a '+corto(e)+':\n'+out.replace(/\n$/,'');
+}
+function h2hIA(a,b){
+ var i,k,wa=0,wb=0,emp=0,any=false;
+ var out=elegirIA(['Así van '+corto(a)+' y '+corto(b)+' frente a frente:','Historial entre '+corto(a)+' y '+corto(b)+':'])+'\n';
+ for(i=0;i<S.jornadas.length;i++){var J=S.jornadas[i];
+  for(k=0;k<J.partidos.length;k++){var p=J.partidos[k];
+   var na=p.local===a.id||p.visitante===a.id,nb=p.local===b.id||p.visitante===b.id;
+   if(!na||!nb)continue;
+   var ra=eq(p.local),rb=eq(p.visitante),m=mar(p);
+   if(p.estado==='pendiente'){out+='· J'+J.num+': pendiente\n';any=true;continue;}
+   if(p.estado==='nulo'){out+='· J'+J.num+': nulo (0-0, sin puntos)\n';any=true;continue;}
+   if(p.estado==='ff_local'||p.estado==='ff_visitante'){var gw=p.estado==='ff_local'?ra:rb;
+    if(gw&&gw.id===a.id)wa++;else wb++;
+    out+='· J'+J.num+': FF, ganó '+corto(gw)+' 3-0\n';any=true;continue;}
+   if(m[0]===m[1]){emp++;out+='· J'+J.num+': '+m[0]+'-'+m[1]+' (empate)\n';}
+   else{var gan=m[0]>m[1]?ra:rb;
+    if(gan&&gan.id===a.id)wa++;else wb++;
+    out+='· J'+J.num+': '+m[0]+'-'+m[1]+' (ganó '+corto(gan)+')\n';}
+   any=true;
+  }
+ }
+ if(!any)return corto(a)+' y '+corto(b)+' todavía no se han cruzado en esta copa.';
+ out+='\nBalance: '+corto(a)+' '+wa+' · '+emp+' empates · '+wb+' '+corto(b)+'.';
+ if(wa>wb)out+=' Va ganando el historial '+corto(a)+' 😉';
+ else if(wb>wa)out+=' Va ganando el historial '+corto(b)+' 😉';
+ return out.replace(/\n$/,'');
+}
+function otroEquipoIA(q,excl){
+ var t=normIA(q),i,out=[],j;
+ for(i=0;i<S.equipos.length;i++){
+  var e=S.equipos[i],nombre=normIA(corto(e));
+  if(!nombre)continue;
+  var found=false;
+  if(nombre.length>=3&&t.indexOf(nombre)>=0)found=true;
+  if(!found){var parts=nombre.split(/\s+/);
+   for(var k=0;k<parts.length;k++)if(parts[k].length>=4&&t.indexOf(parts[k])>=0)found=true;
+  }
+  if(found&&(!excl||e.id!==excl.id))out.push(e);
+ }
+ var res=[];
+ for(i=0;i<out.length;i++){var dup=false;for(j=0;j<res.length;j++)if(res[j].id===out[i].id)dup=true;if(!dup)res.push(out[i]);}
+ return res.length===1?res[0]:null;
+}
+function arribaIA(n,idx){
+ var J=jornada(n);if(!J)return 'No existe la Jornada '+n+'.';
+ var p=J.partidos[idx];
+ if(!p)return 'En la Jornada '+n+' solo hay P1 a P'+J.partidos.length+'.';
+ var a=eq(p.local),b=eq(p.visitante),AB=arribaAbajo(p);
+ if(!AB||!a||!b)return '';
+ var sup=eq(AB.arriba),sdo=eq(AB.abajo);
+ return 'En el P'+(idx+1)+' de la Jornada '+n+' ('+corto(a)+' vs '+corto(b)+') va arriba '+corto(sup)+' y abajo '+corto(sdo)+'. El que va arriba puede pedir balón o portería.';
+}
+function textoJugadoresIA(id){
+ if(id===8)return 'Cambios obligatorios: a los 5 minutos entran TODOS los cambios disponibles; no se hacen más cambios ni antes ni después, así exista lesión.';
+ if(id===9)return 'El equipo CONTRARIO decide qué jugador NO juega el partido completo; ese jugador queda fuera. Si el equipo no tiene jugadores de sobra, la carta se invalida para ambos.';
+ if(id===10)return 'El equipo CONTRARIO decide qué jugador SÍ juega el partido completo; ese jugador no puede ser sustituido ni sacado. Si no hay suficientes jugadores, la carta se invalida para ambos.';
+ if(id===11)return 'Juego limpio: juega el escalafón de jugadores con MENOS tarjetas; en empate decide el equipo y los elegidos juegan los 10 minutos sin cambios; sólo pueden dar cambios jugadores totalmente limpios; si el equipo tiene jugadores justos o menos, la carta se invalida.';
+ return '';
+}
+function dinPartidoIA(n,idx){
+ var J=jornada(n);if(!J)return 'No existe la Jornada '+n+'.';
+ var p=J.partidos[idx];if(!p)return 'En la Jornada '+n+' no existe ese partido.';
+ var a=eq(p.local),b=eq(p.visitante),ic=p.carta?cartaInfo(p.carta):null;
+ var est='Pendiente';
+ if(p.estado==='nulo')est='Nulo (0-0, sin puntos)';
+ else if(p.estado==='ff_local')est='FF 3-0, ganó '+(a?corto(a):'local');
+ else if(p.estado==='ff_visitante')est='FF 3-0, ganó '+(b?corto(b):'visitante');
+ else if(p.estado!=='pendiente')est=mar(p)[0]+'-'+mar(p)[1];
+ var out='El P'+(idx+1)+' de la J'+n+' es '+(a?corto(a):'—')+' contra '+(b?corto(b):'—')+': '+(ic?ic.ico+' '+ic.t:'sin carta')+'. Resultado: '+est+'.';
+ var rid=cartaReglaId(p);
+ if(rid){var decidida=p&&p.aplica&&p.aplica[rid]!==undefined;
+  out+='\nY RECUERDA ('+(decidida?(p.aplica[rid]?'regla aplicada':'se decidió no aplicar, juego normal'):'falta decidir si se aplica')+'): '+textoJugadoresIA(rid);}
+ return out;
+}
+function ayudaIA(){
+ return elegirIA(['Te cuento qué sé responder:','Puedo ayudarte con esto:'])+'\n'
+ +'· Puntos y tabla de posiciones (hasta el desglose partido por partido)\n'
+ +'· Resultados y ganador de cada jornada\n'
+ +'· Goles, asistencias, paradas y autogoles: por jugador, por equipo o el top de la copa\n'
+ +'· Tarjetas y fair play, por equipo o por jugador\n'
+ +'· Sanciones y monto por jugador\n'
+ +'· Challenge: quién lo pidió, contra quién, si ganó o perdió\n'
+ +'· Cartas de cada jornada, árbitros y puertas\n'
+ +'· Quién va arriba o abajo en cada partido\n'
+ +'· Quién puede jugar o no según las cartas 8, 9, 10 y 11\n'
+ +'· Reglamento (las bases) y detalles del torneo\n'
+ +'\nPregúntame con naturalidad, como si lo habláramos en la cancha. ⚽';
+}
 function respuestaAsistente(q){
  var t=normIA(q),mm=t.match(/jornada\s*([1-4])/),n=mm?+mm[1]:(S.ui.jor||jornadaActual());
  function hay(re){return re.test(t);}
- if(hay(/^(hola|buenas|hey|que tal)\b/)&&t.length<28)return '¡Hola! Pregúntame lo que quieras de la copa o del reglamento.';
- if(preguntaPuntosIA(t)&&equipoPreguntaIA(q)){
-  return auditoriaPuntosIA(equipoPreguntaIA(q),mm?+mm[1]:null);
+ var jeq=equipoPreguntaIA(q);
+ if(hay(/^(hola|buenas|hey|epa|que mas|saludo)\b/)&&t.length<30)return elegirIA([
+  '¡Hola! 👋 Aquí estoy: pregúntame lo que quieras de la copa y te contesto al tiro.',
+  '¡Eh, qué más! ¿Qué necesitas saber? Resultados, goles, tarjetas, challenge… pregunta tranquilo.']);
+ if(hay(/gracias|buenisimo|crack|perfecto|excelente|genial|de lujo/))return elegirIA([
+  '¡Con gusto! 🤝 Aquí estaré para lo que necesites de la copa.',
+  '¡Eso nomás! Si quieres otro dato, pregunta sin miedo. ⚽']);
+ if(hay(/\b(chao|adios|bye|hasta luego)\b/)&&t.length<25)return elegirIA([
+  '¡Nos vemos! Si necesitas algo de la copa, aquí ando. ⚽',
+  '¡Listo, chau! Cuando quieras otro dato, me escribes aquí. 👋']);
+ if(hay(/ayudame|\bayuda\b|que puedes|que sabes|como funcionas/))return ayudaIA();
+
+ var jp=buscarJugadorIA(q);
+ if(jp&&(hay(/goles\b|gol\b|anoto|marco|autogol|asisten|parada|atajada|tarjeta|amarilla|roja|estad|numeros|como (le )?va|como anda/)||t.indexOf(normIA(jp.nombre))>=0)){
+  return statsJugadorIA(jp);
  }
- if(preguntaPuntosIA(t)&&!equipoPreguntaIA(q))return listaTablaIA()+'\n\nDime el nombre del equipo y te desgloso sus puntos partido por partido.';
- if(hay(/monto|cuanto paga|cuanto dinero|precio|cuota/)){var me=t.match(/equipo\s*([1-4])/);return montoIA(me?+me[1]:0);}
- if(hay(/quien (gano|gana|se llevo) la jornada|ganador de la jornada/))return ganadorJornadaIA(n);
+ if(preguntaPuntosIA(t)&&jeq)return auditoriaPuntosIA(jeq,mm?+mm[1]:null);
+ if(preguntaPuntosIA(t)&&!jeq)return listaTablaIA()+'\n\nDime el nombre de cualquier equipo y te desgloso sus puntos partido por partido. 🧮';
+
+ if(jeq){
+  var otro=otroEquipoIA(q,jeq);
+  if(otro)return h2hIA(jeq,otro);
+  if(hay(/tarjeta|amarilla|roja|fair play|juego limpio|disciplin/))return tarjetasEquipoIA(jeq);
+  if(hay(/autogol|gol|asisten|atajada|parada/))return golesEquipoIA(jeq);
+  if(hay(/challenge|chalen|reto/))return challengeEquipoIA(jeq);
+  if(hay(/sancion|penalizad|castig/))return sancionesEquipoIA(jeq);
+  if(hay(/proximo|siguiente|pendiente|cuando juega|le falta/))return proximosEquipoIA(jeq);
+  if(hay(/arbitro|pita/))return 'Los árbitros son los capitanes, nunca su propio equipo. Dime "árbitros de la jornada" y te doy el reparto. 🙌';
+  return statsEquipoIA(jeq);
+ }
+
+ if(hay(/arriba|abajo|balon|porteria/)&&(hay(/quien|cual/)||/p(?:artido)?\s*[1-4]\b/.test(t))){
+  var pjm=t.match(/\bp(?:artido)?\s*([1-4])\b/),pjx=pjm?+pjm[1]-1:-1;
+  if(pjx>=0)return arribaIA(n,pjx);
+  var J3=jornada(n),kk3,pend=[],outs2=[];
+  if(J3)for(kk3=0;kk3<J3.partidos.length;kk3++)if(J3.partidos[kk3].estado==='pendiente')pend.push(kk3);
+  if(!J3||!pend.length)return 'La Jornada '+n+' ya está completa: todos sus partidos tienen resultado. 🏁';
+  for(kk3=0;kk3<pend.length;kk3++)outs2.push(arribaIA(n,pend[kk3]));
+  return outs2.join('\n');
+ }
+
  if(hay(/goleador|maximo anotador|quien mete mas|mas goles/))return goleadoresIA(!hay(/goleadores|tabla de goleadores/));
+ if(hay(/autogol|autogoles|propia puerta|en propia/))return topsIA('ag');
+ if(hay(/asistencia/)&&hay(/mas|top|mejor|lider|quien tiene/))return topsIA('a');
+ if(hay(/parada|atajada/)&&hay(/mas|top|mejor|lider|quien tiene/))return topsIA('p');
+ if(hay(/amarilla/)&&hay(/mas|top|quien tiene/))return topsIA('am');
+ if(hay(/roja/)&&hay(/mas|top|quien tiene/))return topsIA('ro');
  if(hay(/fair play|juego limpio/))return fairIA(hay(/quien va primero|mejor|lider|primero/));
- if(hay(/sancion/))return sancionesIA();
- if(hay(/challenge|chalen|reto/))return challengeIA(hay(/como va|estado|quien lo pidio|pendiente/)||hay(/jornada/));
+ if(hay(/challenge|chalen|reto/)){
+  if(hay(/como funciona|que es\b|explica/))return 'El challenge es un reto que cada equipo puede pedir una vez por jornada: se juega como rondo de dominios con 3 jugadores. Si gana, ese partido se alarga 2 minutos; si pierde, no hay alargue y queda bloqueado: no puede pedir challenge la jornada siguiente. El rival que no lo pidió conserva su derecho.';
+  return challengeIA(n);}
+ if(hay(/quien (puede|no puede|tiene que) jugar|juega o no/)&&hay(/carta|regla|dinamica/))return 'Las cartas que traen regla de quién juega o no son estas:\n· Carta 8: '+textoJugadoresIA(8)+'\n· Carta 9: '+textoJugadoresIA(9)+'\n· Carta 10: '+textoJugadoresIA(10)+'\n· Carta 11: '+textoJugadoresIA(11)+'\nDime el partido (Ej: P2 jornada 1) y te lo detallo con su resultado.';
  if(hay(/carta|bombo|sorteo|dinamica/)){
-  if(hay(/como funciona|que es|regla|explica/))return 'Cada jornada tiene su mazo de 14 cartas; se reparten sin repetir y cada partido juega con la suya. Si se agotan, se vuelven a barajar.';
+  if(hay(/como funciona|que es\b|explica/))return 'Cada jornada tiene su mazo de 14 cartas; se reparten sin repetir y cada partido juega con la suya. Si se agotan, se vuelven a barajar.';
+  var pjm2=t.match(/\bp(?:artido)?\s*([1-4])\b/);
+  if(mm&&pjm2)return dinPartidoIA(n,+pjm2[1]-1);
   return cartasIA(n);}
- if(hay(/arbitro|arbitr|pita/)){
+ if(hay(/arbitro|pita/)){
   if(hay(/quien arbitra|arbitros de|reparto/))return arbitrosIA(n);
-  return 'Solo arbitran los capitanes, nunca el partido de su propio equipo, y cada uno pita 3 partidos por jornada.';}
+  return 'Solo arbitran los capitanes, nunca el partido de su propio equipo, y cada uno pita 3 partidos por jornada. 🧑‍⚖️';}
  if(hay(/puerta/))return puertasIA();
  if(hay(/proximo|siguiente partido|que falta/))return proximoIA();
  if(hay(/quien va primero|quien lidera|lider|puntero|primero de la tabla/))return liderIA();
- if(hay(/desempat|empate|penal/))return 'Se desempata por puntos, luego diferencia de goles, después el resultado entre ellos y, si sigue el empate, por penales.';
- if(hay(/ff|forfeit|no se present|nulo/))return 'En FF el partido queda 3-0 y se borran las estadísticas, pero los puntos sí cuentan. Si ambos se presentan con 2 jugadores, el partido es nulo: nadie puntúa.';
- if(hay(/sustitu|cambio|fuera|lesion/))return 'Cada equipo tiene 8 jugadores y puede hacer hasta 3 sustituciones por copa; para abrir la jornada necesita al menos 5 jugadores activos.';
+ if(hay(/quien va ultimo|ultimo de la tabla|colero|colista/)){var arrU=calculo(),xU=arrU[arrU.length-1];return (xU&&xU.pj)?corto(xU.e)+' va de último con '+xU.pts+' puntos.':'Todavía no se jugó nada, así que no hay último. 😅';}
+ if(hay(/sancion/))return sancionesIA();
+ if(hay(/monto|cuanto paga|cuanto dinero|precio|cuota/)){var me=t.match(/\bequipo\s*([1-4])\b/);return montoIA(me?+me[1]:0);}
  if(hay(/tabla|clasificacion|posiciones|puntos/)){
   var campeon=jornadaTerminada(4)?('\n\nCampeón: '+((calculo()[0]&&corto(calculo()[0].e))||'—')):'';
   return listaTablaIA()+campeon;}
  if(hay(/campeon|quien gana la copa|ganador de la copa/)){
-  if(!jornadaTerminada(4))return 'La copa aún no ha terminado.';
-  return 'El campeón es '+((calculo()[0]&&corto(calculo()[0].e))||'—')+'.';}
- if(hay(/cuanto dura|duracion|minutos|botes|tiempo/))return 'Cada partido dura 10 minutos y termina con 2 botes; la carta 14 lo alarga a 15 y el challenge ganado suma 2.';
- if(hay(/hora|domingo|cancha|donde|ciudad deportiva/))return 'Se juega los domingos a las 5:00 p. m. en la Ciudad Deportiva.';
- if(hay(/jugador|plantilla|cuantos/))return 'Cada equipo tiene 8 jugadores (5 titulares y 3 suplentes).';
+  if(!jornadaTerminada(4))return 'La copa aún no termina: sigue jugándose y todavía no hay campeón. 😎';
+  return 'El campeón es '+((calculo()[0]&&corto(calculo()[0].e))||'—')+'. 🏆';}
+ if(hay(/cuanto dura|duracion|minutos|botes|tiempo/))return 'Cada partido dura 10 minutos y termina con 2 botes; la carta 14 lo alarga a 15 y un challenge ganado suma 2 más. ⏱';
+ if(hay(/hora|domingo|cancha|donde juegan|ciudad deportiva/))return 'Se juega los domingos a las 5:00 p. m. en la Ciudad Deportiva.';
+ if(hay(/jugador|plantilla|cuantos jugadores/))return 'Cada equipo tiene 8 jugadores (5 titulares y 3 suplentes).';
  if(hay(/id de la copa|codigo de la copa|identificador/))return 'El ID de esta copa es '+(S.idCopa||'—')+'.';
+ if(hay(/desempat|penales\b/))return 'Se desempata por puntos, luego diferencia de goles, después el resultado entre ellos y, si sigue el empate, por penales.';
+ if(hay(/\bff\b|forfeit|no se present|nulo/))return 'En FF el partido queda 3-0 y se borran las estadísticas, pero los puntos sí cuentan. Si ambos se presentan con 2 jugadores, el partido es nulo: nadie puntúa.';
+ if(hay(/sustitu|cambio|fuera|lesion/))return 'Cada equipo tiene 8 jugadores y puede hacer hasta 3 sustituciones por copa; para abrir la jornada necesita al menos 5 jugadores activos.';
+ if(hay(/quien (gano|gana|se llevo) la jornada|ganador de la jornada/))return ganadorJornadaIA(n);
  if(mm)return resultadosJornadaIA(n);
  var reg=buscarReglamentoIA(q);
  if(reg)return 'En las bases dice: «'+reg+'».';
- return 'No encontré eso en las bases ni en los datos de esta copa.';
+ return elegirIA([
+  'Esa no la tengo clara 🤔, pero te dejo el pulso de la copa 👇\n\n'+liderIA()+'\n\nEn goles: '+goleadoresIA(true)+'\n\nEscribe “ayuda” para ver todo lo que sé responder.',
+  'De esa no estoy seguro 😅. Lo que sí te puedo decir ahora mismo: '+liderIA()+' '+goleadoresIA(true)+'\n\nPrueba con “resultados de la jornada 2”, “autogoles” o “challenge”, o escribe “ayuda”.']);
 }
+
 
 function contextoIA(){
  var out='ID de la copa: '+(S.idCopa||'—')+'\nEquipos: ';
@@ -3471,6 +3738,9 @@ function contextoIA(){
  out+='\nJornadas:\n';
  for(i=0;i<S.jornadas.length;i++)out+=resultadosJornadaIA(S.jornadas[i].num)+'\n';
  out+='Sanciones:\n'+sancionesIA();
+ out+='Sanciones:\n'+sancionesIA();
+ out+='\nFair play (menos penalización es mejor):\n'+fairIA();
+ out+='\nChallenge de la jornada '+(S.ui.jor||jornadaActual())+'\n'+challengeIA();
  out+='\nMonto por jugador: '+money(S.monto||0)+' (por equipo: monto × jugadores).';
  return out;
 }
@@ -3496,8 +3766,12 @@ function enviarAsistente(q){
 function vistaAsistente(){
  asistSaludo();
  var h='<h2 class="v">🤖 Asistente IA · Copa CD</h2><div class="tar">';
- h+='<div class="nota" style="margin:0 0 6px">Pregúntame lo que necesites y te respondo <b>solo eso</b>, con los datos de este dispositivo: puedo desglosar los puntos partido por partido, además de resultados, goleadores, sanciones, cartas, challenge, árbitros o cualquier regla.</div>';
- var sug=['¿Quién va primero?','Resultados de la jornada 1','¿Quién ganó la jornada 1?','¿Por qué tiene puntos '+(S.equipos.length?corto(S.equipos[0]):'un equipo')+'?','¿Quién es el goleador?','¿Cómo funciona el challenge?','¿Cómo se desempata?','Sanciones','Próximo partido','¿Cuánto paga cada equipo?','Árbitros de la jornada'],i;
+ h+='<div class="nota" style="margin:0 0 6px">Te respondo <b>solo eso</b> que me preguntes, con los datos de este dispositivo y como si lo habláramos en la cancha 🤙: números de cada jugador o equipo, tops, historiales entre dos equipos, quién va arriba o abajo en cada partido, cartas, challenge, sanciones o reglas.</div>';
+ var sug=['¿Quién va primero?','Resultados de la jornada 1','¿Quién es el goleador?','¿Quién tiene más amarillas?','¿Quién ha metido autogol?','¿Quién tiene más paradas?'];
+ var asEq1=S.equipos[0],asEq2=S.equipos[1];
+ if(asEq1&&asEq2){sug.push('¿Cómo le va a '+corto(asEq1)+' contra '+corto(asEq2)+'?');sug.push('¿Quién va arriba en el P1?');}
+ else if(asEq1)sug.push('¿Cómo anda '+corto(asEq1)+'?');
+ sug.push('¿Cómo funciona el challenge?');
  h+='<div class="ia-sug">';
  for(i=0;i<sug.length;i++)h+='<button data-a="ia-sug" data-q="'+esc(sug[i])+'">'+esc(sug[i])+'</button>';
  h+='</div><div class="ia-log" id="ia-log">';

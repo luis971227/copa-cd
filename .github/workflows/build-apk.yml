@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Instalador nuevo vía PackageInstaller del sistema: en Android 14/15 el botón Instalar ahora Sí abre el diálogo de instalación.'
+          body: 'Asistente IA mejorado y humanizado: responde cualquier pregunta de la copa (estadísticas por jugador y equipo, goles, asistencias, paradas, autogoles, tarjetas, challenge con contra quién, historiales entre equipos, quién va arriba o abajo, quién juega o no según la carta 8/9/10/11 y reglamento)'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
