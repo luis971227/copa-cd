@@ -675,6 +675,9 @@ input[type=color]{cursor:pointer}
 .login .pie{font-size:10.5px;color:rgba(255,255,255,.48);margin:18px 0 0;line-height:1.6;text-align:center}
 .login .pie b{color:rgba(255,255,255,.75)}
 .lg-perks{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:14px 0 0}
+#banner-nube{margin:4px 0 10px;padding:11px 13px;background:var(--suave);border:1px solid var(--borde);border-radius:12px;font-size:12.5px;line-height:1.5;text-align:center}
+#banner-nube .bn-sub{color:var(--gris2);margin:5px 0 8px}
+#banner-nube .btn{width:100%;margin:0}
 .lg-perks span{font-size:9px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);border-radius:99px;padding:4px 9px}
 .login .lg-tools + .lg-brand{margin-top:2px}
 
@@ -1009,7 +1012,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.50</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.51</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1434,10 +1437,10 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.50',APP_BUILD=51;
+var APP_VERSION='1.0.51',APP_BUILD=52;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
-var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false;
+var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
 var actualizaUI=null,actualizaSnooze=0;
 var cron={pid:'',mins:10,seg:600,corriendo:false,t:null,a5:false};
 
@@ -2077,6 +2080,7 @@ h+='<div class="vacio"><b>Bienvenido a Copa CD</b>Gestiona el torneo: equipos, j
     +(puede('torneo')?'<div class="eq-fila" style="margin-top:14px;justify-content:center"><span class="nota" style="margin:0;flex:none;font-weight:900">💰 Monto por jugador ($):</span><input class="txt" id="n-monto" inputmode="numeric" placeholder="Ej: 5000" value="'+(S.monto||'')+'" style="max-width:130px"></div><div style="margin-top:10px"><button class="btn ro" data-a="crear">Crear torneo (4 equipos)</button></div>'
      :'<div style="margin-top:14px">El torneo aún no está creado. '+(r==='jugador'?'Tu capitán lo pondrá en marcha.':'El súper admin lo pondrá en marcha.')+'</div>')+'</div>';
   h+='<div class="dash-sync"><button class="btn" data-a="sincronizar">🔄 Sincronizar copa compartida</button></div>';
+  h+='<div id="banner-nube"></div>';
   h+='<div class="nota" style="margin:-4px 0 10px">¿Te pasaron una copa por WhatsApp? Ábrela aquí sin crear una nueva: pega el código o elige el archivo .json.</div>';
   if(S.historial.length)h+='<div class="tar nota">Hay '+S.historial.length+' copa'+(S.historial.length>1?'s':'')+' archivada'+(S.historial.length>1?'s':'')+' en <b>Histórico</b>.</div>';
   return h;
@@ -3182,6 +3186,7 @@ function vistaLogin(){
   +'<div class="caja"><div class="lg-badge"><i></i>Torneo oficial</div>'
   +'<h2>Bienvenido</h2><p class="sub">Entra para gestionar equipos, jornadas, cartas y estadísticas de la copa.</p>'
   +'<div class="err" id="lg-err"></div>'
+  +'<div id="banner-nube"></div>'
   +'<div class="lg-field"><span class="lg-ico">👤</span><input class="txt" id="lg-user" placeholder=" " autocapitalize="none" autocomplete="username" spellcheck="false"><span class="lg-lab">Usuario</span></div>'
   +'<div class="lg-field"><span class="lg-ico">🔒</span><input class="txt" id="lg-pass" type="password" placeholder=" " autocomplete="current-password"><span class="lg-lab">Contraseña</span><button class="lg-eye" data-a="pass-ojo" aria-label="Mostrar contraseña">👁</button></div>'
   +'<button class="btn ro pri" data-a="entrar">Entrar <span aria-hidden="true">→</span></button>'
@@ -3214,6 +3219,16 @@ function entrar(){
   },650);
 }
 function errorLogin(m){var e=document.getElementById('lg-err');if(e){e.textContent=m;e.className='err on';}}
+function htmlBannerNube(){
+ var ts=nubeUltEstado,tx;
+ if(ts===null)tx='☁️ Conectando con la nube para bajar la copa oficial ('+NUBE_ID_DEFECTO+')…';
+ else if(ts.ok===null)tx='☁️ Revisando la nube… (intento '+(nubeIntentos||1)+'º)';
+ else if(ts.ok===true)tx=(S.equipos.length?'✅ Copa cargada desde la nube':('✅ Nube revisada: '+ts.msg));
+ else tx='⚠️ La descarga falló: '+ts.msg+' · reintento automático cada 30 segundos';
+ return '<div class="bn-msg">'+tx+'</div><div class="bn-sub">Debe bajar la copa oficial '+NUBE_ID_DEFECTO+' de la nube con internet activo. Si este aviso sigue, toca el botón y mira el mensaje exacto:</div>'
+  +'<button class="btn gh" data-a="nube-carga">☁️ Reintentar la descarga ahora</button>';
+}
+function pintarBannerNube(){var b=document.getElementById('banner-nube');if(b)b.innerHTML=htmlBannerNube();}
 function vistaCambiarPass(){
   var u=S.sesion?S.sesion.u:'';
   return '<div class="login"><div class="login-bg"><i></i><i></i><i></i></div><div class="login-wrap">'
@@ -4128,6 +4143,7 @@ function render(){
     ses.hidden=true;ses.innerHTML='';
     permUI=null;cocapUI=null;arbUI=null;quitarUI=null;chalUI=null;cerrarUI=null;var pu0=document.getElementById('perm-usr');if(pu0){pu0.className='';pu0.innerHTML='';}
     renderCocap();renderArb();renderQuitar();renderChal();
+    pintarBannerNube();
     aplicarTema();guardar();transicion();return;
   }
   if(S.sesion&&S.sesion.debeCambiar){
@@ -4279,6 +4295,7 @@ document.addEventListener('click',function(ev){
     guardar();toast(S.ia.key&&S.ia.url?'IA en la nube conectada':'Conexión de IA guardada');render();break;
    case 'ia-clear':S.ia={url:'',model:'',key:''};guardar();toast('IA en la nube desactivada');render();break;
    case 'entrar':entrar();break;
+   case 'nube-carga':nubeConfirmado=true;nubeDescargar(false);break;
      case 'salir':cronStop();S.ui.partido='';cartaUI=null;syncUI=false;permUI=null;quitarUI=null;chalUI=null;navAbierto=false;navHist=[];S.sesion=null;S.ui.vista='dashboard';guardar();render();toast('Sesión cerrada');break;
    case 'nav-toggle':setNav(!navAbierto);break;
   case 'vista':irA(el.getAttribute('data-v'));break;
@@ -5432,6 +5449,7 @@ function nubePublicar(silencioso){
    if(/<!DOCTYPE|<html|Error 403|unusual traffic/i.test(m))m='Tu red bloquea el acceso a Google (403): prueba por WiFi y vuelve a publicar';
    else if(/Invalid path|Invalid token/i.test(m))m='Ruta inválida: borra en Nube la URL de Realtime Database y vulvela a pegar SIN espacios ni `/` al final, luego Guardar y Publica';
    else if(/PERMISSION_DENIED|Permission denied|Unauthorized|401/i.test(m))m='Las reglas de la base bloquean esto: si publicaste sin cuenta, pega en Firebase → Realtime Database → Reglas las reglas «modo directo» y pulsa Publicar';
+  nubeUltEstado={ok:false,ts:Date.now(),msg:m};pintarBannerNube();
    cerrarCargandoNube();
    if(silencioso){nubeAutoFallos=(nubeAutoFallos||0)+1;if(nubeAutoFallos===2)toast('⚠️ Auto: la copa no se pudo publicar. Revisa internet y que en Firebase → Reglas estén pegadas las reglas modo directo');return;}
  if(!silencioso)toast('No se pudo publicar: '+m);
@@ -5448,6 +5466,7 @@ function nubeDescargar(silencioso,reintento){
  if(!idCopaNube&&NUBE_ID_DEFECTO)idCopaNube=NUBE_ID_DEFECTO;
  if(!/^CD-[A-HJ-NP-Z2-9]{6}$/.test(idCopaNube)){if(!silencioso)toast('Escribe un ID de copa válido (CD-XXXXXX)');return;}
  var consulta=nubeSesion?'?auth='+encodeURIComponent(nubeSesion.token):'';
+ nubeIntentos++;nubeUltEstado={ok:null,ts:Date.now(),msg:'revisando'};pintarBannerNube();
  var bajada=nubeSesion?nubeToken().then(function(token){
   consulta='?auth='+encodeURIComponent(token);
   return httpNube(nubeUrl(idCopaNube)+consulta,'GET');
@@ -5479,6 +5498,7 @@ function nubeDescargar(silencioso,reintento){
     }else errores++;
    }
   }finally{nubeBatch=false;}
+  nubeUltEstado={ok:true,ts:Date.now(),msg:aplicados+' paquete(s) aplicados, '+ignorados+' ignorados'};pintarBannerNube();
   if(aplicados&&nubeAuto&&S.idCopa)nubeAutoIniciar();
   render();
   if(silencioso){
