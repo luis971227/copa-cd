@@ -11,6 +11,7 @@ import android.util.Base64;
 import android.util.Log;
 
 import androidx.core.content.FileProvider;
+import android.app.PendingIntent;
 import android.content.pm.PackageInstaller;
 import android.content.IntentFilter;
 
@@ -396,7 +397,7 @@ public class CdpCompartir extends CordovaPlugin {
                         if (ext == null || !ext.containsKey(PackageInstaller.EXTRA_STATUS)) return;
                         int estado = ext.getInt(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
                         if (estado == PackageInstaller.STATUS_PENDING_USER_ACTION) {
-                            Intent act = (Intent) ext.getParcelable(PackageInstaller.EXTRA_INTENT);
+                            Intent act = (Intent) ext.getParcelable(Intent.EXTRA_INTENT);
                             if (act != null) { act.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); uiLanzar(c, act); }
                             return;
                         }
