@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Resumen del challenge en la jornada (quien lo pidio, contra quien, si gano o perdio y quien queda bloqueado); reglas de cartas 8/9/10/11 con quien puede jugar segun el reglamento y aviso al aplicar; los botones se ocultan al aplicar y vuelven al reiniciar el partido.'
+          body: 'Cada partido muestra quien esta ARRIBA (pide balon o portería) y quien ABAJO; en la jornada cada pareja se cruza dos veces y ningún equipo queda dos veces arriba ni dos veces abajo contra el mismo rival.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
