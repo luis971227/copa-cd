@@ -996,7 +996,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.21</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.22</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1420,7 +1420,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.21',APP_BUILD=22;
+var APP_VERSION='1.0.22',APP_BUILD=23;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -2720,11 +2720,12 @@ function vistaTabla(){
 
 function calcEstadisticas(){
  var est={},i,k,t,jj;
- for(i=0;i<S.equipos.length;i++)for(jj=0;jj<S.equipos[i].jugadores.length;jj++){var j=S.equipos[i].jugadores[jj];est[j.id]={j:j,e:S.equipos[i],g:0,a:0,p:0,am:0,ro:0};}
+ for(i=0;i<S.equipos.length;i++)for(jj=0;jj<S.equipos[i].jugadores.length;jj++){var j=S.equipos[i].jugadores[jj];est[j.id]={j:j,e:S.equipos[i],g:0,a:0,ag:0,p:0,am:0,ro:0};}
  for(i=0;i<S.jornadas.length;i++){var ps=S.jornadas[i].partidos;
   for(k=0;k<ps.length;k++){var p=ps[k];
    if(p.estado==='ff_local'||p.estado==='ff_visitante'||p.estado==='nulo')continue;
    for(t=0;t<p.goles.length;t++)if(!p.goles[t].autogol&&est[p.goles[t].jug])est[p.goles[t].jug].g++;
+   for(t=0;t<p.goles.length;t++)if(p.goles[t].autogol&&est[p.goles[t].jug])est[p.goles[t].jug].ag++;
    for(t=0;t<p.asist.length;t++)if(est[p.asist[t].jug])est[p.asist[t].jug].a++;
    for(t=0;t<p.paradas.length;t++)if(est[p.paradas[t].jug])est[p.paradas[t].jug].p+=p.paradas[t].n;
    for(t=0;t<p.tarjetas.length;t++){var x=est[p.tarjetas[t].jug];if(!x)continue;if(p.tarjetas[t].tipo==='amarilla')x.am++;else x.ro++;}
@@ -2782,13 +2783,13 @@ function vistaJugadores(){
  for(i=0;i<S.equipos.length;i++){var e=S.equipos[i];
   h+='<div class="eq-tit"><i class="pall" style="background:'+e.color+'"></i>'+esc(corto(e))+'</div>';
   if(!e.jugadores.length){h+='<div class="tar nota">Sin jugadores.</div>';continue;}
-  h+='<div class="tar" style="overflow-x:auto"><table class="tabla"><tr><th>#</th><th>Jugador</th><th>G</th><th>A</th><th>P</th><th>🟨</th><th>🟥</th></tr>';
-   for(jj=0;jj<e.jugadores.length;jj++){var j=e.jugadores[jj],s=est[j.id]||{g:0,a:0,p:0,am:0,ro:0};
+  h+='<div class="tar" style="overflow-x:auto"><table class="tabla"><tr><th>#</th><th>Jugador</th><th>G</th><th>AG</th><th>A</th><th>P</th><th>🟨</th><th>🟥</th></tr>';
+   for(jj=0;jj<e.jugadores.length;jj++){var j=e.jugadores[jj],s=est[j.id]||{g:0,a:0,ag:0,p:0,am:0,ro:0};
     h+='<tr><td>'+(j.dorsal?esc(j.dorsal):'–')+'</td><td class="nom">'+avMini(j,e)+esc(j.nombre||'Sin nombre')+(j.fuera?'<span class="sus" style="background:#3A3A3A">FUERA</span>':'')+(s.am>=3?'<span class="sus">3🟨 SUSP</span>':'')+(s.ro>0?'<span class="sus" style="background:#7F7F7F">'+s.ro+'🟥</span>':'')+'</td>'
-    +'<td>'+s.g+'</td><td>'+s.a+'</td><td>'+s.p+'</td><td>'+s.am+'</td><td>'+s.ro+'</td></tr>';}
+    +'<td>'+s.g+'</td><td>'+s.ag+'</td><td>'+s.a+'</td><td>'+s.p+'</td><td>'+s.am+'</td><td>'+s.ro+'</td></tr>';}
   h+='</table></div>';
  }
- h+='<div class="nota">Goles, asistencias, paradas y tarjetas por jugador (FF y partidos nulos no cuentan). '
+ h+='<div class="nota">Goles, asistencias, paradas y tarjetas por jugador (FF y partidos nulos no cuentan). AG = autogoles: cuentan para el marcador del equipo rival y no suman al goleador. '
   +'Reglamento: 3 tarjetas amarillas acumuladas = pierde el próximo partido; roja = expulsión de ese partido y el siguiente.</div>';
  return h;
 }
