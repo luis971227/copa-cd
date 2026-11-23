@@ -271,6 +271,25 @@ public class CdpCompartir extends CordovaPlugin {
         });
     }
 
+    private void abrirDescargas(final CallbackContext cb) {
+        try {
+            Context ctx = cordova.getContext();
+            Intent d = new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS);
+            d.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                ctx.startActivity(d);
+                cb.success("descargas");
+            } catch (Exception e1) {
+                Intent d2 = new Intent("android.intent.action.VIEW_DOWNLOADS");
+                d2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                ctx.startActivity(d2);
+                cb.success("descargas-v2");
+            }
+        } catch (Exception e) {
+            cb.error("No se pudo abrir Descargas: " + e.getMessage());
+        }
+    }
+
     private void instalar(CordovaArgs args, final CallbackContext cb) {
         final String nombre = args.optString(0);
         cordova.getThreadPool().execute(new Runnable() {

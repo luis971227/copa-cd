@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Instalador reforzado: primero ACTION_INSTALL_PACKAGE oficial, luego la via Descargas, sesion del sistema y respaldos; el dialog ahora dice por que via fue y que hacer si el cartel de Android no aparece.'
+          body: 'Nuevo boton Abrir Descargas: abre la carpeta Descargas de Android para instalar el APK con un toque (la via manual que funciona), con aviso del Bloqueo automatico de Samsung si el instalador no aparece.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
