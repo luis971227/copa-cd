@@ -1009,7 +1009,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.45</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.46</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1434,10 +1434,10 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.45',APP_BUILD=46;
+var APP_VERSION='1.0.46',APP_BUILD=47;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
-var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
+var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0;
 var actualizaUI=null,actualizaSnooze=0;
 var cron={pid:'',mins:10,seg:600,corriendo:false,t:null,a5:false};
 
@@ -1777,7 +1777,7 @@ function transicion(ms){var o=document.getElementById('carga');if(!o)return;o.cl
 function aplicarTema(){document.documentElement.setAttribute('data-tema',S.tema==='oscuro'?'oscuro':'claro');
  var mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.setAttribute('content',S.tema==='oscuro'?'#161618':'#8C1614');
  var bs=document.querySelectorAll('[data-a="tema"]'),bi;for(bi=0;bi<bs.length;bi++)bs[bi].innerHTML=S.tema==='oscuro'?'&#9728;&#65039;':'&#127769;';}
-function guardar(){try{localStorage.setItem(CLAVE,JSON.stringify(S));}catch(e){toast('⚠️ No se pudo guardar: almacén lleno o bloqueado');}if(nubeAuto&&nubeSesion&&!nubeBatch)nubeAutoProgramar();}
+function guardar(){try{localStorage.setItem(CLAVE,JSON.stringify(S));}catch(e){toast('⚠️ No se pudo guardar: almacén lleno o bloqueado');}if(nubeAuto&&!nubeBatch)nubeAutoProgramar();}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];});}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.className='on';if(toastT)clearTimeout(toastT);toastT=setTimeout(function(){t.className='';},2400);}
 function eq(id){for(var i=0;i<S.equipos.length;i++)if(S.equipos[i].id===id)return S.equipos[i];return null;}
@@ -4977,7 +4977,7 @@ function renderSync(){
    +nubeEstado
    +(nubeSesion?'<div class="acciones"><button class="btn '+(nubeAuto?'ro':'gh')+'" data-a="nube-auto" style="flex:1">🔁 Auto: '+(nubeAuto?'activada':'desactivada')+'</button><button class="btn ro" data-a="nube-subir" style="flex:1">☁️ Publicar mi copia</button><button class="btn ro" data-a="nube-bajar" style="flex:1">📥 Descargar y mezclar</button><button class="btn gh" data-a="nube-salir">Cerrar sesión nube</button></div>'
     +(nubeSesion?'<div class="nota">Con Auto activada, cada cambio local se publica solo y cada 45 s se revisa la nube; si otro dispositivo aportó datos, avisamos aquí. Sin internet sigue disponible el intercambio manual de abajo.</div>':'')
-    :'<div class="acciones"><button class="btn ro" data-a="nube-subir" style="flex:1">☁️ Publicar (modo directo)</button><button class="btn ro" data-a="nube-bajar" style="flex:1">📥 Descargar (modo directo)</button></div><div class="nota">Modo directo: publica y descarga sin cuenta de Firebase (requiere las reglas «modo directo» pegadas en Realtime Database → Reglas → Publicar). Con Auto sí hace falta cuenta:</div><label class="nota" for="nube-email">Correo de Firebase</label><input id="nube-email" class="txt" type="email" autocomplete="username" placeholder="correo@ejemplo.com">'
+    :'<div class="acciones"><button class="btn '+(nubeAuto?'ro':'gh')+'" data-a="nube-auto" style="flex:1">🔁 Auto: '+(nubeAuto?'activada':'desactivada')+'</button></div><div class="acciones"><button class="btn ro" data-a="nube-subir" style="flex:1">☁️ Publicar (modo directo)</button><button class="btn ro" data-a="nube-bajar" style="flex:1">📥 Descargar (modo directo)</button></div><div class="nota">Con Auto activada no hace falta cuenta: cada cambio se publica solo y cada 45 s se baja lo nuevo de otros moviles (requiere las reglas «modo directo» pegadas en Realtime Database → Reglas → Publicar).</div><label class="nota" for="nube-email">Correo de Firebase (opcional)</label><input id="nube-email" class="txt" type="email" autocomplete="username" placeholder="correo@ejemplo.com">'
      +'<label class="nota" for="nube-pass">Contraseña de Firebase</label><div style="position:relative"><input id="nube-pass" class="txt" type="password" autocomplete="current-password" placeholder="Contraseña" style="padding-right:46px"><button class="lg-eye" data-a="pass-ojo" data-t="nube-pass" aria-label="Mostrar contraseña" style="background:var(--chip);color:var(--tinta);border:1px solid var(--gris)">👁</button></div>'
      +'<div class="acciones"><button class="btn ro" data-a="nube-entrar" style="flex:1">Iniciar sesión</button><button class="btn gh" data-a="nube-crear" style="flex:1">Crear cuenta</button></div>')
    +'<div class="nota">Las cuentas Firebase son independientes de los usuarios locales de la APK. Toda persona con cuenta Firebase y el ID de una copa puede leer y aportar paquetes de esa copa; no uses esta nube para información privada.</div></details>'
@@ -5241,11 +5241,11 @@ function nubeAutoGuardar(){try{localStorage.setItem('mtp_copa_cd_nube_auto',nube
 function nubeAutoDetener(){if(nubePoll){clearInterval(nubePoll);nubePoll=null;}}
 function nubeAutoIniciar(){
  nubeAutoDetener();
- if(!nubeAuto||!nubeSesion||!S.idCopa||validarConfigNube())return;
- nubePoll=setInterval(function(){if(nubeAuto&&nubeSesion&&S.idCopa&&!validarConfigNube())nubeDescargar(true);},45000);
+ if(!nubeAuto||!S.idCopa||validarConfigNube())return;
+ nubePoll=setInterval(function(){if(!nubeAuto||!S.idCopa||nubeBatch||validarConfigNube())return;nubeDescargar(true);},45000);
 }
 function nubeAutoProgramar(){
- if(!nubeAuto||!nubeSesion||nubeBatch||!S.idCopa||validarConfigNube())return;
+ if(!nubeAuto||nubeBatch||!S.idCopa||validarConfigNube())return;
  if(nubePublicarPendiente)clearTimeout(nubePublicarPendiente);
  nubePublicarPendiente=setTimeout(function(){nubePublicarPendiente=null;nubePublicar(true);},900);
 }
@@ -5376,7 +5376,6 @@ function nubeDispositivo(){
 }
 function nubePublicar(silencioso){
  var anon=!nubeSesion;
- if(anon&&silencioso)return;
  if(anon&&!nubeConfirmado){nubeConfirmado=true;setTimeout(function(){nubeConfirmado=false;},8000);toast('Sin sesión de Firebase: pulsa de nuevo para publicar en modo directo (sin cuenta)');return;}
  var error=validarConfigNube();if(error){if(!silencioso)toast(error);return;}
  if(!S.idCopa||!S.equipos.length){if(!silencioso)toast('Crea o importa una copa antes de publicarla');return;}
@@ -5395,7 +5394,7 @@ function nubePublicar(silencioso){
   if(!silencioso)cargandoNube(veces?'Publicando tu copa… reintentando':'Publicando tu copa…');
   (anon?Promise.resolve(''):nubeToken()).then(function(token){return httpNube(destino+(anon?'':'?auth='+encodeURIComponent(token)),'PUT',JSON.stringify(registro),'text/plain;charset=UTF-8');})
   .then(nubeRespuesta).then(function(){
-   cerrarCargandoNube();if(!silencioso)toast('Copia de este dispositivo publicada ✓ · ID '+S.idCopa);
+   nubeAutoFallos=0;cerrarCargandoNube();if(!silencioso)toast('Copia de este dispositivo publicada ✓ · ID '+S.idCopa);
   }).catch(function(e){
    var m=String(e.message||e);
    if(/fetch|NetworkError|Load failed/i.test(m)){
@@ -5406,7 +5405,8 @@ function nubePublicar(silencioso){
    else if(/Invalid path|Invalid token/i.test(m))m='Ruta inválida: borra en Nube la URL de Realtime Database y vulvela a pegar SIN espacios ni `/` al final, luego Guardar y Publica';
    else if(/PERMISSION_DENIED|Permission denied|Unauthorized|401/i.test(m))m='Las reglas de la base bloquean esto: si publicaste sin cuenta, pega en Firebase → Realtime Database → Reglas las reglas «modo directo» y pulsa Publicar';
    cerrarCargandoNube();
-   if(!silencioso)toast('No se pudo publicar: '+m);
+   if(silencioso){nubeAutoFallos=(nubeAutoFallos||0)+1;if(nubeAutoFallos===2)toast('⚠️ Auto: la copa no se pudo publicar. Revisa internet y que en Firebase → Reglas estén pegadas las reglas modo directo');return;}
+ if(!silencioso)toast('No se pudo publicar: '+m);
   });
  }
  enviar(0);
@@ -5414,7 +5414,6 @@ function nubePublicar(silencioso){
 function nubeDescargar(silencioso,reintento){
  var anon=!nubeSesion;
  if(anon&&!silencioso&&!nubeConfirmado){nubeConfirmado=true;setTimeout(function(){nubeConfirmado=false;},8000);toast('Sin sesión de Firebase: pulsa de nuevo para descargar en modo directo (sin cuenta)');return;}
- if(anon&&silencioso)return;
  var error=validarConfigNube();if(error){if(!silencioso)toast(error);return;}
  var idCopaNube=S.idCopa;
  if(!idCopaNube){var entradaId=document.getElementById('nube-id');idCopaNube=entradaId?entradaId.value.trim().toUpperCase():'';}
@@ -5451,7 +5450,7 @@ function nubeDescargar(silencioso,reintento){
     }else errores++;
    }
   }finally{nubeBatch=false;}
-  if(aplicados&&nubeAuto&&nubeSesion&&S.idCopa)nubeAutoIniciar();
+  if(aplicados&&nubeAuto&&S.idCopa)nubeAutoIniciar();
   render();
   if(silencioso){
    if(cambios)toast('🔄 Otro dispositivo actualizó la copa · '+(resumenSync(stTotal).indexOf('Todo ya estaba')===0?'datos nuevos':resumenSync(stTotal)));
@@ -5467,7 +5466,8 @@ function nubeDescargar(silencioso,reintento){
   }
   if(/<!DOCTYPE|<html|Error 403|unusual traffic/i.test(m))m='Tu red bloquea el acceso a Google (403): prueba por WiFi';
   else if(/PERMISSION_DENIED|Permission denied|Unauthorized|401/i.test(m))m='Las reglas de la base exigen cuenta: pega en Firebase → Realtime Database → Reglas las reglas «modo directo» y pulsa Publicar';
-  if(!silencioso)toast('No se pudo descargar la nube: '+m);
+  if(silencioso){nubeBajarFallos=(nubeBajarFallos||0)+1;if(nubeBajarFallos===2)toast('⚠️ Auto: no se pudo revisar la nube. Revisa internet y que las reglas modo directo estén publicadas en Firebase');return;}
+ if(!silencioso)toast('No se pudo descargar la nube: '+m);
  });
 }
 /* Unión de anotaciones por id. Cada móvil aporta sus propios registros; los
@@ -5772,6 +5772,7 @@ cargar();
 S.sesion=null;S.ui.vista='dashboard';
 if(S.equipos.length>=2&&S.jornadas.length<4)generar();
 render();
+nubeAutoIniciar();
 setTimeout(function(){
  var a=document.getElementById('arranque');
  if(!a)return;

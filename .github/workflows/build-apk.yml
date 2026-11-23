@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Instalacion: ahora primero sesion del sistema PackageInstaller (la que muestra el cartel Instalar? estandar con Play Protect) y la app muestra en VIVO el estado real: esperando tu confirmacion, bloqueado por seguridad, instalado o fallo.'
+          body: 'Auto-sincronizacion sin cuenta: cada cambio se sube solo a la nube y cada 45 s se baja lo nuevo de otros moviles; funcional tambien en datos moviles.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
