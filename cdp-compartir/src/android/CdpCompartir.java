@@ -80,6 +80,7 @@ public class CdpCompartir extends CordovaPlugin {
             if ("http".equals(accion)) { http(args, cb); return true; }
             if ("instalar".equals(accion)) { instalar(args, cb); return true; }
             if ("descargas".equals(accion)) { abrirDescargas(args, cb); return true; }
+            if ("escuchar-instalador".equals(accion)) { escucharInstalador(cb); return true; }
             if ("notificar".equals(accion)) { notificar(args, cb); return true; }
             cb.error("accion desconocida: " + accion);
             return false;
@@ -337,6 +338,14 @@ public class CdpCompartir extends CordovaPlugin {
                        clasico ya no abre el instalador en equipos nuevos (por eso
                        "toco Instalar y no pasa nada"). Si el sistema no responde,
                        hay respaldo automatico con el ACTION_VIEW clasico. */
+                    sesionConfirmada = false;
+                    ctxSesion = ctx; uriSesion = uri;
+                    estadoInstalador("info", "Abriendo el instalador de Android...");
+                    if (instalarSesionApi(ctx, f, cb)) {
+                        esperarInstaladorSesion(ctx, uri, cb);
+                        return;
+                    }
+                    /* Respaldo clasico solo si la sesion del sistema no esta disponible. */
                     Intent vIP = new Intent(Intent.ACTION_INSTALL_PACKAGE);
                     vIP.setDataAndType(uri, "application/vnd.android.package-archive");
                     vIP.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -347,12 +356,6 @@ public class CdpCompartir extends CordovaPlugin {
                         vD.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
                         if (uiLanzar(ctx, vD)) { cb.success("instalador-descargas"); return; }
                     }
-                    sesionConfirmada = false;
-                    ctxSesion = ctx; uriSesion = uri;
-                    if (instalarSesionApi(ctx, f, cb)) {
-                        esperarInstaladorSesion(ctx, uri, cb);
-                        return;
-                    }
                     lanzarInstalador(ctx, uri);
                     cb.success("instalador");
                 } catch (Throwable e) {
@@ -360,6 +363,26 @@ public class CdpCompartir extends CordovaPlugin {
                 }
             }
         });
+    }
+
+    /* Canal de estado en vivo del instalador del sistema hacia la web:
+       info/esperando/bloqueado/instalado/fallo, con keepCallback. */
+    private void escucharInstalador(final CallbackContext cb) {
+        estadoCb = cb;
+        new PluginResult(PluginResult.Status.NO_RESULT);
+    }
+
+    private void estadoInstalador(String estado, String detalle) {
+        CallbackContext local = estadoCb;
+        if (local == null) return;
+        try {
+            org.json.JSONObject n = new org.json.JSONObject();
+            n.put("estado", estado);
+            n.put("detalle", detalle == null ? "" : detalle);
+            new PluginResult(PluginResult.Status.OK);
+            r.setKeepCallback(true);
+            local.sendPluginResult(r);
+        } catch (Throwable e) { }
     }
 
     /* Espera hasta 8 s la respuesta del sistema (STATUS_PENDING_USER_ACTION o
@@ -451,6 +474,7 @@ public class CdpCompartir extends CordovaPlugin {
 
     private android.content.BroadcastReceiver receptorSesion;
     private CallbackContext cbSesion;
+    private CallbackContext estadoCb;
     private volatile boolean sesionConfirmada;
     private Context ctxSesion;
     private Uri uriSesion;
@@ -490,7 +514,13 @@ public class CdpCompartir extends CordovaPlugin {
                             try { act = (Intent) ext.getParcelable(Intent.EXTRA_INTENT); } catch (Throwable te) { act = null; }
                             if (act != null) {
                                 act.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                if (uiLanzar(c, act)) { sesionConfirmada = true; return; }
+                                if (uiLanzar(c, act)) {
+                                    sesionConfirmada = true;
+                                    estadoInstalador("esperando", "Cartel de instalacion abierto: toca Instalar y luego 'Instalar sin analizar' de Play Protect");
+                                    CallbackContext localA = cbSesion; cbSesion = null;
+                                    if (localA != null) localA.success("instalador-sesion");
+                                    return;
+                                }
                             }
                             /* La confirmacion del sistema no se pudo abrir: respaldo clasico al toca */
                             CallbackContext local2 = cbSesion; cbSesion = null;
@@ -502,9 +532,13 @@ public class CdpCompartir extends CordovaPlugin {
                         }
                         CallbackContext local = cbSesion; cbSesion = null;
                         try { c.unregisterReceiver(this); } catch (Throwable t) { }
+                        String detEst = ext.getString(PackageInstaller.EXTRA_STATUS_MESSAGE) == null ? ("estado " + estado) : ext.getString(PackageInstaller.EXTRA_STATUS_MESSAGE);
+                        if (estado == PackageInstaller.STATUS_SUCCESS) estadoInstalador("instalado", "Instalado: abre Copa CD");
+                        else if (estado == PackageInstaller.STATUS_FAILURE_BLOCKED) estadoInstalador("bloqueado", detEst);
+                        else estadoInstalador("fallo", detEst);
                         if (local == null) return;
                         if (estado == PackageInstaller.STATUS_SUCCESS) local.success("instalador-sistema");
-                        else local.error("instalador: " + (ext.getString(PackageInstaller.EXTRA_STATUS_MESSAGE) == null ? ("estado " + estado) : ext.getString(PackageInstaller.EXTRA_STATUS_MESSAGE)));
+                        else local.error("instalador: " + detEst);
                     } catch (Throwable e) {
                         CallbackContext local = cbSesion; cbSesion = null;
                         if (local != null) local.error("instalador: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));

@@ -1009,7 +1009,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.44</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.45</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1434,7 +1434,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.44',APP_BUILD=45;
+var APP_VERSION='1.0.45',APP_BUILD=46;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -5202,13 +5202,24 @@ function abrirCarpetaDescargas(){
 }
 function instalarYCerrar(){
  var d=descargaUI;if(!d)return;
- cdpCompartir.instalar(d.nombre,'Actualización Copa CD',
+ if(cdpCompartir&&cdpCompartir.escucharInstalador){
+  cdpCompartir.escucharInstalador(function(nota){
+   var e=nota&&nota.estado||'',dt=nota&&nota.detalle||'',msj='';
+   if(e==='esperando')msj='\u23f3 Cartel de Android abierto: toca Instalar y luego \u00abInstalar sin analizar\u00bb de Play Protect';
+   else if(e==='bloqueado')msj='🛑 El sistema bloque\u00f3 la instalaci\u00f3n: '+dt;
+   else if(e==='instalado')msj='\u2705 \u00a1Instalado! Ya puedes abrir Copa CD';
+   else if(e==='fallo')msj='\u26a0\ufe0f La instalaci\u00f3n no termin\u00f3 ('+dt+'). Usa \u00ab📂 Ir a Descargas\u00bb';
+   if(!msj)msj=e||'ℹ️ Abriendo instalador...';
+   var st=document.getElementById('dz-estado');if(st)st.innerHTML=esc(msj);else toast(msj);
+  },function(){});
+ }
+ cdpCompartir.instalar(d.nombre,'Actualizaci\u00f3n Copa CD',
   function(ruta){
    actualizaUI=null;renderActualiza();
-   finalDescarga('Se lanzó el instalador de Android (vía '+String(ruta||'directa')+'). Si el cartel de Android NO aparece, toca «📂 Ir a Descargas» y sigue los 4 pasos de abajo (el último es «Instalar sin analizar» de Google Play Protect, obligatorio las primeras veces).');
-   toast('✓ Descarga completa · si no se abrió el instalador, toca Instalar en el dialog');
+   finalDescarga('Se abri\u00f3 el instalador de Android (\u00bfno sali\u00f3 el cartel? toca \u00ab📂 Ir a Descargas\u00bb y sigue los 4 pasos de abajo; el \u00faltimo es \u00abInstalar sin analizar\u00bb de Play Protect).');
+   toast('\u2713 Descarga completa \u00b7 el cartel de instalaci\u00f3n se abre solo; si no, usa \u00abIr a Descargas\u00bb');
   },
-  function(e){finalDescarga('El instalador no respondió ('+String(e||'error')+'). Toca «📂 Abrir Descargas» → toca el APK → Instalar (la vía manual que funciona), o «🌐 Por navegador».');});
+  function(e){finalDescarga('El instalador no respondi\u00f3 ('+String(e||'error')+'). Toca \u00ab📂 Abrir Descargas\u00bb \u2192 toca el APK \u2192 Instalar (la v\u00eda manual que funciona), o \u00ab\U0001F310 Por navegador\u00bb.');});
 }
 function fallbackNavegador(){
  cerrarDescarga();
