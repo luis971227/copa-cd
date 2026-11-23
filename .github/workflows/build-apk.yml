@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Muestra la versión instalada dentro de la app; el dialog de descarga se queda abierto al terminar con botones Instalar / Por navegador y avisos de Archivos → Descargas.'
+          body: 'Nuevo: estadística de AUTOGOL en los partidos (chip 🥅 junto al gol); el autogol suma el gol al equipo rival y no cuenta como gol del jugador.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

@@ -995,7 +995,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.16</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.17</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1419,7 +1419,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.16',APP_BUILD=17;
+var APP_VERSION='1.0.17',APP_BUILD=18;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -1808,11 +1808,12 @@ function marcarBorrado(p,id){if(!p)return;if(!(p.borrados instanceof Array))p.bo
 function limpiarStats(p){if(!p)return;p.goles=[];p.asist=[];p.tarjetas=[];p.paradas=[];p.borrados=[];p.resetTs=Date.now();}
 function mar(p){if(p.estado==='ff_local')return[3,0];if(p.estado==='ff_visitante')return[0,3];if(p.estado==='nulo')return[0,0];
  var g=0,v=0,i;for(i=0;i<p.goles.length;i++){
-  var gol=p.goles[i],doble=p.carta===7&&gol.min!=null&&gol.min<5?2:1;
-  if(gol.eq===p.local)g+=doble;else if(gol.eq===p.visitante)v+=doble;
+  var gol=p.goles[i],doble=p.carta===7&&gol.min!=null&&gol.min<5?2:1,de=gol.autogol?(gol.eq===p.local?p.visitante:p.local):gol.eq;
+  if(de===p.local)g+=doble;else if(de===p.visitante)v+=doble;
  }return[g,v];}
 function cnt(p,tipo,jId){var n=0,i;
- if(tipo==='gol'){for(i=0;i<p.goles.length;i++)if(p.goles[i].jug===jId)n++;}
+ if(tipo==='gol'){for(i=0;i<p.goles.length;i++)if(p.goles[i].jug===jId&&!p.goles[i].autogol)n++;}
+ else if(tipo==='autogol'){for(i=0;i<p.goles.length;i++)if(p.goles[i].jug===jId&&p.goles[i].autogol)n++;}
  else if(tipo==='asist'){for(i=0;i<p.asist.length;i++)if(p.asist[i].jug===jId)n++;}
  else if(tipo==='parada'){for(i=0;i<p.paradas.length;i++)if(p.paradas[i].jug===jId)n+=p.paradas[i].n;}
  else{for(i=0;i<p.tarjetas.length;i++)if(p.tarjetas[i].jug===jId&&p.tarjetas[i].tipo===tipo)n++;}
@@ -1945,10 +1946,10 @@ function ajustarPor(el,delta){
   if(bloqueado(p)){toast('Partido '+etiqueta(p)+': sin estadísticas');return;}
   if(!puedeArbitrar(pid)){toast('Solo el árbitro de este partido puede llenar estadísticas');return;}
   if(p.estado==='pendiente'&&!p.iniciado){toast('Pulsa ▶ Iniciar el partido para marcar estadísticas');return;}
-  if(tipo==='gol'||tipo==='asist'){
-  var arr=tipo==='gol'?p.goles:p.asist;
-  if(delta>0){var nuevo={id:sUid(),eq:eqId,jug:jId};if(tipo==='gol')nuevo.min=Math.max(0,Math.floor((cron.mins*60-cron.seg)/60));arr.push(nuevo);}
-  else{for(var i=arr.length-1;i>=0;i--)if(arr[i].jug===jId){marcarBorrado(p,arr[i].id);arr.splice(i,1);break;}}
+  if(tipo==='gol'||tipo==='autogol'||tipo==='asist'){
+  var arr=tipo==='asist'?p.asist:p.goles,esAuto=tipo==='autogol';
+  if(delta>0){var nuevo={id:sUid(),eq:eqId,jug:jId};if(tipo!=='asist')nuevo.min=Math.max(0,Math.floor((cron.mins*60-cron.seg)/60));if(esAuto)nuevo.autogol=1;arr.push(nuevo);}
+  else{for(var i=arr.length-1;i>=0;i--){if(arr[i].jug!==jId)continue;if(tipo==='gol'&&arr[i].autogol)continue;if(esAuto&&!arr[i].autogol)continue;marcarBorrado(p,arr[i].id);arr.splice(i,1);break;}}
  }else if(tipo==='amarilla'||tipo==='roja'){
   if(delta>0)p.tarjetas.push({id:sUid(),eq:eqId,jug:jId,tipo:tipo});
   else{for(var k=p.tarjetas.length-1;k>=0;k--)if(p.tarjetas[k].jug===jId&&p.tarjetas[k].tipo===tipo){marcarBorrado(p,p.tarjetas[k].id);p.tarjetas.splice(k,1);break;}}
@@ -1961,14 +1962,19 @@ function ajustarPor(el,delta){
 
 /* Quitar anotaciones: se abre manteniendo pulsado un chip (gol, asistencia,
    parada, amarilla, roja) y permite indicar cuántas se eliminan. */
-var QSTATS={gol:'goles',asist:'asistencias',parada:'paradas',amarilla:'amarillas',roja:'rojas'};
+var QSTATS={gol:'goles',autogol:'autogoles',asist:'asistencias',parada:'paradas',amarilla:'amarillas',roja:'rojas'};
 function quitarStat(tipo,pid,eqId,jId,n){
  var p=buscarPartido(pid);if(!p)return 0;
  var i,hechas=0;
  n=Math.max(1,+n||1);
- if(tipo==='gol'||tipo==='asist'){
-  var arr=tipo==='gol'?p.goles:p.asist;
-  for(i=arr.length-1;i>=0&&hechas<n;i--)if(arr[i].jug===jId){marcarBorrado(p,arr[i].id);arr.splice(i,1);hechas++;}
+ if(tipo==='gol'||tipo==='autogol'||tipo==='asist'){
+  var arr=tipo==='asist'?p.asist:p.goles;
+  for(i=arr.length-1;i>=0&&hechas<n;i--){
+   if(arr[i].jug!==jId)continue;
+   if(tipo==='gol'&&arr[i].autogol)continue;
+   if(tipo==='autogol'&&!arr[i].autogol)continue;
+   marcarBorrado(p,arr[i].id);arr.splice(i,1);hechas++;
+  }
  }else if(tipo==='amarilla'||tipo==='roja'){
   for(i=p.tarjetas.length-1;i>=0&&hechas<n;i--)if(p.tarjetas[i].jug===jId&&p.tarjetas[i].tipo===tipo){marcarBorrado(p,p.tarjetas[i].id);p.tarjetas.splice(i,1);hechas++;}
  }else if(tipo==='parada'){
@@ -2332,7 +2338,7 @@ function renderPartido(){
    +'<button class="btn gh" data-a="limpiar" data-p="'+p.id+'">Limpiar partido</button>'
    +(esAdmin()?'<button class="btn gh" data-a="pj-reiniciar" data-p="'+p.id+'">↺ Reiniciar partido</button>':'')
    +'</div>':'')
-   +'<div class="nota">'+(pueArb?'Toca un chip para sumar. Mantén pulsado un chip (gol, asistencia, tarjeta, parada…) para quitar anotaciones y elegir cuántas. FF: 3-0 y se borran las estadísticas (+4 cervezas al premio).':'Este partido lo arbitra '+(arbNom?('<b>'+esc(arbNom)+'</b>'):'el super admin')+'; tú solo puedes consultarlo.')+'</div></div>';
+   +'<div class="nota">'+(pueArb?'Toca un chip para sumar. Mantén pulsado un chip (gol, autogol, asistencia, tarjeta, parada…). Autogol: el gol cuenta para el equipo rival para quitar anotaciones y elegir cuántas. FF: 3-0 y se borran las estadísticas (+4 cervezas al premio).':'Este partido lo arbitra '+(arbNom?('<b>'+esc(arbNom)+'</b>'):'el super admin')+'; tú solo puedes consultarlo.')+'</div></div>';
   h+='<div class="pt-fins">'
    +(jug&&pueArb&&p.iniciado?'<button class="btn ro pri" data-a="pt-terminar">⏹ Terminar partido</button>':'')
    +(jug&&!p.iniciado?'<button class="btn gh" data-a="pt-cerrar">Salir sin jugar</button>':'')
@@ -2567,7 +2573,7 @@ function bloqueEq(p,e,rol){
   continue;
  }
  h+='<div class="jug"><span class="nm">'+avMini(j,e)+'<i>'+(j.dorsal?('#'+esc(j.dorsal)):'')+'</i>'+esc(j.nombre||'Sin nombre')+'</span>'
-   +mk(p,'gol','⚽',j,e.id)+mk(p,'asist','🅰',j,e.id)+mk(p,'parada','🧤',j,e.id)+mk(p,'amarilla','🟨',j,e.id)+mk(p,'roja','🟥',j,e.id)
+   +mk(p,'gol','⚽',j,e.id)+mk(p,'autogol','🥅',j,e.id)+mk(p,'asist','🅰',j,e.id)+mk(p,'parada','🧤',j,e.id)+mk(p,'amarilla','🟨',j,e.id)+mk(p,'roja','🟥',j,e.id)
    +'</div>';
  }
  return h;
@@ -2717,7 +2723,7 @@ function calcEstadisticas(){
  for(i=0;i<S.jornadas.length;i++){var ps=S.jornadas[i].partidos;
   for(k=0;k<ps.length;k++){var p=ps[k];
    if(p.estado==='ff_local'||p.estado==='ff_visitante'||p.estado==='nulo')continue;
-   for(t=0;t<p.goles.length;t++)if(est[p.goles[t].jug])est[p.goles[t].jug].g++;
+   for(t=0;t<p.goles.length;t++)if(!p.goles[t].autogol&&est[p.goles[t].jug])est[p.goles[t].jug].g++;
    for(t=0;t<p.asist.length;t++)if(est[p.asist[t].jug])est[p.asist[t].jug].a++;
    for(t=0;t<p.paradas.length;t++)if(est[p.paradas[t].jug])est[p.paradas[t].jug].p+=p.paradas[t].n;
    for(t=0;t<p.tarjetas.length;t++){var x=est[p.tarjetas[t].jug];if(!x)continue;if(p.tarjetas[t].tipo==='amarilla')x.am++;else x.ro++;}
