@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Corregido el error Invalid path al publicar: la ruta a la nube ya no lleva .json en el medio; ahora Publicar mi copia funciona con cuenta o en modo directo.'
+          body: 'Instalador nuevo vía PackageInstaller del sistema: en Android 14/15 el botón Instalar ahora Sí abre el diálogo de instalación.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

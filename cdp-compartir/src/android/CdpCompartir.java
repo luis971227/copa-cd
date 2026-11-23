@@ -11,6 +11,8 @@ import android.util.Base64;
 import android.util.Log;
 
 import androidx.core.content.FileProvider;
+import android.content.pm.PackageInstaller;
+import android.content.IntentFilter;
 
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CallbackContext;
@@ -283,6 +285,10 @@ public class CdpCompartir extends CordovaPlugin {
                         cb.error("permiso-instalar: Android pide autorizar 'Instalar apps desconocidas' para Copa CD. Se abrieron los Ajustes: activa el permiso, vuelve a la app y toca Instalar otra vez");
                         return;
                     }
+                    /* Via moderna PackageInstaller (Android 12-15): el ACTION_VIEW
+                       clasico ya no abre el instalador en equipos nuevos (por eso
+                       "toco Instalar y no pasa nada"). Si falla, respaldo clasico. */
+                    if (instalarSesionApi(ctx, f, cb)) return;
                     lanzarInstalador(ctx, uri);
                     cb.success("instalador");
                 } catch (Throwable e) {
@@ -355,6 +361,67 @@ public class CdpCompartir extends CordovaPlugin {
               .setStyle(new android.app.Notification.BigTextStyle().bigText(texto));
             nm.notify(2001, nb.build());
         } catch (Throwable e) { Log.w("CdpCompartir", "fallo notificar", e); }
+    }
+
+    private android.content.BroadcastReceiver receptorSesion;
+    private CallbackContext cbSesion;
+
+    /* Instalacion via PackageInstaller.Session: arma la sesion, copia la APK
+       dentro y hace commit; el SISTEMA muestra el dialogo "Instalar". Así
+       funciona igual en Android 14/15 donde el ACTION_VIEW clasico murio. */
+    private boolean instalarSesionApi(final Context ctx, final File f, final CallbackContext cb) {
+        PackageInstaller.Session ses = null;
+        try {
+            PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+            PackageInstaller pkg = ctx.getPackageManager().getPackageInstaller();
+            int idS = pkg.createSession(params);
+            ses = pkg.openSession(idS);
+            java.io.InputStream in = new java.io.FileInputStream(f);
+            OutputStream os = ses.openWrite("copacd", 0, f.length());
+            byte[] buf = new byte[65536];
+            int n;
+            while ((n = in.read(buf)) > 0) os.write(buf, 0, n);
+            ses.fsync(os);
+            os.close();
+            in.close();
+            cbSesion = cb;
+            Intent aviso = new Intent("COPACD_INSTALADOR_ESTADO").setPackage(ctx.getPackageName());
+            int bandera = android.os.Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0;
+            PendingIntent pende = PendingIntent.getBroadcast(ctx, 3002, aviso, bandera | PendingIntent.FLAG_UPDATE_CURRENT);
+            if (receptorSesion != null) { try { ctx.unregisterReceiver(receptorSesion); } catch (Throwable t) { } }
+            receptorSesion = new android.content.BroadcastReceiver() {
+                @Override public void onReceive(Context c, Intent i) {
+                    try {
+                        android.os.Bundle ext = i.getExtras();
+                        if (ext == null || !ext.containsKey(PackageInstaller.EXTRA_STATUS)) return;
+                        int estado = ext.getInt(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
+                        if (estado == PackageInstaller.STATUS_PENDING_USER_ACTION) {
+                            Intent act = (Intent) ext.getParcelable(PackageInstaller.EXTRA_INTENT);
+                            if (act != null) { act.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); uiLanzar(c, act); }
+                            return;
+                        }
+                        CallbackContext local = cbSesion; cbSesion = null;
+                        try { c.unregisterReceiver(this); } catch (Throwable t) { }
+                        if (local == null) return;
+                        if (estado == PackageInstaller.STATUS_SUCCESS) local.success("instalador-sistema");
+                        else local.error("instalador: " + (ext.getString(PackageInstaller.EXTRA_STATUS_MESSAGE) == null ? ("estado " + estado) : ext.getString(PackageInstaller.EXTRA_STATUS_MESSAGE)));
+                    } catch (Throwable e) {
+                        CallbackContext local = cbSesion; cbSesion = null;
+                        if (local != null) local.error("instalador: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
+                    }
+                }
+            };
+            IntentFilter filtro = new IntentFilter("COPACD_INSTALADOR_ESTADO");
+            if (android.os.Build.VERSION.SDK_INT >= 33) ctx.registerReceiver(receptorSesion, filtro, Context.RECEIVER_NOT_EXPORTED);
+            else ctx.registerReceiver(receptorSesion, filtro);
+            ses.commit(pende.getIntentSender());
+            ses.close();
+            return true;
+        } catch (Throwable e) {
+            if (ses != null) { try { ses.abandon(); } catch (Throwable t) { } }
+            Log.w("CdpCompartir", "sesion de instalacion no disponible: " + e);
+            return false;
+        }
     }
 
     /* Lanza la actividad en el hilo de UI (obligatorio en varios telefonos) y
