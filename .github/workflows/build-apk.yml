@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Cada partido muestra quien esta ARRIBA (pide balon o portería) y quien ABAJO; en la jornada cada pareja se cruza dos veces y ningún equipo queda dos veces arriba ni dos veces abajo contra el mismo rival.'
+          body: 'Corregido el error Invalid path al publicar: la ruta a la nube ya no lleva .json en el medio; ahora Publicar mi copia funciona con cuenta o en modo directo.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
