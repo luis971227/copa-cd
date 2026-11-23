@@ -1000,7 +1000,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.35</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.36</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1425,7 +1425,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.35',APP_BUILD=36;
+var APP_VERSION='1.0.36',APP_BUILD=37;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -1834,7 +1834,7 @@ function jugadoresConAmarillaEnJornada(p,eqId){
   var tarjetas=otro.tarjetas||[];
   for(k=0;k<tarjetas.length;k++){
    t=tarjetas[k];
-   if(t.tipo==='amarilla'&&t.eq===eqId)ids[t.jug]=1;
+   if((t.tipo==='amarilla'||t.tipo==='roja')&&t.eq===eqId)ids[t.jug]=1;
   }
  }
  for(var id in ids){var j=jugDe(eqId,+id);if(j)out.push(j);}
@@ -1952,7 +1952,7 @@ function ajustarPor(el,delta){
   var p=buscarPartido(pid);if(!p)return;
   var nJ=jornadaDePartido(pid);
   if(!puedeEditarJornada(nJ)){toast('Jornada terminada: solo lectura');return;}
-  if(jugadorInelegibleJuegoLimpio(p,eqId,jId)){toast('No puede jugar Juego limpio: ya recibió una amarilla en esta jornada');return;}
+  if(jugadorInelegibleJuegoLimpio(p,eqId,jId)){toast('No puede jugar Juego limpio: ya recibió una amarilla o una roja en esta jornada');return;}
   if(bloqueado(p)){toast('Partido '+etiqueta(p)+': sin estadísticas');return;}
   if(!puedeArbitrar(pid)){toast('Solo el árbitro de este partido puede llenar estadísticas');return;}
   if(p.estado==='pendiente'&&!p.iniciado){toast('Pulsa ▶ Iniciar el partido para marcar estadísticas');return;}
@@ -2639,8 +2639,8 @@ function avisoJuegoLimpio(p){
   h+='<b>'+esc(corto(e))+':</b> '+fuera.map(function(j){return esc(j.nombre||'Jugador');}).join(', ')+'. ';
  }
  }
- if(!jugados)return '<div class="pt-aviso">⚖️ Juego limpio: no hay amarillas registradas en partidos anteriores de esta jornada; todos los jugadores activos pueden participar.</div>';
- return '<div class="pt-aviso">⚖️ <b>Juego limpio:</b> estos jugadores no pueden participar en este partido por tener amarilla previa en la jornada: '+h+'</div>';
+ if(!jugados)return '<div class="pt-aviso">⚖️ Juego limpio: no hay amarillas ni rojas registradas en partidos anteriores de esta jornada; todos los jugadores activos pueden participar.</div>';
+ return '<div class="pt-aviso">⚖️ <b>Juego limpio:</b> estos jugadores no pueden participar en este partido por tener amarilla o roja previa en la jornada: '+h+'</div>';
 }
 function mk(p,tipo,icono,j,eqId){
  var n=cnt(p,tipo==='gol'?'gol':tipo,j.id);
@@ -2827,7 +2827,7 @@ function vistaJugadores(){
  var tg=top('g'),ta=top('a'),tp=top('p');
  var h='<h2 class="v">Líderes del torneo</h2><div class="lideres" style="margin-bottom:12px">'
   +lider('Goleador',tg,'g')+lider('Asistencias',ta,'a')+lider('Paradas',tp,'p')
-  +lider('Más tarjetas',top('am'),'am')+'</div>';
+  +lider('Más tarjetas',top('am'),'am')+lider('Más rojas',top('ro'),'ro')+'</div>';
  for(i=0;i<S.equipos.length;i++){var e=S.equipos[i];
   h+='<div class="eq-tit"><i class="pall" style="background:'+e.color+'"></i>'+esc(corto(e))+'</div>';
   if(!e.jugadores.length){h+='<div class="tar nota">Sin jugadores.</div>';continue;}
@@ -2842,10 +2842,10 @@ function vistaJugadores(){
  return h;
 }
 function lider(t,r,campo){
- var ico=campo==='g'?'⚽':campo==='a'?'🅰':campo==='p'?'🧤':'🟨';
+ var ico=campo==='g'?'⚽':campo==='a'?'🅰':campo==='p'?'🧤':campo==='ro'?'🟥':'🟨';
  if(!r)return '<div class="lider" style="--lc:#7F7F7F"><b>'+ico+' '+t+'</b><div class="ld-top"><span class="ld-av">?</span><div class="ld-txt"><span class="ld-nm">—</span><span class="ld-eq">Sin datos aún</span></div></div></div>';
  var e=r.e,col=(e&&e.color)||'#7F7F7F',u=r.j.nombre||'—';
- var v=campo==='g'?r.g+' goles':campo==='a'?r.a+' asist.':campo==='p'?r.p+' paradas':r.am+' amarillas';
+ var v=campo==='g'?r.g+' goles':campo==='a'?r.a+' asist.':campo==='p'?r.p+' paradas':campo==='ro'?r.ro+' rojas':r.am+' amarillas';
  var av=r.j.foto?'<img data-pv="'+r.j.foto+'" src="'+r.j.foto+'" alt="">':'?';
  var bg=r.j.foto?'':'style="background:'+gradDe(e)+'"';
  return '<div class="lider" style="--lc:'+col+'"><b>'+ico+' '+t+'</b><div class="ld-top"><span class="ld-av" '+bg+'>'+av+'</span><div class="ld-txt"><span class="ld-nm">'+esc(u)+'</span><span class="ld-eq">'+esc(corto(e))+'</span></div></div><span class="ld-v">'+v+'</span></div>';
@@ -3234,6 +3234,7 @@ function guardarPass(){
 }
 /* ---------- asistente IA (local + nube opcional) ---------- */
 var asistMsgs=[];
+var asistUltStat=null;
 function asistSaludo(){
  if(!asistMsgs.length)asistMsgs.push({r:'bot',t:elegirIA([
   '¡Hola! Soy el asistente de Copa CD ⚽ Pregúntame lo que quieras: resultados, puntos, goleadores, autogoles, tarjetas, challenge, árbitros o reglas. Con el nombre de un equipo te doy hasta el desglose partido por partido.',
@@ -3241,6 +3242,15 @@ function asistSaludo(){
  ])});
 }
 function normIA(s){s=String(s||'').toLowerCase();try{s=s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');}catch(e){}return s;}
+function cualStatIA(t){
+ if(/autogol|autogoles|propia puerta|en propia/.test(t))return 'ag';
+ if(/goleador|maximo anotador|quien mete mas|mas goles|gol(es)?\b/.test(t))return 'gol';
+ if(/asistencia/.test(t))return 'a';
+ if(/parada|atajada/.test(t))return 'p';
+ if(/amarilla/.test(t))return 'am';
+ if(/roja/.test(t))return 'ro';
+ return null;
+}
 function listaTablaIA(){
  var arr=calculo(),out='',i;
  if(!arr.length)return 'Aún no hay equipos en la copa.';
@@ -3689,6 +3699,12 @@ function respuestaAsistente(q){
   return outs2.join('\n');
  }
 
+ var stIA=cualStatIA(t),califIA=hay(/mas|top|mejor|lider|quien tiene|goleador|maximo anotador|quien mete mas|quien metio mas/);
+ if(!jeq&&stIA&&(califIA||asistUltStat)&&!hay(/tabla de goleadores|escalafon/)){
+  asistUltStat=stIA;
+  if(stIA==='gol')return goleadoresIA(!hay(/goleadores|tabla de goleadores/));
+  return topsIA(stIA);
+ }
  if(hay(/goleador|maximo anotador|quien mete mas|mas goles/))return goleadoresIA(!hay(/goleadores|tabla de goleadores/));
  if(hay(/autogol|autogoles|propia puerta|en propia/))return topsIA('ag');
  if(hay(/asistencia/)&&hay(/mas|top|mejor|lider|quien tiene/))return topsIA('a');
