@@ -289,6 +289,14 @@ public class CdpCompartir extends CordovaPlugin {
                     public void run() {
                         try {
                             Context ctx = cordova.getContext();
+                            try {
+                                Intent ds = new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS);
+                                ds.setPackage("com.sec.android.app.myfiles");
+                                ds.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                ctx.startActivity(ds);
+                                cb.success("descargas-misarchivos");
+                                return;
+                            } catch (Exception e0) { }
                             Intent d = new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS);
                             d.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             ctx.startActivity(d);

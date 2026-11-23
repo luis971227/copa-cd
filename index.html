@@ -1009,7 +1009,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.43</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.44</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1434,7 +1434,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.43',APP_BUILD=44;
+var APP_VERSION='1.0.44',APP_BUILD=45;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -5190,9 +5190,9 @@ function finalDescarga(msg){
  if(box)box.innerHTML='<div class="carta-c"><div class="carta-top" style="background:var(--rojo)">'
   +'<div class="cn">Descarga terminada</div><div class="ci">⏬️</div><div class="ct">'+esc(d.nombre)+'</div></div><div class="carta-b">'
   +'<div class="nota" id="dz-estado">'+esc(msg)+'</div>'
-  +'<div class="acciones"><button class="btn ro" data-a="dz-carpeta" style="flex:1">📂 Abrir Descargas (instalar)</button><button class="btn gh" data-a="dz-instalar" style="flex:1">📲 Instalador directo</button></div>'
+  +'<div class="acciones"><button class="btn ro" data-a="dz-carpeta" style="flex:1">📂 Ir a Descargas</button><button class="btn gh" data-a="dz-instalar" style="flex:1">🔄 Repetir instalador</button></div>'
   +'<div class="acciones"><button class="btn gh" data-a="dz-navegador" style="flex:1">🌐 Por navegador</button><button class="btn gh" data-a="dz-cancelar" style="flex:1">Cerrar</button></div>'
-  +'<div class="nota">El botón 📂 te abre Descargas con el APK nuevo copiado dentro (las copias viejas se borran solas). Ahí toca '+esc(d.nombre)+' → Instalar → «Instalar de todas formas». Si Android no abre nada: Ajustes → Seguridad y privacidad → Bloqueo automático → desactívalo o permite instalar apps.</div>'
+  +'<div class="nota"><b>4 toques y listo</b><br>1) Toca 📂 Ir a Descargas (abre Mis archivos; el APK nuevo ya está copiado y las copias viejas se borran solas)<br>2) Toca '+esc(d.nombre)+'<br>3) Toca <b>Instalar</b><br>4) Si sale el aviso de Google Play Protect, toca «Instalar sin analizar». Ese aviso lo pone Google para cualquier APK fuera de la Play Store y no se puede saltar desde la app; solo sale las primeras veces.</div>'
   +'</div></div>';
 }
 function abrirCarpetaDescargas(){
@@ -5205,7 +5205,7 @@ function instalarYCerrar(){
  cdpCompartir.instalar(d.nombre,'Actualización Copa CD',
   function(ruta){
    actualizaUI=null;renderActualiza();
-   finalDescarga('Se lanzó el instalador de Android (vía '+String(ruta||'directa')+'). Si NO aparece el cartel, toca «📂 Abrir Descargas» e instala el APK desde ahí (es la vía que siempre funciona). Si igualmente falla: Ajustes → Seguridad y privacidad → Bloqueo automático → desactívalo, e inicia sesión de Samsung si lo pide.');
+   finalDescarga('Se lanzó el instalador de Android (vía '+String(ruta||'directa')+'). Si el cartel de Android NO aparece, toca «📂 Ir a Descargas» y sigue los 4 pasos de abajo (el último es «Instalar sin analizar» de Google Play Protect, obligatorio las primeras veces).');
    toast('✓ Descarga completa · si no se abrió el instalador, toca Instalar en el dialog');
   },
   function(e){finalDescarga('El instalador no respondió ('+String(e||'error')+'). Toca «📂 Abrir Descargas» → toca el APK → Instalar (la vía manual que funciona), o «🌐 Por navegador».');});
