@@ -1000,7 +1000,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.32</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.33</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1425,7 +1425,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.32',APP_BUILD=33;
+var APP_VERSION='1.0.33',APP_BUILD=34;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:''};
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false;
@@ -3765,8 +3765,9 @@ function preguntarNubeIA(q){
 function enviarAsistente(q){
  q=String(q||'').trim();if(!q)return;
  asistMsgs.push({r:'me',t:q});
- var idx=asistMsgs.length;
- asistMsgs.push({r:'bot',t:respuestaAsistente(q)});
+ var idx=asistMsgs.length,rb='';
+ try{rb=respuestaAsistente(q);}catch(ea){rb='Aquí tocó fallar 😅 pero sigo entero: reformula la pregunta y lo intentamos otra vez.';}
+ asistMsgs.push({r:'bot',t:rb});
  render();
  if(preguntaPuntosIA(q))return;
  var pr=null;try{pr=preguntarNubeIA(q);}catch(e){}
@@ -3774,7 +3775,7 @@ function enviarAsistente(q){
 }
 function vistaAsistente(){
  asistSaludo();
- var h='<h2 class="v">🤖 Asistente IA · Copa CD</h2><div class="tar">';
+ var i=0,h='<h2 class="v">🤖 Asistente IA · Copa CD</h2><div class="tar">';
  h+='<div class="nota" style="margin:0 0 6px">Te respondo <b>solo eso</b> que me preguntes, con los datos de este dispositivo y como si lo habláramos en la cancha 🤙: números de cada jugador o equipo, tops, historiales entre dos equipos, quién va arriba o abajo en cada partido, cartas, challenge, sanciones o reglas.</div>';
  var sug=['¿Quién va primero?','Resultados de la jornada 1','¿Quién es el goleador?','¿Quién tiene más amarillas?','¿Quién ha metido autogol?','¿Quién tiene más paradas?'];
  var asEq1=S.equipos[0],asEq2=S.equipos[1];
@@ -4612,6 +4613,7 @@ document.addEventListener('click',function(ev){
    case 'act-recordar':descartarActualizacion();break;
    case 'dz-cancelar':cerrarDescarga();break;
    case 'dz-instalar':instalarYCerrar();break;
+   case 'dz-reintentar':descargaLista='';abrirDescargaProgreso();break;
    case 'dz-navegador':fallbackNavegador();break;
    case 'act-ver-repo':try{window.open('https://github.com/'+(githubRepo||GITHUB_REPO)+'/releases','_system');}catch(e){toast('Sin visor de red: abre github.com/'+(githubRepo||GITHUB_REPO)+'/releases en tu navegador');}break;
    case 'sync-file':if(S.sesion&&!puede('sync')){toast('No tienes permiso para importar archivos');break;}document.getElementById('f-sync').click();break;
@@ -5074,10 +5076,17 @@ function abrirDescargaProgreso(){
   if(!descargaUI)return;
   var abortado=e&&e.name==='AbortError';
   if(abortado&&!descargaUI.porTiempo)return;
-  var st=document.getElementById('dz-estado');
-  if(st)st.textContent='Abriendo el navegador del móvil para descargar…';
-  setTimeout(fallbackNavegador,600);
+  mostrarErrorDescarga(abortado?'La conexión tardó demasiado en responder. Toca Reintentar, o usa el navegador solo si prefieres.':'Error de red al descargar la APK. Toca Reintentar, o usa el navegador solo si prefieres.');
  });
+}
+function mostrarErrorDescarga(msg){
+ var box=document.getElementById('descarga');if(!box)return;
+ var d=descargaUI;
+ box.innerHTML='<div class="carta-c"><div class="carta-top" style="background:var(--rojo)">'
+  +'<div class="cn">No se pudo descargar</div><div class="ci">⚠️</div><div class="ct">'+esc(d?d.nombre:'APK')+'</div></div><div class="carta-b">'
+  +'<div class="nota" id="dz-estado">'+esc(msg||'Error de conexión')+'</div>'
+  +'<div class="acciones"><button class="btn ro" data-a="dz-reintentar" style="flex:1">🔄 Reintentar</button></div>'
+  +'<div class="acciones"><button class="btn gh" data-a="dz-navegador" style="flex:1">🌐 Por navegador</button><button class="btn gh" data-a="dz-cancelar" style="flex:1">Cancelar</button></div></div></div>';
 }
 function bajarNativa(d){
  var st=document.getElementById('dz-estado');
@@ -5095,9 +5104,8 @@ function bajarNativa(d){
   instalarYCerrar();
  },function(e){
   if(!descargaUI)return;
-  var st=document.getElementById('dz-estado');
-  if(st)st.textContent='La descarga directa falló. Abriendo el navegador del móvil…';
-  setTimeout(fallbackNavegador,900);
+  if(!d.reint){d.reint=true;var st=document.getElementById('dz-estado');if(st)st.textContent='Fallo de red… reintentando';setTimeout(function(){if(descargaUI===d)bajarNativa(d);},1500);return;}
+  mostrarErrorDescarga('La descarga directa falló ('+String(e||'error').slice(0,120)+'). Toca Reintentar, o usa el navegador solo si prefieres.');
  });
 }
 function finalDescarga(msg){

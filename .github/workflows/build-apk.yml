@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Las sanciones ahora se aplican a la tabla al cierre de cada jornada (antes se guardaban hasta el final de la copa).'
+          body: 'Arreglado el chat del asistente IA (no abria la vista). La descarga de la APK ya no salta sola al navegador: reintenta dentro de la app y solo si fallo permanente ofrece Reintentar o Por navegador.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
