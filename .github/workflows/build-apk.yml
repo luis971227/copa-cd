@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Instalador arreglado: el dialogo del sistema ahora si se abre (Android 13/14/15) con respaldo automatico si el sistema no contesta. Nuevo: boton Cerrar jornada con resumen completo (puntos, goleadores, tarjetas, challenge) y felicitacion al ganador.'
+          body: 'Arreglado el aviso de BLOQUEADO por challenge perdido: ya no se distorsiona ni sale de la pantalla, el texto salta de linea en todas las vistas.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
