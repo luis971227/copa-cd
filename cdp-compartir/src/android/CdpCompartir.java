@@ -79,6 +79,7 @@ public class CdpCompartir extends CordovaPlugin {
             if ("bajar".equals(accion)) { bajar(args, cb); return true; }
             if ("http".equals(accion)) { http(args, cb); return true; }
             if ("instalar".equals(accion)) { instalar(args, cb); return true; }
+            if ("descargas".equals(accion)) { abrirDescargas(args, cb); return true; }
             if ("notificar".equals(accion)) { notificar(args, cb); return true; }
             cb.error("accion desconocida: " + accion);
             return false;
@@ -272,23 +273,41 @@ public class CdpCompartir extends CordovaPlugin {
         });
     }
 
-    private void abrirDescargas(final CallbackContext cb) {
-        try {
-            Context ctx = cordova.getContext();
-            Intent d = new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS);
-            d.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            try {
-                ctx.startActivity(d);
-                cb.success("descargas");
-            } catch (Exception e1) {
-                Intent d2 = new Intent("android.intent.action.VIEW_DOWNLOADS");
-                d2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                ctx.startActivity(d2);
-                cb.success("descargas-v2");
+    private void abrirDescargas(CordovaArgs args, final CallbackContext cb) {
+        final String nombre = args.optString(0);
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                if (nombre != null && nombre.length() > 0) {
+                    try {
+                        File f = archivoCompartible(nombre);
+                        if (f != null && f.exists()) copiarADescargas(f);
+                    } catch (Throwable t) {
+                        Log.w(TAG, "copiarADescargas fallo", t);
+                    }
+                }
+                cordova.getActivity().runOnUiThread(new Runnable() {
+                    public void run() {
+                        try {
+                            Context ctx = cordova.getContext();
+                            Intent d = new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS);
+                            d.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            ctx.startActivity(d);
+                            cb.success("descargas");
+                        } catch (Exception e1) {
+                            try {
+                                Context ctx2 = cordova.getContext();
+                                Intent d2 = new Intent("android.intent.action.VIEW_DOWNLOADS");
+                                d2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                ctx2.startActivity(d2);
+                                cb.success("descargas-v2");
+                            } catch (Exception e2) {
+                                cb.error("No se pudo abrir Descargas: " + e2.getMessage());
+                            }
+                        }
+                    }
+                });
             }
-        } catch (Exception e) {
-            cb.error("No se pudo abrir Descargas: " + e.getMessage());
-        }
+        });
     }
 
     private void instalar(CordovaArgs args, final CallbackContext cb) {
@@ -547,6 +566,27 @@ public class CdpCompartir extends CordovaPlugin {
             /* Si ya existe una copia previa del mismo nombre, se reutiliza (la
                carga limpia el contenido), siguiendo el mismo camino que el
                archivo descargado a mano: ContentResolver + Descargas. */
+            /* Limpia copias anteriores de Copa CD en Descargas (propias de esta
+               app): asi solo queda el APK de la version de ahora y no se puede
+               instalar por error una APK vieja que siga en la carpeta. */
+            try {
+                android.database.Cursor cur = ctx.getContentResolver().query(
+                    android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                    new String[]{android.provider.MediaStore.Downloads._ID},
+                    android.provider.MediaStore.Downloads.DISPLAY_NAME + " LIKE ?",
+                    new String[]{"CopaCD%"}, null);
+                if (cur != null) {
+                    while (cur.moveToNext()) {
+                        long idf = cur.getLong(0);
+                        try {
+                            ctx.getContentResolver().delete(
+                                android.content.ContentUris.withAppendedId(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, idf),
+                                null, null);
+                        } catch (Throwable t3) { }
+                    }
+                    cur.close();
+                }
+            } catch (Throwable t2) { }
             android.content.ContentValues v = new android.content.ContentValues();
             v.put(android.provider.MediaStore.Downloads.DISPLAY_NAME, f.getName());
             v.put(android.provider.MediaStore.Downloads.MIME_TYPE, "application/vnd.android.package-archive");
