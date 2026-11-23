@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Auto-sincronizacion activada de fabrica y descarga automatica de la copa oficial CD-VDF5J9 para moviles nuevos: instalan, abren y ya tienen los datos.'
+          body: 'Correccion de errores mejorada: si reinicias una jornada y vuelves a publicar, los demas moviles borran automaticamente los datos viejos de esa jornada (goles, tarjetas, sanciones, challenge y estado).'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
