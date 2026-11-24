@@ -94,7 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.81: login afinado - botones de la esquina arriba a la derecha, logo y campos mas arriba, botones con el mismo ancho que los campos. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
+          body: 'v1.0.82: los botones Entrar y Copa compartida quedan del mismo ancho exacto que los campos de credenciales. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
           files: |
             salida/CopaCD-*.apk
 
