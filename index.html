@@ -118,7 +118,7 @@ select.sm2{border:1px solid var(--gris);border-radius:6px;padding:6px;font-size:
 .pall{width:15px;height:15px;border-radius:4px;flex:none;border:1px solid var(--borde)}
 .eq-fila{display:flex;gap:6px;align-items:center;margin-bottom:6px}
 .eq-fila .txt{flex:1}
-.x{border:1px solid var(--gris);background:var(--chip);border-radius:6px;width:30px;height:30px;font-weight:900;color:#C81E1E;flex:none;cursor:pointer}
+.x{border:1px solid var(--gris);background:var(--chip);border-radius:6px;width:30px;height:30px;font-weight:900;color:var(--rojo);flex:none;cursor:pointer}
 .foto{width:34px;height:34px;border-radius:50%;border:1px dashed var(--gris);background:var(--chip);overflow:hidden;padding:0;flex:none;cursor:pointer;font-size:15px;color:var(--gris2);display:flex;align-items:center;justify-content:center}
 .foto img{width:100%;height:100%;object-fit:cover;display:block}
 .mini{width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:5px;border:1px solid var(--gris);cursor:pointer}
@@ -202,7 +202,7 @@ h4.t{margin:12px 0 4px;font-size:12.5px;text-transform:uppercase;color:var(--roj
 .us-fila .nm{flex:1;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .badge.cap{background:#14306B;color:#fff}
 .badge.jug{background:var(--verde);color:#fff}
-.badge.sup{background:#8C1614;color:#fff}
+.badge.sup{background:var(--rojo);color:#fff}
 .badge.bol{background:#14306B;color:#fff}
 .us-eq{display:block;font-weight:600;font-size:10.5px;color:var(--gris2);text-transform:none}
 .perm-tit{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;color:var(--gris2);margin:11px 0 6px}
@@ -1008,6 +1008,20 @@ body.en-login #toast{bottom:26px}
 [data-acento=azul] .login-bg{background:radial-gradient(680px 440px at 88% -6%,rgba(46,124,246,.26),transparent 60%),linear-gradient(150deg,#050F24 0%,#02060E 52%,#010308 100%)}
 [data-acento=verde] .login{background:linear-gradient(150deg,#0B2E1C 0%,#04140C 52%,#010703 100%)}
 [data-acento=verde] .login-bg{background:radial-gradient(680px 440px at 88% -6%,rgba(35,165,89,.24),transparent 60%),linear-gradient(150deg,#04120A 0%,#020806 52%,#010402 100%)}
+#menutemas{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:92;display:none;align-items:center;justify-content:center}
+#menutemas.on{display:flex}
+#menutemas .mt-c{width:280px;max-width:88vw;background:var(--tar);border:1px solid var(--borde);border-radius:16px;padding:14px;box-shadow:0 22px 54px rgba(0,0,0,.35)}
+#menutemas .mt-t{font-size:11px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;color:var(--gris2);margin:0 0 9px}
+#menutemas button{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;border:1px solid var(--borde);background:var(--chip);color:var(--tinta);border-radius:12px;font-size:14px;font-weight:800;margin-bottom:6px;cursor:pointer;transition:transform .12s ease}
+#menutemas button:active{transform:scale(.96)}
+#menutemas button.on{border-color:var(--rojo);outline:1.5px solid var(--rojo)}
+#menutemas button i{width:14px;height:14px;border-radius:50%;flex:none}
+#menutemas button .chk{margin-left:auto;color:var(--rojo);font-weight:900}
+#menutemas .mt-x{justify-content:center;color:var(--gris2);background:var(--suave)}
+.carta-top.ttema{background:linear-gradient(135deg,#8C1614,#3A0808)}
+[data-acento=azul] .carta-top.ttema{background:linear-gradient(135deg,#10244F,#020617)}
+[data-acento=verde] .carta-top.ttema{background:linear-gradient(135deg,#0B3B22,#010803)}
+[data-acento=negro] .carta-top.ttema{background:linear-gradient(135deg,#1D1F24,#000)}
 #nav .tema-hd b{background:var(--rojo)}
 #nav .tema-hd .arw{margin-left:auto;font-size:10px;opacity:.65;padding-left:6px}
 #nav .tema-sw{padding-left:12px}
@@ -1045,7 +1059,8 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.60</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.61</div></div>
+<div id="menutemas"></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1470,7 +1485,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.60',APP_BUILD=61;
+var APP_VERSION='1.0.61',APP_BUILD=62;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -2253,7 +2268,6 @@ h+='<div class="vacio"><b>Bienvenido a Copa CD</b>Gestiona el torneo: equipos, j
 
 /* ---------- partido a pantalla completa + cronómetro ---------- */
 var vozOn=true;try{vozOn=localStorage.getItem('mtp_copa_cd_voz')!=='0';}catch(e){}
-var temaMenuOn=true;
 var vozDichos={};
 function voz(texto){if(!vozOn)return;if(!(window.cdpCompartir&&window.cdpCompartir.hablar))return;try{window.cdpCompartir.hablar(String(texto||''),function(){},function(){});}catch(e){}}
 function anunciarPartido(p,inicio){if(!p)return;if(!vozOn)return;
@@ -4020,7 +4034,7 @@ function renderArb(){
  for(i=0;i<disp.length;i++)if(disp[i].e.id!==p.local&&disp[i].e.id!==p.visitante)elig.push(disp[i]);
  var eL=eq(p.local),eV=eq(p.visitante);
  box.className='on';
- h='<div class="carta-c"><div class="carta-top" style="background:linear-gradient(135deg,#8C1614,#3A0808)"><div class="cn">Jornada '+jornadaDePartido(p.id)+' · P'+((p.id.indexOf('-')>=0)?(+p.id.split('-')[1]+1):'')+'</div><div class="ci">🧑‍⚖️</div><div class="ct">Árbitro del partido</div></div><div class="carta-b">'
+ h='<div class="carta-c"><div class="carta-top ttema"><div class="cn">Jornada '+jornadaDePartido(p.id)+' · P'+((p.id.indexOf('-')>=0)?(+p.id.split('-')[1]+1):'')+'</div><div class="ci">🧑‍⚖️</div><div class="ct">Árbitro del partido</div></div><div class="carta-b">'
   +'<div class="nota" style="margin-top:0"><b>'+esc(corto(eL))+' vs '+esc(corto(eV))+'</b><br>Solo puede arbitrar un capitán de un equipo que <b>no juegue</b> este partido.</div>'
   +'<div class="pick-list">';
  for(i=0;i<elig.length;i++){var d=elig[i];
@@ -4098,7 +4112,7 @@ function renderCerrarJor(){
  var n=+cerrarUI.n,J=jornada(n),h='';
  if(!J){cerrarUI=null;box.className='';box.innerHTML='';return;}
  box.className='on';
- h='<div class="carta-c"><div class="carta-top" style="background:linear-gradient(135deg,#8C1614,#3A0808)"><div class="cn">Jornada '+n+'</div><div class="ci">🏁</div><div class="ct">Cierre de la jornada</div></div><div class="carta-b">'
+ h='<div class="carta-c"><div class="carta-top ttema"><div class="cn">Jornada '+n+'</div><div class="ci">🏁</div><div class="ct">Cierre de la jornada</div></div><div class="carta-b">'
  +resumenJornadaCerradaHTML(n)
  +'<div class="acciones" style="margin-top:12px"><button class="btn ro" data-a="cj-cerrar" style="width:100%">Cerrar</button></div></div></div>';
  box.innerHTML=h;
@@ -4109,7 +4123,7 @@ function renderChal(){
  var n=chalUI.n,J=jornada(n),h='',i;
  if(!J){chalUI=null;box.className='';box.innerHTML='';return;}
  box.className='on';
- h='<div class="carta-c"><div class="carta-top" style="background:linear-gradient(135deg,#8C1614,#3A0808)"><div class="cn">Jornada '+n+'</div><div class="ci">⏱</div><div class="ct">Editar challenge</div></div><div class="carta-b">'
+ h='<div class="carta-c"><div class="carta-top ttema"><div class="cn">Jornada '+n+'</div><div class="ci">⏱</div><div class="ct">Editar challenge</div></div><div class="carta-b">'
   +'<div class="nota" style="margin-top:0">Corrige quién lo pidió, en qué partido y si lo ganó o perdió. Marcarlo como ganado agrega +2 minutos; al quitar el registro se elimina ese alargue. Si alguien perdió la jornada anterior, edita esa jornada para desbloquearlo.</div>';
  for(i=0;i<S.equipos.length;i++){
   var e=S.equipos[i],c=J.chal&&J.chal[e.id],st=!c?'disponible':(c.estado==='pedido'?'pedido':(c.estado==='perdido'?'perdido':(c.estado==='usado'?(c.gano?'ganado':'perdido'):'disponible')));
@@ -4242,9 +4256,6 @@ function render(){
    var blq=bloqueoVista(p.v)||capBloqueo(p.v),cls=(S.ui.vista===p.v?'on ':'')+(blq?'bloq':'');
   nh+='<button data-a="vista" data-v="'+p.v+'"'+(cls?' class="'+cls+'"':'')+' style="animation-delay:'+(0.03+i*0.05).toFixed(2)+'s" title="'+esc(blq||p.t)+'"><b>'+p.i+'</b>'+p.t+(blq?'<span class="lk">🔒</span>':'')+'</button>';}
  nh+='<button data-a="voz-toggle" class="voz-toggle"><b>'+(vozOn?'🔊':'🔇')+'</b>Voz de anuncios: '+(vozOn?'activada':'desactivada')+'</button>';
- var TEMNI=[['rojo','Rojo','#F52B27'],['azul','Azul','#2E7CF6'],['verde','Verde','#23A559'],['negro','Negro','#C7CBD3']];
- nh+='<button data-a="tema-menu" class="tema-hd'+(temaMenuOn?' abierto':'')+'"><b>&#127912;</b> Tema: '+nombreTema(S.tema)+'<span class="arw">'+(temaMenuOn?'&#9652;':'&#9662;')+'</span></button>';
- if(temaMenuOn){for(var iTn=0;iTn<TEMNI.length;iTn++){var tnv=TEMNI[iTn];nh+='<button data-a="tema-set" data-x="'+tnv[0]+'" class="tema-sw'+(S.tema===tnv[0]?' on':'')+'"><i style="background:'+tnv[2]+'"></i>'+tnv[1]+(S.tema===tnv[0]?'<span class="chk">&#10003;</span>':'')+'</button>';}}
  nh+='<div class="nav-ver">Copa CD · v'+APP_VERSION+' · compila '+APP_BUILD+'</div>';
  nav.innerHTML=nh;nav.style.display='flex';
  if(navBtn)navBtn.style.display='flex';
@@ -4283,7 +4294,17 @@ function irA(v){if(!v||!permitida(v))return;
  navHist.push(S.ui.vista);if(navHist.length>40)navHist.shift();
  S.ui.vista=v;cierraNav();window.scrollTo(0,0);render();
 }
+function abrirMenuTemas(){
+ var m=document.getElementById('menutemas');if(!m)return;
+ var TS=[['rojo','Rojo','#F52B27'],['azul','Azul','#2E7CF6'],['verde','Verde','#23A559'],['negro','Negro','#C7CBD3']];
+ var h='<div class="mt-c"><div class="mt-t">Tema de la app</div>';
+ for(var i=0;i<TS.length;i++){var t=TS[i];h+='<button data-a="tema-set" data-x="'+t[0]+'"'+(S.tema===t[0]?' class="on"':'')+'><i style="background:'+t[2]+'"></i>'+t[1]+(S.tema===t[0]?'<span class="chk">&#10003;</span>':'')+'</button>';}
+ h+='<button class="mt-x" data-a="menu-cerrar">Cerrar</button></div>';
+ m.innerHTML=h;m.className='on';
+}
+function cerrarMenuTemas(){var m=document.getElementById('menutemas');if(m)m.className='';}
 function atras(){
+  var mnt=document.getElementById('menutemas');if(mnt&&mnt.className==='on'){cerrarMenuTemas();return;}
   var cbn=document.getElementById('carganube');
   if(cbn&&cbn.className==='on'){cerrarCargandoNube();return;}
   if(descargaUI){cerrarDescarga();return;}
@@ -4339,6 +4360,7 @@ document.addEventListener('touchend',function(ev){
 },{passive:true});
 document.addEventListener('click',function(ev){
    if(ev.target&&ev.target.closest&&ev.target.closest('#foto-prev')){cierraFotoPrev();return;}
+   if(ev.target&&ev.target.id==='menutemas'){cerrarMenuTemas();return;}
    if(ev.target&&ev.target.id==='quitar'){quitarUI=null;renderQuitar();return;}
    if(ev.target&&ev.target.id==='chal'){chalUI=null;renderChal();return;}
    if(ev.target&&ev.target.id==='cerrarjor'){S.ui.resumenVisto=Math.max(S.ui.resumenVisto||0,+cerrarUI.n);cerrarUI=null;renderCerrarJor();return;}
@@ -4364,9 +4386,9 @@ document.addEventListener('click',function(ev){
      case 'salir':cronStop();S.ui.partido='';cartaUI=null;syncUI=false;permUI=null;quitarUI=null;chalUI=null;navAbierto=false;navHist=[];S.sesion=null;S.ui.vista='dashboard';guardar();render();toast('Sesión cerrada');break;
    case 'nav-toggle':setNav(!navAbierto);break;
   case 'vista':irA(el.getAttribute('data-v'));break;
-  case 'tema':{var TSa=['rojo','azul','verde','negro'];S.tema=TSa[(TSa.indexOf(String(S.tema))+1)%TSa.length];aplicarTema();guardar();toast('Tema: '+nombreTema(S.tema));}break;
-  case 'tema-set':S.tema=String(el.getAttribute('data-x')||'rojo');aplicarTema();guardar();navAbierto=false;render();toast('Tema: '+nombreTema(S.tema));break;
-  case 'tema-menu':temaMenuOn=!temaMenuOn;render();break;
+  case 'tema':abrirMenuTemas();break;
+  case 'tema-set':S.tema=String(el.getAttribute('data-x')||'rojo');aplicarTema();guardar();cerrarMenuTemas();navAbierto=false;render();toast('Tema: '+nombreTema(S.tema));break;
+  case 'menu-cerrar':cerrarMenuTemas();break;
   case 'bases':S.ui.anterior=(S.ui.vista==='bases'?S.ui.anterior:S.ui.vista);navHist.push(S.ui.vista);S.ui.vista='bases';window.scrollTo(0,0);render();break;
     case 'volver':S.ui.vista=navHist.pop()||S.ui.anterior||'dashboard';window.scrollTo(0,0);render();break;
    case 'hist-abrir':var hid=+el.getAttribute('data-i');S.ui.histAbierto=(S.ui.histAbierto===hid?'':hid);render();break;
