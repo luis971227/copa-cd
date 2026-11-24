@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Nuevo estilo moderno con 4 temas de color en el menu lateral: Rojo, Azul, Verde y Negro completo. El modo claro se retira: la app queda siempre en modo oscuro y todos los brillos siguen al color del tema elegido.'
+          body: 'El header, el menu lateral y los botones ahora cambian completos con el tema elegido. Nuevo selector de temas desplegable en el menu lateral (Rojo, Azul, Verde, Negro) con el tema activo marcado.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

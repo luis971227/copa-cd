@@ -380,7 +380,7 @@ img.av-player{border:2px solid var(--c);object-fit:cover}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:radial-gradient(900px 420px at 100% -8%,color-mix(in srgb,var(--rojo) 10%,transparent),transparent 60%),radial-gradient(720px 380px at -10% 108%,rgba(20,48,107,.06),transparent 55%),var(--bg);background-attachment:fixed}
 [data-tema=oscuro] body{background:var(--bg)}
 main{padding:14px 12px calc(26px + env(safe-area-inset-bottom));max-width:760px;margin:0 auto}
-.cab{padding:calc(env(safe-area-inset-top) + 8px) 12px 8px;background:linear-gradient(120deg,#F52B27 0%,#DC221E 52%,#8C1614 100%);box-shadow:0 4px 18px rgba(140,22,20,.28)}
+.cab{padding:calc(env(safe-area-inset-top) + 8px) 12px 8px;background:linear-gradient(120deg,var(--rojo) 0%,var(--rojo2) 52%,var(--hero-cta) 100%);box-shadow:0 4px 18px color-mix(in srgb,var(--rojo) 28%,transparent)}
 .cab img{width:34px;height:35px;border-radius:9px;padding:2px}
 .cab h1{font-size:23px;letter-spacing:2.2px;font-family:inherit}
 .cab p{font-size:10.5px}
@@ -470,7 +470,7 @@ input.txt,select.sm2,input.sm{border-radius:10px;border-color:var(--borde);trans
    CAPA VISUAL 2026 · Android moderno (Material 3 + glass)
    ============================================================ */
 :root{
-  --m3-primary:#F52B27;--m3-primary2:#C81E1E;--m3-radius:22px;
+  --m3-primary:var(--rojo);--m3-primary2:var(--rojo2);--m3-radius:22px;
   --m3-shadow:0 2px 4px rgba(16,16,22,.04),0 10px 30px rgba(16,16,22,.09);
   --m3-shadow2:0 4px 10px rgba(16,16,22,.06),0 22px 54px rgba(16,16,22,.16);
   --m3-line:rgba(16,16,22,.08);
@@ -535,7 +535,7 @@ html{scroll-behavior:smooth}
 .dash-tile b{background:linear-gradient(135deg,var(--tinta),var(--gris2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .dash-tile:active{transform:scale(.975)}
 .tar,.dash-sec,.eq-card,.lider,#nav,.dash-tile{box-shadow:var(--m3-shadow)}
-#nav{backdrop-filter:blur(20px) saturate(170%);-webkit-backdrop-filter:blur(20px) saturate(170%);background:linear-gradient(160deg,var(--nav) 0%,var(--nav) 62%,color-mix(in srgb,var(--nav) 88%,#F52B27 12%) 100%)}
+#nav{backdrop-filter:blur(20px) saturate(170%);-webkit-backdrop-filter:blur(20px) saturate(170%);background:linear-gradient(160deg,var(--nav) 0%,var(--nav) 62%,color-mix(in srgb,var(--nav) 88%,var(--rojo) 12%) 100%)}
 #nav .nav-hd{position:relative}
 #nav .nav-hd:after{content:"";position:absolute;left:20px;right:20px;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--m3-line),transparent)}
 #nav button{margin:3px 12px}
@@ -997,7 +997,7 @@ body.en-login #toast{bottom:26px}
 [data-acento=negro]{--rojo:#C7CBD3;--rojo2:#8E939D;--hero1:#17181B;--hero2:#000;--hero-s:rgba(255,255,255,.08);--hero-cta:#0C0D0F}
 [data-acento=azul] .cab{box-shadow:0 3px 10px rgba(16,36,79,.4)}
 [data-acento=verde] .cab{box-shadow:0 3px 10px rgba(11,59,34,.4)}
-[data-acento=negro] .cab{background:linear-gradient(135deg,#22242A,#000);box-shadow:0 3px 10px rgba(0,0,0,.55)}
+[data-acento=negro] .cab{background:linear-gradient(120deg,#2E3036 0%,#17181B 52%,#000 100%);box-shadow:0 3px 10px rgba(0,0,0,.55)}
 [data-acento=negro] .btn.ro{background:linear-gradient(135deg,#2B2D33,#141519);box-shadow:0 5px 13px rgba(0,0,0,.5)}
 [data-acento=negro] .chip.on,[data-acento=negro] .mk.on,[data-acento=negro] .badge.ff{background:#E9EBEF;border-color:#E9EBEF;color:#141414}
 [data-acento=negro] .mk.on.am{background:#F2C230;border-color:#F2C230;color:#3a2f00}
@@ -1008,6 +1008,11 @@ body.en-login #toast{bottom:26px}
 [data-acento=azul] .login-bg{background:radial-gradient(680px 440px at 88% -6%,rgba(46,124,246,.26),transparent 60%),linear-gradient(150deg,#050F24 0%,#02060E 52%,#010308 100%)}
 [data-acento=verde] .login{background:linear-gradient(150deg,#0B2E1C 0%,#04140C 52%,#010703 100%)}
 [data-acento=verde] .login-bg{background:radial-gradient(680px 440px at 88% -6%,rgba(35,165,89,.24),transparent 60%),linear-gradient(150deg,#04120A 0%,#020806 52%,#010402 100%)}
+#nav .tema-hd b{background:var(--rojo)}
+#nav .tema-hd .arw{margin-left:auto;font-size:10px;opacity:.65;padding-left:6px}
+#nav .tema-sw{padding-left:12px}
+#nav .tema-sw.on{outline:1.5px solid var(--rojo)}
+#nav .tema-sw .chk{margin-left:auto;color:var(--rojo);font-weight:900}
 #nav .tema-sw i{width:14px;height:14px;border-radius:50%;display:inline-block;border:1px solid var(--borde);flex:none}
 .btn,.hbtn,.chip,.bnav button,#nav button{transition:transform .12s ease,filter .2s ease}
 .btn:active,.hbtn:active,.chip:active,.bnav button:active,#nav button:active{transform:scale(.96);filter:brightness(.93)}
@@ -1040,7 +1045,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.59</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.60</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1465,7 +1470,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.59',APP_BUILD=60;
+var APP_VERSION='1.0.60',APP_BUILD=61;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -2248,6 +2253,7 @@ h+='<div class="vacio"><b>Bienvenido a Copa CD</b>Gestiona el torneo: equipos, j
 
 /* ---------- partido a pantalla completa + cronómetro ---------- */
 var vozOn=true;try{vozOn=localStorage.getItem('mtp_copa_cd_voz')!=='0';}catch(e){}
+var temaMenuOn=true;
 var vozDichos={};
 function voz(texto){if(!vozOn)return;if(!(window.cdpCompartir&&window.cdpCompartir.hablar))return;try{window.cdpCompartir.hablar(String(texto||''),function(){},function(){});}catch(e){}}
 function anunciarPartido(p,inicio){if(!p)return;if(!vozOn)return;
@@ -4237,8 +4243,8 @@ function render(){
   nh+='<button data-a="vista" data-v="'+p.v+'"'+(cls?' class="'+cls+'"':'')+' style="animation-delay:'+(0.03+i*0.05).toFixed(2)+'s" title="'+esc(blq||p.t)+'"><b>'+p.i+'</b>'+p.t+(blq?'<span class="lk">🔒</span>':'')+'</button>';}
  nh+='<button data-a="voz-toggle" class="voz-toggle"><b>'+(vozOn?'🔊':'🔇')+'</b>Voz de anuncios: '+(vozOn?'activada':'desactivada')+'</button>';
  var TEMNI=[['rojo','Rojo','#F52B27'],['azul','Azul','#2E7CF6'],['verde','Verde','#23A559'],['negro','Negro','#C7CBD3']];
- nh+='<div class="nav-lbl">Tema</div>';
- for(var iTn=0;iTn<TEMNI.length;iTn++){var tnv=TEMNI[iTn];nh+='<button data-a="tema-set" data-x="'+tnv[0]+'" class="tema-sw'+(S.tema===tnv[0]?' on':'')+'"><i style="background:'+tnv[2]+'"></i>'+tnv[1]+'</button>';}
+ nh+='<button data-a="tema-menu" class="tema-hd'+(temaMenuOn?' abierto':'')+'"><b>&#127912;</b> Tema: '+nombreTema(S.tema)+'<span class="arw">'+(temaMenuOn?'&#9652;':'&#9662;')+'</span></button>';
+ if(temaMenuOn){for(var iTn=0;iTn<TEMNI.length;iTn++){var tnv=TEMNI[iTn];nh+='<button data-a="tema-set" data-x="'+tnv[0]+'" class="tema-sw'+(S.tema===tnv[0]?' on':'')+'"><i style="background:'+tnv[2]+'"></i>'+tnv[1]+(S.tema===tnv[0]?'<span class="chk">&#10003;</span>':'')+'</button>';}}
  nh+='<div class="nav-ver">Copa CD · v'+APP_VERSION+' · compila '+APP_BUILD+'</div>';
  nav.innerHTML=nh;nav.style.display='flex';
  if(navBtn)navBtn.style.display='flex';
@@ -4360,6 +4366,7 @@ document.addEventListener('click',function(ev){
   case 'vista':irA(el.getAttribute('data-v'));break;
   case 'tema':{var TSa=['rojo','azul','verde','negro'];S.tema=TSa[(TSa.indexOf(String(S.tema))+1)%TSa.length];aplicarTema();guardar();toast('Tema: '+nombreTema(S.tema));}break;
   case 'tema-set':S.tema=String(el.getAttribute('data-x')||'rojo');aplicarTema();guardar();navAbierto=false;render();toast('Tema: '+nombreTema(S.tema));break;
+  case 'tema-menu':temaMenuOn=!temaMenuOn;render();break;
   case 'bases':S.ui.anterior=(S.ui.vista==='bases'?S.ui.anterior:S.ui.vista);navHist.push(S.ui.vista);S.ui.vista='bases';window.scrollTo(0,0);render();break;
     case 'volver':S.ui.vista=navHist.pop()||S.ui.anterior||'dashboard';window.scrollTo(0,0);render();break;
    case 'hist-abrir':var hid=+el.getAttribute('data-i');S.ui.histAbierto=(S.ui.histAbierto===hid?'':hid);render();break;
@@ -5301,9 +5308,10 @@ function instalarYCerrar(){
  cdpCompartir.instalar(d.nombre,'Actualizaci\u00f3n Copa CD',
   function(ruta){
    actualizaUI=null;renderActualiza();
-   finalDescarga('Se abri\u00f3 el instalador de Android (\u00bfno sali\u00f3 el cartel? toca \u00ab📂 Ir a Descargas\u00bb y sigue los 4 pasos de abajo; el \u00faltimo es \u00abInstalar sin analizar\u00bb de Play Protect).');
+      var rtG=String(ruta||'');
+   finalDescarga('Se abri\u00f3 el instalador de Android [v\u00eda '+rtG+'] (\u00bfno sali\u00f3 el cartel? toca \u00ab📂 Ir a Descargas\u00bb y sigue los 4 pasos de abajo; el \u00faltimo es \u00abInstalar sin analizar\u00bb de Play Protect).');
    toast('\u2713 Descarga completa \u00b7 el cartel de instalaci\u00f3n se abre solo; si no, usa \u00abIr a Descargas\u00bb');
-     var rtG=String(ruta||'');if(rtG==='instalador-sesion'){setTimeout(function(){if(!avisoInst){var st2=document.getElementById('dz-estado');if(st2)st2.innerHTML=esc('⚠️ El cartel de Android no llegó a abrirse solo: toca «🔄 Repetir instalador» (con el permiso ya concedido se abre directo). Si sale el permiso, actívalo y al volver sigo yo.');}},12000);}else{var st3=document.getElementById('dz-estado');if(st3)st3.innerHTML=esc('Cartel de Android abierto: toca INSTALAR; si sale el aviso de Google Play Protect, toca Instalar sin analizar (solo sale las primeras veces).');}
+     if(rtG==='instalador-sesion'){setTimeout(function(){if(!avisoInst){var st2=document.getElementById('dz-estado');if(st2)st2.innerHTML=esc('⚠️ El cartel de Android no llegó a abrirse solo: toca «🔄 Repetir instalador» (con el permiso ya concedido se abre directo). Si sale el permiso, actívalo y al volver sigo yo.');}},12000);}else{var st3=document.getElementById('dz-estado');if(st3)st3.innerHTML=esc('Cartel de Android abierto: toca INSTALAR; si sale el aviso de Google Play Protect, toca Instalar sin analizar (solo sale las primeras veces).');}
   },
   function(e){var me=String(e||'');if(me.indexOf('permiso-instalar')===0){instaladorPendiente=true;finalDescarga('🔑 Android pidió permiso: en la pantalla que se abrió activa «Permitir de esta fuente» y AL VOLVER a la app la instalación sigue sola.');toast('🔑 Activa el permiso y al volver sigo yo con la instalación');return;}finalDescarga('El instalador no respondió ('+me+'). Toca «📂 Abrir Descargas» → toca el APK → Instalar (la vía manual que funciona), o «🌐 Por navegador».');});
 }
