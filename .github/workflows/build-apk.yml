@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Voz mejorada: al pulsar INICIAR dice solo Comienza el partido. En el 3 para 3 (carta 2) el tiempo se DETIENE solo a los 5 minutos para hacer los cambios y queda en 3 jugadores por equipo hasta pulsar continuar.'
+          body: 'El instalador de Android se abre igual que tocar el archivo en Descargas (cartel de INSTALAR + Play Protect). Sin dialogo de cargando en los procesos automaticos de la nube y sin avisos de sesion de Firebase en el modo automatico.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
