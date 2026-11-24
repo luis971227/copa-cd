@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.69: si el instalador de Android se lanza pero NUNCA aparece en pantalla, la app lo detecta sola y salta a la instalacion del sistema (sesion PackageInstaller). Si sigue sin salir el cartel, mandame la captura de la linea [via ...].'
+          body: 'Version de prueba para el instalador automatico: sin cambios de codigo, solo version. Observa si el cartel de ACTUALIZAR sale solo tras la descarga y mandame la captura de la linea [via ...].'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
