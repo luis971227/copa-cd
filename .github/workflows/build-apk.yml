@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Version de prueba para el ciclo de actualizacion: descargala desde el aviso de la app y mira si el cartel de Android se abre solo. Si no abre, mandame la captura del dialog con la linea [via ...].'
+          body: 'El instalador ahora entra por la via oficial de Android (ACTION_INSTALL_PACKAGE, que solo el instalador del sistema puede atender) y por el canal de sesion con estado en vivo. El estado de la app muestra exactamente que app del sistema tomo cada intento.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

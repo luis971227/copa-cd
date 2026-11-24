@@ -348,23 +348,28 @@ public class CdpCompartir extends CordovaPlugin {
                     sesionConfirmada = false;
                     ctxSesion = ctx; uriSesion = uri;
                     estadoInstalador("info", "Abriendo el instalador de Android...");
-                    Intent vF = new Intent(Intent.ACTION_VIEW);
-                    vF.setDataAndType(uri, "application/vnd.android.package-archive");
-                    vF.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    if (uiLanzar(ctx, vF)) { cb.success("instalador-fp"); return; }
-                    Intent vIP2 = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-                    vIP2.setDataAndType(uri, "application/vnd.android.package-archive");
-                    vIP2.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    if (uiLanzar(ctx, vIP2)) { cb.success("instalador-directo"); return; }
+                    /* v1.0.65: ACTION_INSTALL_PACKAGE primero: solo el instalador del sistema
+                       puede atender ese intent, nunca una carpeta ni el navegador. Si el
+                       sistema no lo tiene, sigue la sesion PackageInstaller (su confirmacion
+                       la construye y lanza el propio sistema). El ACTION_VIEW se dejo de
+                       usar al frente porque Samsung lo derivaba a Mis Archivos. */
+                    Intent vIP = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+                    vIP.setDataAndType(uri, "application/vnd.android.package-archive");
+                    vIP.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    if (uiLanzar(ctx, vIP)) { cb.success("instalador-directo|" + quien(ctx, vIP)); return; }
                     if (instalarSesionApi(ctx, f, cb)) {
                         esperarInstaladorSesion(ctx, uri, cb);
                         return;
                     }
+                    Intent vF = new Intent(Intent.ACTION_VIEW);
+                    vF.setDataAndType(uri, "application/vnd.android.package-archive");
+                    vF.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    if (uiLanzar(ctx, vF)) { cb.success("instalador-fp|" + quien(ctx, vF)); return; }
                     if (uriDescargas != null) {
                         Intent vD = new Intent(Intent.ACTION_VIEW);
                         vD.setDataAndType(uriDescargas, "application/vnd.android.package-archive");
                         vD.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        if (uiLanzar(ctx, vD)) { cb.success("instalador-descargas"); return; }
+                        if (uiLanzar(ctx, vD)) { cb.success("instalador-descargas|" + quien(ctx, vD)); return; }
                     }
                     lanzarInstalador(ctx, uri);
                     cb.success("instalador");
@@ -411,7 +416,7 @@ public class CdpCompartir extends CordovaPlugin {
             CallbackContext local = cbSesion; cbSesion = null;
             if (local == null || sesionConfirmada) return;
             try {
-                lanzarInstalador(ctx, uriDescargas != null ? uriDescargas : uri);
+                lanzarInstalador(ctx, uriDescargas != null ? uri : uriDescargas);
                 local.success("instalador-clasico");
             } catch (Throwable e) {
                 local.error("instalador: el sistema no respondio y el respaldo clasico tampoco; instala a mano desde Archivos -> Descargas");
@@ -589,7 +594,7 @@ public class CdpCompartir extends CordovaPlugin {
                             CallbackContext local2 = cbSesion; cbSesion = null;
                             try { c.unregisterReceiver(this); } catch (Throwable t) { }
                             if (local2 == null) return;
-                            try { lanzarInstalador(ctxSesion, uriDescargas != null ? uriDescargas : uriSesion); local2.success("instalador-clasico"); }
+                            try { lanzarInstalador(ctxSesion, uriSesion != null ? uriSesion : uriDescargas); local2.success("instalador-clasico"); }
                             catch (Throwable e2) { local2.error("instalador: " + (e2.getMessage() == null ? e2.getClass().getSimpleName() : e2.getMessage())); }
                             return;
                         }
@@ -626,6 +631,14 @@ public class CdpCompartir extends CordovaPlugin {
 
     /* Lanza la actividad en el hilo de UI (obligatorio en varios telefonos) y
        avisa con el boolean si realmente se lanzo; bloquea hasta 1 segundo. */
+    private String quien(final Context ctx, final Intent it) {
+        try {
+            android.content.pm.ResolveInfo r = ctx.getPackageManager().resolveActivity(it, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY);
+            if (r != null && r.activityInfo != null && r.activityInfo.packageName != null) return r.activityInfo.packageName;
+        } catch (Throwable t) { }
+        return "desconocido";
+    }
+
     private boolean uiLanzar(final Context ctx, final Intent intent) {
         final java.util.concurrent.atomic.AtomicBoolean lanzado = new java.util.concurrent.atomic.AtomicBoolean(false);
         try {
