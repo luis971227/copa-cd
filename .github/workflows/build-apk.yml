@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Version de prueba para el instalador automatico (trae la traza completa de las vias en el dialog). Sin cambios de codigo, solo version.'
+          body: 'v1.0.73: si One UI cierra el cartel del instalador sin verse, la app lo detecta y lo dice claro en el dialog (con el paso para desactivar el Bloqueo automatico de Samsung).'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

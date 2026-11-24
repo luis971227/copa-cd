@@ -628,9 +628,16 @@ public class CdpCompartir extends CordovaPlugin {
                                 act.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 if (uiLanzar(c, act)) {
                                     sesionConfirmada = true;
-                                    estadoInstalador("esperando", "Cartel de instalacion abierto: toca Instalar y luego 'Instalar sin analizar' de Play Protect");
                                     CallbackContext localA = cbSesion; cbSesion = null;
-                                    if (localA != null) localA.success("instalador-sesion");
+                                    /* v1.0.73: comprobar de VERDAD si el cartel del
+                                       sistema llego a la pantalla (onPause de la app). */
+                                    if (pantallaCambio(3000)) {
+                                        estadoInstalador("esperando", "Cartel de instalacion abierto: toca Instalar y luego 'Instalar sin analizar' de Play Protect");
+                                        if (localA != null) localA.success("instalador-sesion");
+                                        return;
+                                    }
+                                    estadoInstalador("bloqueado", "One UI bloqueo el cartel del instalador (se abrio y se cerro solo). Desactiva 'Bloqueo automatico' en Ajustes > Seguridad y privacidad, o usa Ir a Descargas");
+                                    if (localA != null) localA.success("instalador-sesion-sin-pantalla");
                                     return;
                                 }
                             }
