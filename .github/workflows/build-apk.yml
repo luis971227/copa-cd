@@ -94,7 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.77: login de estadio de noche - gradas con publico y lucecitas, 4 torres de reflectores con conos de luz, cesped iluminado con portería y los 4 balones (Champions/Euro/Copa America/Mundial); boton Invitar tambien en el login'
+          body: 'v1.0.78: login centrado con fondo de noche unificado  fuera el rojo superior, estadio y cancha sutiles al fondo, marca compacta. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
           files: |
             salida/CopaCD-*.apk
 
