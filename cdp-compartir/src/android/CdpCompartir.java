@@ -353,10 +353,18 @@ public class CdpCompartir extends CordovaPlugin {
                        sistema no lo tiene, sigue la sesion PackageInstaller (su confirmacion
                        la construye y lanza el propio sistema). El ACTION_VIEW se dejo de
                        usar al frente porque Samsung lo derivaba a Mis Archivos. */
+                    /* v1.0.67: cada intent se GATEA con quien() ANTES de lanzarlo.
+                       Si el resolver dice que lo atendera algo que NO es un instalador
+                       (p.ej. Mis Archivos de Samsung: com.sec.android.app.myfiles), ese
+                       intent NO se lanza y se pasa al siguiente: jamas se abre una
+                       carpeta sola. La sesion PackageInstaller es la via canonica
+                       porque EL SISTEMA construye y lanza su propia confirmacion. */
                     Intent vIP = new Intent(Intent.ACTION_INSTALL_PACKAGE);
                     vIP.setDataAndType(uri, "application/vnd.android.package-archive");
                     vIP.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    if (uiLanzar(ctx, vIP)) { cb.success("instalador-directo|" + quien(ctx, vIP)); return; }
+                    String qIP = quien(ctx, vIP);
+                    boolean esInst = qIP.lastIndexOf("install") >= 0;
+                    if (esInst && uiLanzar(ctx, vIP)) { cb.success("instalador-directo|" + qIP); return; }
                     if (instalarSesionApi(ctx, f, cb)) {
                         esperarInstaladorSesion(ctx, uri, cb);
                         return;
@@ -364,7 +372,8 @@ public class CdpCompartir extends CordovaPlugin {
                     Intent vF = new Intent(Intent.ACTION_VIEW);
                     vF.setDataAndType(uri, "application/vnd.android.package-archive");
                     vF.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    if (uiLanzar(ctx, vF)) { cb.success("instalador-fp|" + quien(ctx, vF)); return; }
+                    String qF = quien(ctx, vF);
+                    if (qF.lastIndexOf("install") >= 0 && uiLanzar(ctx, vF)) { cb.success("instalador-fp|" + qF); return; }
                     if (uriDescargas != null) {
                         Intent vD = new Intent(Intent.ACTION_VIEW);
                         vD.setDataAndType(uriDescargas, "application/vnd.android.package-archive");
@@ -656,16 +665,18 @@ public class CdpCompartir extends CordovaPlugin {
         return lanzado.get();
     }
 
+    /* v1.0.67: intentos EXPLICITOS primero (setPackage al instalador del sistema,
+       incluido el de Samsung), despues el VIEW generico, despues el chooser. */
     private void lanzarInstalador(final Context ctx, final Uri uri) throws IOException {
-        Intent base = new Intent(Intent.ACTION_VIEW);
-        base.setDataAndType(uri, "application/vnd.android.package-archive");
-        base.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-        if (uiLanzar(ctx, base)) return;
-        Intent elegir = Intent.createChooser(base, "Instalar actualización de Copa CD");
-        elegir.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-        if (uiLanzar(ctx, elegir)) return;
-        String[] instaladores = {"com.google.android.packageinstaller", "com.android.packageinstaller"};
+        String[] instaladores = {"com.google.android.packageinstaller", "com.android.packageinstaller", "com.samsung.android.packageinstaller"};
         for (String paq : instaladores) {
+            try {
+                Intent i1 = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+                i1.setPackage(paq);
+                i1.setDataAndType(uri, "application/vnd.android.package-archive");
+                i1.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                if (uiLanzar(ctx, i1)) return;
+            } catch (Throwable e2) { }
             try {
                 Intent i2 = new Intent(Intent.ACTION_VIEW);
                 i2.setPackage(paq);
@@ -674,6 +685,13 @@ public class CdpCompartir extends CordovaPlugin {
                 if (uiLanzar(ctx, i2)) return;
             } catch (Throwable e3) { }
         }
+        Intent base = new Intent(Intent.ACTION_VIEW);
+        base.setDataAndType(uri, "application/vnd.android.package-archive");
+        base.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (uiLanzar(ctx, base)) return;
+        Intent elegir = Intent.createChooser(base, "Instalar actualización de Copa CD");
+        elegir.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (uiLanzar(ctx, elegir)) return;
         throw new IOException("Ningún instalador de Android respondió; instala la APK desde la carpeta Descargas del móvil");
     }
 
