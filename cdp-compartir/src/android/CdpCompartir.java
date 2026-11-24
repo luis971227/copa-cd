@@ -440,7 +440,7 @@ public class CdpCompartir extends CordovaPlugin {
 
     private void hablar(CordovaArgs args, final CallbackContext cb) {
         try {
-            String t0 = args.optString(0, "");
+            String t0 = args.optString(0);
             final String texto = (t0 == null || t0.length() == 0) ? "" : t0.trim();
             if (texto.length() == 0) { cb.success("vacio"); return; }
             final Context ctx = cordova.getContext().getApplicationContext();
