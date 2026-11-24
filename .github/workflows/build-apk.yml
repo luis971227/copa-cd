@@ -80,20 +80,25 @@ jobs:
         run: |
           mkdir -p salida
           cp platforms/android/app/build/outputs/apk/debug/app-debug.apk "salida/CopaCD-${VER}.apk"
+          # Copia con nombre FIJO para el enlace permanente de descarga:
+          cp "salida/CopaCD-${VER}.apk" "salida/CopaCD-ultima.apk"
 
       - name: Subir artefacto (siempre)
         uses: actions/upload-artifact@v4
         with:
           name: CopaCD-${{ env.VER }}-apk
-          path: salida/CopaCD-${{ env.VER }}.apk
+          path: salida/CopaCD-*.apk
 
       - name: Crear Release (solo al empujar un tag v*)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.74: login rediseñado — cancha de fútbol en perspectiva con su círculo central y balones flotando detrás de la tarjeta.'
-          files: salida/CopaCD-${{ env.VER }}.apk
+          body: 'v1.0.75: enlace fijo de descarga (CopaCD-ultima.apk) para compartir por WhatsApp: siempre baja la APK mas reciente sin entrar a GitHub.
+
+Enlace para compartir: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
+          files: |
+            salida/CopaCD-*.apk
 
   keystore:
     runs-on: ubuntu-latest
