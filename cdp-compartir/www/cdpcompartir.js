@@ -1,6 +1,10 @@
 var exec = require('cordova/exec');
 
 var CdpCompartir = {
+  texto: function(t, success, error) {
+    exec(success, error, 'CdpCompartir', 'texto', [t || '', '', '']);
+  },
+
   compartir: function(nombre, contenido, texto, success, error) {
     exec(success, error, 'CdpCompartir', 'compartir', [nombre, contenido || '', texto || '']);
   },

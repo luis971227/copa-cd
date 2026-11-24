@@ -100,6 +100,7 @@ public class CdpCompartir extends CordovaPlugin {
             if ("http".equals(accion)) { http(args, cb); return true; }
             if ("instalar".equals(accion)) { instalar(args, cb); return true; }
             if ("descargas".equals(accion)) { abrirDescargas(args, cb); return true; }
+            if ("texto".equals(accion)) { compartirTexto(args, cb); return true; }
             if ("escuchar-instalador".equals(accion)) { escucharInstalador(cb); return true; }
             if ("notificar".equals(accion)) { notificar(args, cb); return true; }
             if ("hablar".equals(accion)) { hablar(args, cb); return true; }
@@ -560,6 +561,25 @@ public class CdpCompartir extends CordovaPlugin {
             notificarYa(titulo, texto);
             cb.success("notificado");
         } catch (Throwable e) { cb.error(e.getMessage() == null ? "no se pudo notificar" : e.getMessage()); }
+    }
+
+    /* v1.0.76: comparte TEXTO/link plano con cualquier app (Whatsapp etc). */
+    private void compartirTexto(CordovaArgs args, final CallbackContext cb) {
+        final String texto = args.optString(0);
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override public void run() {
+                try {
+                    Intent i = new Intent(Intent.ACTION_SEND);
+                    i.setType("text/plain");
+                    i.putExtra(Intent.EXTRA_TEXT, texto);
+                    Intent elegir = Intent.createChooser(i, "Compartir Copa CD");
+                    cordova.getActivity().startActivity(elegir);
+                    cb.success("compartido");
+                } catch (Throwable e) {
+                    cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+                }
+            }
+        });
     }
 
     private void notificarYa(String titulo, String texto) {

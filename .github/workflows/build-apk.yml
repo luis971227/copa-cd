@@ -94,7 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.75: enlace fijo de descarga (CopaCD-ultima.apk) para compartir por WhatsApp: siempre baja la APK mas reciente sin entrar a GitHub.
+          body: 'v1.0.76: boton INVITAR A LA COPA en el menu - comparte el enlace fijo de descarga por Whatsapp o cualquier app. La version 1.0.76 arregla ademas el aviso honesto del instalador bloqueado por One UI.'
 
 Enlace para compartir: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
           files: |
