@@ -16,6 +16,8 @@ body{font:15px/1.45 Arial,Helvetica,sans-serif;color:var(--tinta);background:var
 .cab img{width:36px;height:37px;object-fit:contain;background:#fff;border-radius:10px;padding:3px;box-shadow:0 2px 8px rgba(0,0,0,.22)}
 .cab h1{margin:0;font-size:27px;letter-spacing:1.5px;font-weight:900;font-family:'Arial Narrow',Arial;color:#fff}
 .hdr-ver{display:inline-block;vertical-align:middle;font-size:10px;font-weight:800;background:var(--chip);color:var(--chip-txt);border:1px solid var(--gris);border-radius:99px;padding:2px 7px;margin-left:7px;letter-spacing:.5px}
+#nav .nav-ver{flex:none;margin-top:auto;padding:14px 18px;text-align:center;font-size:11px;font-weight:800;letter-spacing:.6px;color:var(--gris2);border-top:1px solid var(--borde)}
+#btn-nube{position:relative}
 .cab p{margin:0;font-size:11px;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cab .tit{min-width:0}
 .cab .der{margin-left:auto;display:flex;gap:6px}
@@ -676,6 +678,7 @@ input[type=color]{cursor:pointer}
 .login .pie b{color:rgba(255,255,255,.75)}
 .lg-perks{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:14px 0 0}
 #banner-nube{margin:4px 0 10px;padding:11px 13px;background:var(--suave);border:1px solid var(--borde);border-radius:12px;font-size:12.5px;line-height:1.5;text-align:center}
+#banner-nube:empty{display:none}
 #banner-nube .bn-sub{color:var(--gris2);margin:5px 0 8px}
 #banner-nube .btn{width:100%;margin:0}
 .lg-perks span{font-size:9px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);border-radius:99px;padding:4px 9px}
@@ -990,10 +993,11 @@ body.en-login #toast{bottom:26px}
 <header class="cab" id="cab">
   <button id="nav-btn" data-a="nav-toggle" title="Menú" aria-label="Abrir menú">☰</button>
   <img src="assets/logo.png" alt="Copa CD">
-  <div class="tit"><h1>COPA CD <span id="hdr-ver" class="hdr-ver"></span></h1><p>Ciudad Deportiva · domingos 5:00 pm</p></div>
+  <div class="tit"><h1>COPA CD</h1><p>Ciudad Deportiva · domingos 5:00 pm</p></div>
   <div class="der">
     <button class="hbtn" data-a="bases" title="Reglamento">&#128214;</button>
     <button class="hbtn" data-a="vista" data-v="asistente" id="ia-btn" title="Asistente IA" aria-label="Asistente IA">&#129302;</button>
+    <button class="hbtn" data-a="nube-carga" id="btn-nube" title="Actualizar desde la nube (descarga los cambios de otros móviles ahora, sin esperar la Auto)">&#128260;</button>
     <button class="hbtn" data-a="tema" id="btn-tema" title="Modo oscuro/claro">&#127769;</button>
   </div>
 </header>
@@ -1012,7 +1016,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.51</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.52</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1437,7 +1441,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.51',APP_BUILD=52;
+var APP_VERSION='1.0.52',APP_BUILD=53;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -3223,7 +3227,7 @@ function htmlBannerNube(){
  var ts=nubeUltEstado,tx;
  if(ts===null)tx='☁️ Conectando con la nube para bajar la copa oficial ('+NUBE_ID_DEFECTO+')…';
  else if(ts.ok===null)tx='☁️ Revisando la nube… (intento '+(nubeIntentos||1)+'º)';
- else if(ts.ok===true)tx=(S.equipos.length?'✅ Copa cargada desde la nube':('✅ Nube revisada: '+ts.msg));
+ else if(ts.ok===true){if(S.equipos.length)return '';tx='✅ Nube revisada: '+ts.msg;}
  else tx='⚠️ La descarga falló: '+ts.msg+' · reintento automático cada 30 segundos';
  return '<div class="bn-msg">'+tx+'</div><div class="bn-sub">Debe bajar la copa oficial '+NUBE_ID_DEFECTO+' de la nube con internet activo. Si este aviso sigue, toca el botón y mira el mensaje exacto:</div>'
   +'<button class="btn gh" data-a="nube-carga">☁️ Reintentar la descarga ahora</button>';
@@ -4181,6 +4185,7 @@ function render(){
    if(p.r.indexOf(r)<0)continue;
    var blq=bloqueoVista(p.v)||capBloqueo(p.v),cls=(S.ui.vista===p.v?'on ':'')+(blq?'bloq':'');
   nh+='<button data-a="vista" data-v="'+p.v+'"'+(cls?' class="'+cls+'"':'')+' style="animation-delay:'+(0.03+i*0.05).toFixed(2)+'s" title="'+esc(blq||p.t)+'"><b>'+p.i+'</b>'+p.t+(blq?'<span class="lk">🔒</span>':'')+'</button>';}
+ nh+='<div class="nav-ver">Copa CD · v'+APP_VERSION+' · compila '+APP_BUILD+'</div>';
  nav.innerHTML=nh;nav.style.display='flex';
  if(navBtn)navBtn.style.display='flex';
  if(bnav){bnav.innerHTML=barraInferior(r);bnav.className='bnav on';}
@@ -4295,7 +4300,7 @@ document.addEventListener('click',function(ev){
     guardar();toast(S.ia.key&&S.ia.url?'IA en la nube conectada':'Conexión de IA guardada');render();break;
    case 'ia-clear':S.ia={url:'',model:'',key:''};guardar();toast('IA en la nube desactivada');render();break;
    case 'entrar':entrar();break;
-   case 'nube-carga':nubeConfirmado=true;nubeDescargar(false);break;
+   case 'nube-carga':nubeConfirmado=true;setTimeout(function(){nubeConfirmado=false;},8000);window.__nubeManual=true;toast('Revisando la nube\u2026');nubeDescargar(true);break;
      case 'salir':cronStop();S.ui.partido='';cartaUI=null;syncUI=false;permUI=null;quitarUI=null;chalUI=null;navAbierto=false;navHist=[];S.sesion=null;S.ui.vista='dashboard';guardar();render();toast('Sesión cerrada');break;
    case 'nav-toggle':setNav(!navAbierto);break;
   case 'vista':irA(el.getAttribute('data-v'));break;
@@ -5499,6 +5504,7 @@ function nubeDescargar(silencioso,reintento){
    }
   }finally{nubeBatch=false;}
   nubeUltEstado={ok:true,ts:Date.now(),msg:aplicados+' paquete(s) aplicados, '+ignorados+' ignorados'};pintarBannerNube();
+  if(silencioso&&!cambios&&window.__nubeManual){toast('Nube revisada: ya estás al día');window.__nubeManual=false;}
   if(aplicados&&nubeAuto&&S.idCopa)nubeAutoIniciar();
   render();
   if(silencioso){
@@ -5850,7 +5856,7 @@ setTimeout(function(){
  a.className='fuera';
  setTimeout(function(){if(a.parentNode)a.parentNode.removeChild(a);},400);
 },500);
-var hv=document.getElementById('hdr-ver');if(hv)hv.textContent='v'+APP_VERSION;
+var hv=document.getElementById('hdr-ver');if(hv)hv.textContent='v'+APP_VERSION;/*version movida al menu lateral (nav-ver)*/
 comprobarActualizacion(true);
 setInterval(function(){comprobarActualizacion(true,true);},20*60*1000);
 })();

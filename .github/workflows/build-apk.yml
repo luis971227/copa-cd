@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'DIAGNOSTICO: la pantalla de login ahora muestra el estado en vivo de como baja la copa oficial CD-VDF5J9 (conectando, revisando, copa cargada, o el ERROR EXACTO si falla) con boton Reintentar la descarga. Asi sabemos por que en algunos moviles en datos no entraba nada.'
+          body: 'El cartel de descarga del login desaparece solo cuando la copa carga. Nuevo boton de actualizar en el header para bajar de la nube al instante (sin dialogo de carga) y la version ahora vive abajo del menu lateral.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
