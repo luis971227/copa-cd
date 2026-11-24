@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'El boton del header ahora abre un desplegable con los 4 temas (Rojo, Azul, Verde, Negro) y TODOS los botones y carteles siguen al color del tema elegido. Se quito el selector del menu lateral.'
+          body: 'Corregido: los botones rojos (Resumen de la jornada, Enviar del asistente, Entrar del login y todos los principales) ahora cambian con el tema elegido.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
