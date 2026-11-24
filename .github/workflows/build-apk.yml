@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.73: si One UI cierra el cartel del instalador sin verse, la app lo detecta y lo dice claro en el dialog (con el paso para desactivar el Bloqueo automatico de Samsung).'
+          body: 'v1.0.74: login rediseñado — cancha de fútbol en perspectiva con su círculo central y balones flotando detrás de la tarjeta.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
