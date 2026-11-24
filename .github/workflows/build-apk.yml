@@ -94,7 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.76: boton INVITAR A LA COPA en el menu - comparte el enlace fijo de descarga (CopaCD-ultima.apk) por Whatsapp o cualquier app; instalador con aviso honesto si One UI bloquea el cartel. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
+          body: 'v1.0.77: login de estadio de noche - gradas con publico y lucecitas, 4 torres de reflectores con conos de luz, cesped iluminado con portería y los 4 balones (Champions/Euro/Copa America/Mundial); boton Invitar tambien en el login'
           files: |
             salida/CopaCD-*.apk
 
