@@ -40,10 +40,26 @@ public class CdpCompartir extends CordovaPlugin {
     private android.speech.tts.TextToSpeech tts;
     private volatile boolean ttsListo = false;
     private java.util.Queue<String> colaTts;
+    /* v1.0.69: hora del ultimo onPause de la actividad principal. Si tras lanzar
+       el instalador la app NO baja a segundo plano, es que el cartel NUNCA se
+       puso en pantalla (One UI lo descarta) y hay que saltar a otra via. */
+    private static volatile long appPausadaEn = 0;
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
+        try {
+            cordova.getActivity().getApplication().registerActivityLifecycleCallbacks(new android.app.Application.ActivityLifecycleCallbacks() {
+                @Override public void onActivityPaused(android.app.Activity a) {
+                    if (a == cordova.getActivity()) appPausadaEn = System.currentTimeMillis();
+                }
+                @Override public void onActivityResumed(android.app.Activity a) { }
+                @Override public void onActivityStarted(android.app.Activity a) { }
+                @Override public void onActivityStopped(android.app.Activity a) { }
+                @Override public void onActivitySaveInstanceState(android.app.Activity a, android.os.Bundle b) { }
+                @Override public void onActivityDestroyed(android.app.Activity a) { }
+            });
+        } catch (Throwable t) { Log.w(TAG, "no se pudo registrar el ciclo de vida", t); }
         final File filesDir = cordova.getContext().getFilesDir();
         cordova.getThreadPool().execute(new Runnable() {
             @Override
@@ -364,7 +380,15 @@ public class CdpCompartir extends CordovaPlugin {
                     vIP.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
                     String qIP = quien(ctx, vIP);
                     boolean esInst = qIP.lastIndexOf("install") >= 0;
-                    if (esInst && uiLanzar(ctx, vIP)) { cb.success("instalador-directo|" + qIP); return; }
+                    if (esInst) {
+                        appPausadaEn = 0;
+                        if (uiLanzar(ctx, vIP) && pantallaCambio(3000)) {
+                            cb.success("instalador-directo|" + qIP);
+                            return;
+                        }
+                        /* el intent se lanzo pero NADIE se puso delante: carta al
+                           oscuro. No se cuenta como exito: sigue la sesion. */
+                    }
                     if (instalarSesionApi(ctx, f, cb)) {
                         esperarInstaladorSesion(ctx, uri, cb);
                         return;
@@ -373,7 +397,13 @@ public class CdpCompartir extends CordovaPlugin {
                     vF.setDataAndType(uri, "application/vnd.android.package-archive");
                     vF.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
                     String qF = quien(ctx, vF);
-                    if (qF.lastIndexOf("install") >= 0 && uiLanzar(ctx, vF)) { cb.success("instalador-fp|" + qF); return; }
+                    if (qF.lastIndexOf("install") >= 0) {
+                        appPausadaEn = 0;
+                        if (uiLanzar(ctx, vF) && pantallaCambio(3000)) {
+                            cb.success("instalador-fp|" + qF);
+                            return;
+                        }
+                    }
                     if (uriDescargas != null) {
                         Intent vD = new Intent(Intent.ACTION_VIEW);
                         vD.setDataAndType(uriDescargas, "application/vnd.android.package-archive");
@@ -640,6 +670,17 @@ public class CdpCompartir extends CordovaPlugin {
 
     /* Lanza la actividad en el hilo de UI (obligatorio en varios telefonos) y
        avisa con el boolean si realmente se lanzo; bloquea hasta 1 segundo. */
+    /* v1.0.69: espera hasta maxMs por un onPause de la app (senal de que OTRA
+       aplicacion, el instalador, se puso en primer plano). */
+    private boolean pantallaCambio(long maxMs) {
+        long fin = System.currentTimeMillis() + maxMs;
+        while (System.currentTimeMillis() < fin) {
+            if (appPausadaEn > 0) return true;
+            try { Thread.sleep(100); } catch (InterruptedException e) { break; }
+        }
+        return false;
+    }
+
     private String quien(final Context ctx, final Intent it) {
         try {
             android.content.pm.ResolveInfo r = ctx.getPackageManager().resolveActivity(it, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY);
