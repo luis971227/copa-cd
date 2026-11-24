@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.67: el instalador ahora verifica con el sistema quien atendera el intent antes de lanzarlo: si no es un instalador (p.ej. Mis Archivos) no se abre y salta directo a la instalacion del sistema. NOTA: mandame la captura de la linea [via instalador-directo|com...] del dialog.'
+          body: 'Version de prueba: baja esta desde el aviso de la app y observa si el cartel de ACTUALIZAR sale solo. Mandame captura de la linea [via ...] si falla.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
