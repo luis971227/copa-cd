@@ -393,7 +393,7 @@ public class CdpCompartir extends CordovaPlugin {
        para que el usuario nunca se quede colgado en "abriendo instalador...". */
     private void esperarInstaladorSesion(final Context ctx, final Uri uri, final CallbackContext cb) {
         cordova.getThreadPool().execute(new Runnable() { public void run() {
-            for (int i = 0; i < 80; i++) {
+            for (int i = 0; i < 200; i++) {
                 if (sesionConfirmada) return;
                 if (cbSesion == null) return;
                 try { Thread.sleep(100); } catch (InterruptedException e) { break; }
