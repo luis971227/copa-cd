@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Instalacion automatica rehecha: el cartel INSTALAR de Android se abre directo con el archivo descargado (la copia en Descargas queda de respaldo). El estado ahora muestra por donde fue cada intento.'
+          body: 'Version de prueba para el ciclo de actualizacion: descargala desde el aviso de la app y mira si el cartel de Android se abre solo. Si no abre, mandame la captura del dialog con la linea [via ...].'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
