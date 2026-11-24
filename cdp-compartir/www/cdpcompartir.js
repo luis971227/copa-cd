@@ -19,6 +19,9 @@ var CdpCompartir = {
   instalar: function(nombre, texto, success, error) {
     exec(success, error, 'CdpCompartir', 'instalar', [nombre, texto || '']);
   },
+  hablar: function(texto, success, error) {
+    exec(success, error, 'CdpCompartir', 'hablar', [String(texto || '')]);
+  },
   notificar: function(titulo, texto, success, error) {
     exec(success, error, 'CdpCompartir', 'notificar', [titulo || 'Copa CD', texto || '']);
   },

@@ -37,6 +37,9 @@ import java.net.URL;
 
 public class CdpCompartir extends CordovaPlugin {
     private static final String TAG = "CdpCompartir";
+    private android.speech.tts.TextToSpeech tts;
+    private volatile boolean ttsListo = false;
+    private java.util.Queue<String> colaTts;
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -82,6 +85,7 @@ public class CdpCompartir extends CordovaPlugin {
             if ("descargas".equals(accion)) { abrirDescargas(args, cb); return true; }
             if ("escuchar-instalador".equals(accion)) { escucharInstalador(cb); return true; }
             if ("notificar".equals(accion)) { notificar(args, cb); return true; }
+            if ("hablar".equals(accion)) { hablar(args, cb); return true; }
             cb.error("accion desconocida: " + accion);
             return false;
         }
@@ -434,6 +438,57 @@ public class CdpCompartir extends CordovaPlugin {
         }
     }
 
+    private void hablar(CordovaArgs args, final CallbackContext cb) {
+        try {
+            String t0 = args.optString(0, "");
+            final String texto = (t0 == null || t0.length() == 0) ? "" : t0.trim();
+            if (texto.length() == 0) { cb.success("vacio"); return; }
+            final Context ctx = cordova.getContext().getApplicationContext();
+            if (tts == null) {
+                colaTts = new java.util.LinkedList<String>();
+                colaTts.add(texto);
+                cordova.getThreadPool().execute(new Runnable() { public void run() {
+                    try {
+                        tts = new android.speech.tts.TextToSpeech(ctx, new android.speech.tts.TextToSpeech.OnInitListener() {
+                            @Override public void onInit(int st) {
+                                if (st == android.speech.tts.TextToSpeech.SUCCESS && tts != null) {
+                                    boolean ok = false;
+                                    try {
+                                        int r = tts.setLanguage(new java.util.Locale("spa", "ESP"));
+                                        ok = r != android.speech.tts.TextToSpeech.LANG_MISSING_DATA && r != android.speech.tts.TextToSpeech.LANG_NOT_SUPPORTED;
+                                    } catch (Throwable t) { ok = false; }
+                                    if (!ok) {
+                                        try {
+                                            int r2 = tts.setLanguage(new java.util.Locale("es", "ES"));
+                                            ok = r2 != android.speech.tts.TextToSpeech.LANG_MISSING_DATA && r2 != android.speech.tts.TextToSpeech.LANG_NOT_SUPPORTED;
+                                        } catch (Throwable t3) { ok = false; }
+                                    }
+                                    if (!ok) {
+                                        try { tts.setLanguage(java.util.Locale.getDefault()); } catch (Throwable t4) {}
+                                    }
+                                    ttsListo = true;
+                                    drenarCola();
+                                }
+                            }
+                        });
+                    } catch (Throwable t) { Log.w(TAG, "fallo tts", t); }
+                }});
+            } else if (ttsListo) {
+                drenarUno(texto);
+            } else if (colaTts != null) {
+                colaTts.add(texto);
+            }
+            cb.success("hablado");
+        } catch (Throwable e) { cb.error(e.getMessage() == null ? "no se pudo hablar" : e.getMessage()); }
+    }
+    private void drenarUno(String texto) {
+        try { if (tts != null) tts.speak(texto, android.speech.tts.TextToSpeech.QUEUE_ADD, null); } catch (Throwable t) {}
+    }
+    private void drenarCola() {
+        if (colaTts == null) return;
+        String q;
+        while ((q = colaTts.poll()) != null) drenarUno(q);
+    }
     private void notificar(CordovaArgs args, final CallbackContext cb) {
         try {
             String t0 = args.optString(0);

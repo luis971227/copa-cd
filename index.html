@@ -1020,7 +1020,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.55</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.56</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1445,7 +1445,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.55',APP_BUILD=56;
+var APP_VERSION='1.0.56',APP_BUILD=57;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -2221,6 +2221,22 @@ h+='<div class="vacio"><b>Bienvenido a Copa CD</b>Gestiona el torneo: equipos, j
 }
 
 /* ---------- partido a pantalla completa + cronómetro ---------- */
+var vozOn=true;try{vozOn=localStorage.getItem('mtp_copa_cd_voz')!=='0';}catch(e){}
+var vozDichos={};
+function voz(texto){if(!vozOn)return;if(!(window.cdpCompartir&&window.cdpCompartir.hablar))return;try{window.cdpCompartir.hablar(String(texto||''),function(){},function(){});}catch(e){}}
+function anunciarPartido(p,inicio){if(!p)return;if(!vozOn)return;
+ var e1=eq(p.local),e2=eq(p.visitante);if(!e1||!e2)return;
+ var kAn=(inicio?'in-':'vi-')+p.id;if(vozDichos[kAn])return;
+ var nAn=jornadaDePartido(p.id),JAn=jornada(nAn);
+ var arbAn=p.arbitro?nombreArbitro(p.arbitro):(JAn&&JAn.arbitro?nombreArbitro(JAn.arbitro):'');
+ var tAn;
+ if(inicio)tAn='Comienza el partido de la jornada '+nAn+': '+e1.nombre+' contra '+e2.nombre;
+ else tAn='Vista del partido de la jornada '+nAn+': '+e1.nombre+' contra '+e2.nombre;
+ if(arbAn)tAn+='. Arbitra '+arbAn;
+ var ciAn=p.carta?cartaInfo(p.carta):null;
+ if(ciAn)tAn+='. La carta es la numero '+ciAn.id+': '+ciAn.t+'.';
+ voz(tAn);vozDichos[kAn]=1;
+}
 function cronFmt(s){var m=Math.floor(s/60),x=s%60;return (m<10?'0':'')+m+':'+(x<10?'0':'')+x;}
 function cronPara(){if(cron.t){clearInterval(cron.t);cron.t=null;}cron.corriendo=false;}
 function cronStop(){cronPara();cron.pid='';cron.seg=cron.mins*60;cron.a5=false;}
@@ -2243,6 +2259,7 @@ function alerta5Min(){
  else if(p.carta===14&&elap>=300)msg='⏱ 5 minutos de juego (partido de 15 min)';
  if(!msg)return;
  cron.a5=true;beepAlerta(4);toast(msg);
+ voz(msg.replace(/^[\s\S]*?\s/,'').trim());
  var box=document.getElementById('cron-txt');if(box){box.style.color='#C81E1E';setTimeout(function(){if(box)box.style.color='';},4000);}
 }
 function cronTick(){
@@ -2256,7 +2273,7 @@ function cronTick(){
 function cronIniciar(){var p9=S.ui.partido?buscarPartido(S.ui.partido):null;
  if(!p9)return;
  if(!puedeEditarJornada(jornadaDePartido(p9.id))){toast('Jornada terminada: solo lectura');return;}
- if(p9&&p9.estado==='pendiente'&&!p9.iniciado){p9.iniciado=true;guardar();}
+ if(p9&&p9.estado==='pendiente'&&!p9.iniciado){p9.iniciado=true;guardar();anunciarPartido(p9,true);}
  if(cron.seg<=0)cron.seg=cron.mins*60;cron.corriendo=true;if(cron.t)clearInterval(cron.t);cron.t=setInterval(cronTick,1000);renderPartido();}
 function cronPausar(){cronPara();renderPartido();}
 function cronReiniciar(){cronPara();cron.seg=cron.mins*60;cron.a5=false;renderPartido();}
@@ -2272,6 +2289,7 @@ function abrirPartido(pid){
  }
  if(cron.pid!==pid){cronPara();cron.pid=pid;cron.mins=minutosPartido(p);cron.seg=cron.mins*60; }
  S.ui.partido=pid;S.ui.ab='';window.scrollTo(0,0);render();
+ if(p.estado==='pendiente')anunciarPartido(p,false);
 }
 function cerrarPartido(){
  var p=S.ui.partido?buscarPartido(S.ui.partido):null;
@@ -4190,6 +4208,7 @@ function render(){
    if(p.r.indexOf(r)<0)continue;
    var blq=bloqueoVista(p.v)||capBloqueo(p.v),cls=(S.ui.vista===p.v?'on ':'')+(blq?'bloq':'');
   nh+='<button data-a="vista" data-v="'+p.v+'"'+(cls?' class="'+cls+'"':'')+' style="animation-delay:'+(0.03+i*0.05).toFixed(2)+'s" title="'+esc(blq||p.t)+'"><b>'+p.i+'</b>'+p.t+(blq?'<span class="lk">🔒</span>':'')+'</button>';}
+ nh+='<button data-a="voz-toggle" class="voz-toggle"><b>'+(vozOn?'🔊':'🔇')+'</b>Voz de anuncios: '+(vozOn?'activada':'desactivada')+'</button>';
  nh+='<div class="nav-ver">Copa CD · v'+APP_VERSION+' · compila '+APP_BUILD+'</div>';
  nav.innerHTML=nh;nav.style.display='flex';
  if(navBtn)navBtn.style.display='flex';
@@ -4718,6 +4737,7 @@ document.addEventListener('click',function(ev){
    case 'act-recordar':descartarActualizacion();break;
    case 'dz-cancelar':cerrarDescarga();break;
    case 'dz-instalar':instalarYCerrar();break;
+   case 'voz-toggle':vozOn=!vozOn;try{localStorage.setItem('mtp_copa_cd_voz',vozOn?'1':'0');}catch(e){}render();toast(vozOn?'Voz de anuncios activada':'Voz de anuncios desactivada');if(vozOn)voz('Voz de anuncios activada');break;
    case 'dz-reintentar':descargaLista='';abrirDescargaProgreso();break;
    case 'dz-navegador':fallbackNavegador();break;
    case 'dz-carpeta':abrirCarpetaDescargas();break;

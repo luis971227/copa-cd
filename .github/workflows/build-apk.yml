@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Red de seguridad de la instalacion automatica: si en 12 segundos el cartel de Android no llego a abrirse, la app lo dice claro en el dialogo y el boton Repetir instalador lo relanza directo (con el permiso ya concedido se abre sin escalas). IMPORTANTE: esta version debe instalarse a mano por ultima vez; las ACTUALIZACIONES desde la 1.0.55 ya correra todo solo.'
+          body: 'Voz de anuncios en la app: al entrar o iniciar un partido dice quien arbitra, que carta se juega y quienes juegan; y avisa por voz cuando termina el gol doble, entran los cambios obligatorios o arranca el 3 para 3.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
