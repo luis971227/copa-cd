@@ -94,7 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.79: login cinematografico de estadio de noche - gradas con publico desenfocado, reflectores, vallas LED, cesped con franjas, pelota clasica abajo y detalles dorados. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
+          body: 'v1.0.80: login con foto de fondo real del estadio y campos flotando sin tarjeta. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
           files: |
             salida/CopaCD-*.apk
 
