@@ -338,25 +338,33 @@ public class CdpCompartir extends CordovaPlugin {
                         cb.error("permiso-instalar: Android pide autorizar 'Instalar apps desconocidas' para Copa CD. Se abrieron los Ajustes: activa el permiso, vuelve a la app y toca Instalar otra vez");
                         return;
                     }
-                    /* Camino probado: igual que tocar el archivo en Descargas (ACTION_VIEW sobre la
-                       copia publica) primero; si el sistema no responde, ACTION_INSTALL_PACKAGE;
-                       y como ultimo recurso la sesion PackageInstaller. */
+                    /* Orden v1.0.63: Samsung mueve el ACTION_VIEW de la copia de Descargas
+                       hasta Mis Archivos (solo abre la carpeta, no instala). Ahora primero
+                       ACTION_VIEW con la URI FileProvider de la propia app (abre el cartel
+                       INSTALAR directo, igual que tocar el archivo), luego
+                       ACTION_INSTALL_PACKAGE, luego la sesion PackageInstaller con estado
+                       en vivo, y la copia de Descargas como penultimo recurso; el generico
+                       queda al final. */
                     sesionConfirmada = false;
                     ctxSesion = ctx; uriSesion = uri;
                     estadoInstalador("info", "Abriendo el instalador de Android...");
+                    Intent vF = new Intent(Intent.ACTION_VIEW);
+                    vF.setDataAndType(uri, "application/vnd.android.package-archive");
+                    vF.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    if (uiLanzar(ctx, vF)) { cb.success("instalador-fp"); return; }
+                    Intent vIP2 = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+                    vIP2.setDataAndType(uri, "application/vnd.android.package-archive");
+                    vIP2.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    if (uiLanzar(ctx, vIP2)) { cb.success("instalador-directo"); return; }
+                    if (instalarSesionApi(ctx, f, cb)) {
+                        esperarInstaladorSesion(ctx, uri, cb);
+                        return;
+                    }
                     if (uriDescargas != null) {
                         Intent vD = new Intent(Intent.ACTION_VIEW);
                         vD.setDataAndType(uriDescargas, "application/vnd.android.package-archive");
                         vD.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
                         if (uiLanzar(ctx, vD)) { cb.success("instalador-descargas"); return; }
-                    }
-                    Intent vIP = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-                    vIP.setDataAndType(uri, "application/vnd.android.package-archive");
-                    vIP.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    if (uiLanzar(ctx, vIP)) { cb.success("instalador-directo"); return; }
-                    if (instalarSesionApi(ctx, f, cb)) {
-                        esperarInstaladorSesion(ctx, uri, cb);
-                        return;
                     }
                     lanzarInstalador(ctx, uri);
                     cb.success("instalador");

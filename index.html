@@ -1059,7 +1059,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.62</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.63</div></div>
 <div id="menutemas"></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
@@ -1485,7 +1485,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.62',APP_BUILD=63;
+var APP_VERSION='1.0.63',APP_BUILD=64;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -5333,7 +5333,7 @@ function instalarYCerrar(){
       var rtG=String(ruta||'');
    finalDescarga('Se abri\u00f3 el instalador de Android [v\u00eda '+rtG+'] (\u00bfno sali\u00f3 el cartel? toca \u00ab📂 Ir a Descargas\u00bb y sigue los 4 pasos de abajo; el \u00faltimo es \u00abInstalar sin analizar\u00bb de Play Protect).');
    toast('\u2713 Descarga completa \u00b7 el cartel de instalaci\u00f3n se abre solo; si no, usa \u00abIr a Descargas\u00bb');
-     if(rtG==='instalador-sesion'){setTimeout(function(){if(!avisoInst){var st2=document.getElementById('dz-estado');if(st2)st2.innerHTML=esc('⚠️ El cartel de Android no llegó a abrirse solo: toca «🔄 Repetir instalador» (con el permiso ya concedido se abre directo). Si sale el permiso, actívalo y al volver sigo yo.');}},12000);}else{var st3=document.getElementById('dz-estado');if(st3)st3.innerHTML=esc('Cartel de Android abierto: toca INSTALAR; si sale el aviso de Google Play Protect, toca Instalar sin analizar (solo sale las primeras veces).');}
+     if(rtG||rtG===''){setTimeout(function(){if(!avisoInst){var st2=document.getElementById('dz-estado');if(st2)st2.innerHTML=esc('⚠️ El cartel de Android no llegó a abrirse solo [v\u00eda '+rtG+']: toca «🔄 Repetir instalador» (con el permiso ya concedido se abre directo). Si sale el permiso, actívalo y al volver sigo yo.');}},12000);}var st3=document.getElementById('dz-estado');if(st3)st3.innerHTML=esc('Cartel de Android abierto [v\u00eda '+rtG+']: toca INSTALAR; si sale el aviso de Google Play Protect, toca Instalar sin analizar (solo sale las primeras veces).');
   },
   function(e){var me=String(e||'');if(me.indexOf('permiso-instalar')===0){instaladorPendiente=true;finalDescarga('🔑 Android pidió permiso: en la pantalla que se abrió activa «Permitir de esta fuente» y AL VOLVER a la app la instalación sigue sola.');toast('🔑 Activa el permiso y al volver sigo yo con la instalación');return;}finalDescarga('El instalador no respondió ('+me+'). Toca «📂 Abrir Descargas» → toca el APK → Instalar (la vía manual que funciona), o «🌐 Por navegador».');});
 }

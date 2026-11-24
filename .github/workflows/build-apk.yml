@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Corregido: los botones rojos (Resumen de la jornada, Enviar del asistente, Entrar del login y todos los principales) ahora cambian con el tema elegido.'
+          body: 'Instalacion automatica rehecha: el cartel INSTALAR de Android se abre directo con el archivo descargado (la copia en Descargas queda de respaldo). El estado ahora muestra por donde fue cada intento.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:
