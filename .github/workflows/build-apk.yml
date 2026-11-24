@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Instalacion automatica reforzada: si Android pide el permiso Instalar apps desconocidas, al volver a la app la instalacion CONTINUA SOLA (no hay que tocar Instalar de nuevo) y la espera del sistema sube a 20 s para no caer jamas al explorador de archivos.'
+          body: 'El cartel de descarga del login ya no aparece si tu copa esta al dia (la Auto sigue trabajando sola). Header redise~nado y compacto: logo, titulo y los 4 botones caben en una sola fila incluso en telefonos chicos.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

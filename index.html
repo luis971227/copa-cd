@@ -12,16 +12,19 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
 body{font:15px/1.45 Arial,Helvetica,sans-serif;color:var(--tinta);background:var(--bg);padding-bottom:70px}
-.cab{display:flex;gap:10px;align-items:center;padding:10px 12px;position:sticky;top:0;background:linear-gradient(135deg,var(--rojo),var(--hero2) 140%);box-shadow:0 3px 10px rgba(140,22,20,.20);z-index:5}
-.cab img{width:36px;height:37px;object-fit:contain;background:#fff;border-radius:10px;padding:3px;box-shadow:0 2px 8px rgba(0,0,0,.22)}
-.cab h1{margin:0;font-size:27px;letter-spacing:1.5px;font-weight:900;font-family:'Arial Narrow',Arial;color:#fff}
+.cab{display:flex;gap:7px;align-items:center;padding:8px 9px;position:sticky;top:0;background:linear-gradient(135deg,var(--rojo),var(--hero2) 140%);box-shadow:0 3px 10px rgba(140,22,20,.20);z-index:5}
+@media (max-width:399px){.cab{gap:5px;padding:7px 7px}}
+.cab img{width:29px;height:30px;object-fit:contain;background:#fff;border-radius:8px;padding:2px;box-shadow:0 2px 8px rgba(0,0,0,.22);flex:none}
+.cab h1{margin:0;font-size:20px;letter-spacing:1px;font-weight:900;font-family:'Arial Narrow',Arial;color:#fff;white-space:nowrap}
+@media (max-width:399px){.cab h1{font-size:18px;letter-spacing:.6px}}
 .hdr-ver{display:inline-block;vertical-align:middle;font-size:10px;font-weight:800;background:var(--chip);color:var(--chip-txt);border:1px solid var(--gris);border-radius:99px;padding:2px 7px;margin-left:7px;letter-spacing:.5px}
 #nav .nav-ver{flex:none;margin-top:auto;padding:14px 18px;text-align:center;font-size:11px;font-weight:800;letter-spacing:.6px;color:var(--gris2);border-top:1px solid var(--borde)}
 #btn-nube{position:relative}
-.cab p{margin:0;font-size:11px;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cab p{margin:1px 0 0;font-size:9.5px;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+@media (max-width:399px){.cab p{max-width:110px}}
 .cab .tit{min-width:0}
-.cab .der{margin-left:auto;display:flex;gap:6px}
-.hbtn{border:1px solid var(--gris);background:var(--chip);border-radius:8px;width:37px;height:34px;font-size:16px;cursor:pointer;padding:0}
+.cab .der{margin-left:auto;display:flex;gap:4px;flex:none}
+.hbtn{border:1px solid var(--gris);background:var(--chip);border-radius:8px;width:31px;height:29px;font-size:14px;cursor:pointer;padding:0;flex:none}
 .cab .hbtn{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4);color:#fff}
 .cab .hbtn:active{background:rgba(255,255,255,.34)}
 main{padding:10px}
@@ -755,12 +758,13 @@ body{font-family:Roboto,"Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica N
 /* ---- app bar ---- */
 .cab{padding:calc(env(safe-area-inset-top) + 7px) 13px 7px;box-shadow:inset 0 -1px 0 rgba(255,255,255,.16),0 6px 20px rgba(120,14,12,.22);transition:box-shadow .3s ease,filter .3s ease}
 body.scrolled .cab{box-shadow:inset 0 -1px 0 rgba(255,255,255,.20),0 12px 32px rgba(110,12,10,.36)}
-.cab img{width:38px;height:39px;border-radius:12px;padding:3px;box-shadow:0 5px 14px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.65)}
-.cab h1{font-size:21px;letter-spacing:2.8px;line-height:1.05;font-weight:900}
-.cab p{font-size:9.8px;letter-spacing:.35px;opacity:.9;margin-top:2px}
-.hbtn{width:40px;height:40px;border-radius:13px;font-size:17px;display:flex;align-items:center;justify-content:center;transition:transform .16s ease,background .2s ease,filter .2s ease}
+.cab img{width:30px;height:31px;border-radius:9px;padding:2px;box-shadow:0 5px 14px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.65)}
+.cab h1{font-size:19px;letter-spacing:1.6px;line-height:1.05;font-weight:900}
+.cab p{font-size:9px;letter-spacing:.3px;opacity:.9;margin-top:2px}
+.hbtn{width:31px;height:31px;border-radius:10px;font-size:14px;display:flex;align-items:center;justify-content:center;transition:transform .16s ease,background .2s ease,filter .2s ease;flex:none}
 .hbtn:active{transform:scale(.92)}
-#nav-btn{width:40px;height:40px;border-radius:12px;font-size:18px;margin-right:-2px}
+#nav-btn{width:33px;height:31px;border-radius:10px;font-size:16px;margin-right:-1px;flex:none}
+@media (max-width:399px){.cab img{width:27px;height:28px}.cab h1{font-size:17px;letter-spacing:1.2px}.cab p{font-size:8.5px}.hbtn{width:28px;height:28px;font-size:13px}#nav-btn{width:30px;height:28px;font-size:15px}}
 #nav-btn:active{background:rgba(255,255,255,.16);transform:scale(.92)}
 
 /* ---- barra de sesión ---- */
@@ -1016,7 +1020,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.53</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.54</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1441,7 +1445,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.53',APP_BUILD=54;
+var APP_VERSION='1.0.54',APP_BUILD=55;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -3224,6 +3228,7 @@ function entrar(){
 }
 function errorLogin(m){var e=document.getElementById('lg-err');if(e){e.textContent=m;e.className='err on';}}
 function htmlBannerNube(){
+ if(S.equipos.length)return '';
  var ts=nubeUltEstado,tx;
  if(ts===null)tx='☁️ Conectando con la nube para bajar la copa oficial ('+NUBE_ID_DEFECTO+')…';
  else if(ts.ok===null)tx='☁️ Revisando la nube… (intento '+(nubeIntentos||1)+'º)';
