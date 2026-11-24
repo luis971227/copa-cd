@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Voz de anuncios en la app: al entrar o iniciar un partido dice quien arbitra, que carta se juega y quienes juegan; y avisa por voz cuando termina el gol doble, entran los cambios obligatorios o arranca el 3 para 3.'
+          body: 'Voz mejorada: al pulsar INICIAR dice solo Comienza el partido. En el 3 para 3 (carta 2) el tiempo se DETIENE solo a los 5 minutos para hacer los cambios y queda en 3 jugadores por equipo hasta pulsar continuar.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

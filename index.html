@@ -1020,7 +1020,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.56</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.57</div></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
 <div id="chal"></div>
@@ -1445,7 +1445,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.56',APP_BUILD=57;
+var APP_VERSION='1.0.57',APP_BUILD=58;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -2230,8 +2230,8 @@ function anunciarPartido(p,inicio){if(!p)return;if(!vozOn)return;
  var nAn=jornadaDePartido(p.id),JAn=jornada(nAn);
  var arbAn=p.arbitro?nombreArbitro(p.arbitro):(JAn&&JAn.arbitro?nombreArbitro(JAn.arbitro):'');
  var tAn;
- if(inicio)tAn='Comienza el partido de la jornada '+nAn+': '+e1.nombre+' contra '+e2.nombre;
- else tAn='Vista del partido de la jornada '+nAn+': '+e1.nombre+' contra '+e2.nombre;
+ if(inicio){voz('Comienza el partido');return;}
+ tAn='Vista del partido de la jornada '+nAn+': '+e1.nombre+' contra '+e2.nombre;
  if(arbAn)tAn+='. Arbitra '+arbAn;
  var ciAn=p.carta?cartaInfo(p.carta):null;
  if(ciAn)tAn+='. La carta es la numero '+ciAn.id+': '+ciAn.t+'.';
@@ -2260,6 +2260,7 @@ function alerta5Min(){
  if(!msg)return;
  cron.a5=true;beepAlerta(4);toast(msg);
  voz(msg.replace(/^[\s\S]*?\s/,'').trim());
+ if(p.carta===2&&elap>=300&&cron.mins>5){cronPara();toast('\u23f8 Tiempo detenido: que salgan los jugadores hasta quedar 3 por equipo y pulsa CONTINUAR');voz('Tiempo detenido para el 3 para 3. Que salgan los jugadores hasta quedar 3 por equipo y pulsan continuar.');renderPartido();}
  var box=document.getElementById('cron-txt');if(box){box.style.color='#C81E1E';setTimeout(function(){if(box)box.style.color='';},4000);}
 }
 function cronTick(){
