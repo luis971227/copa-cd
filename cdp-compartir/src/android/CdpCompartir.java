@@ -54,6 +54,7 @@ public class CdpCompartir extends CordovaPlugin {
                     if (a == cordova.getActivity()) appPausadaEn = System.currentTimeMillis();
                 }
                 @Override public void onActivityResumed(android.app.Activity a) { }
+                @Override public void onActivityCreated(android.app.Activity a, android.os.Bundle b) { }
                 @Override public void onActivityStarted(android.app.Activity a) { }
                 @Override public void onActivityStopped(android.app.Activity a) { }
                 @Override public void onActivitySaveInstanceState(android.app.Activity a, android.os.Bundle b) { }
