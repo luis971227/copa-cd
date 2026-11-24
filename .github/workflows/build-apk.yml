@@ -92,7 +92,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'Version de prueba para el instalador automatico: sin cambios de codigo, solo version. Observa si el cartel de ACTUALIZAR sale solo tras la descarga y mandame la captura de la linea [via ...].'
+          body: 'v1.0.71: la instalacion ahora va PRIMERO por la sesion del sistema (PackageInstaller, el canal mas directo de Android) y el dialog muestra la TRAZA completa de todas las vias. Mandame la captura de la traza si sigue sin salir el cartel.'
           files: salida/CopaCD-${{ env.VER }}.apk
 
   keystore:

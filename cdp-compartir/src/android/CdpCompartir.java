@@ -344,6 +344,7 @@ public class CdpCompartir extends CordovaPlugin {
         final String nombre = args.optString(0);
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
+                final java.util.List<String> traza = new java.util.ArrayList<String>();
                 try {
                     Context ctx = cordova.getContext();
                     File f = archivoCompartible(nombre);
@@ -355,27 +356,21 @@ public class CdpCompartir extends CordovaPlugin {
                         cb.error("permiso-instalar: Android pide autorizar 'Instalar apps desconocidas' para Copa CD. Se abrieron los Ajustes: activa el permiso, vuelve a la app y toca Instalar otra vez");
                         return;
                     }
-                    /* Orden v1.0.63: Samsung mueve el ACTION_VIEW de la copia de Descargas
-                       hasta Mis Archivos (solo abre la carpeta, no instala). Ahora primero
-                       ACTION_VIEW con la URI FileProvider de la propia app (abre el cartel
-                       INSTALAR directo, igual que tocar el archivo), luego
-                       ACTION_INSTALL_PACKAGE, luego la sesion PackageInstaller con estado
-                       en vivo, y la copia de Descargas como penultimo recurso; el generico
-                       queda al final. */
+                    /* v1.0.71: SESION PackageInstaller PRIMERO (la via del sistema:
+                       Android mismo arma y muestra el cartel) y TRAZA COMPLETA de
+                       todas las vias intentadas. La traza sale en el dialog para
+                       ver en una sola captura que se intento y que paso. */
                     sesionConfirmada = false;
                     ctxSesion = ctx; uriSesion = uri;
-                    estadoInstalador("info", "Abriendo el instalador de Android...");
-                    /* v1.0.65: ACTION_INSTALL_PACKAGE primero: solo el instalador del sistema
-                       puede atender ese intent, nunca una carpeta ni el navegador. Si el
-                       sistema no lo tiene, sigue la sesion PackageInstaller (su confirmacion
-                       la construye y lanza el propio sistema). El ACTION_VIEW se dejo de
-                       usar al frente porque Samsung lo derivaba a Mis Archivos. */
-                    /* v1.0.67: cada intent se GATEA con quien() ANTES de lanzarlo.
-                       Si el resolver dice que lo atendera algo que NO es un instalador
-                       (p.ej. Mis Archivos de Samsung: com.sec.android.app.myfiles), ese
-                       intent NO se lanza y se pasa al siguiente: jamas se abre una
-                       carpeta sola. La sesion PackageInstaller es la via canonica
-                       porque EL SISTEMA construye y lanza su propia confirmacion. */
+                    estadoInstalador("info", "Abriendo la instalacion del sistema (sesion)...");
+                    traza.add("SESION:iniciando");
+                    if (instalarSesionApi(ctx, f, cb)) {
+                        esperarInstaladorSesion(ctx, uri, cb);
+                        return;
+                    }
+                    traza.add("SESION:no-disponible");
+                    /* Sigue la cadena de intents, cada uno GATEADO con quien() y con
+                       comprobacion real de que el cartel se puso en pantalla. */
                     Intent vIP = new Intent(Intent.ACTION_INSTALL_PACKAGE);
                     vIP.setDataAndType(uri, "application/vnd.android.package-archive");
                     vIP.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -387,12 +382,9 @@ public class CdpCompartir extends CordovaPlugin {
                             cb.success("instalador-directo|" + qIP);
                             return;
                         }
-                        /* el intent se lanzo pero NADIE se puso delante: carta al
-                           oscuro. No se cuenta como exito: sigue la sesion. */
-                    }
-                    if (instalarSesionApi(ctx, f, cb)) {
-                        esperarInstaladorSesion(ctx, uri, cb);
-                        return;
+                        traza.add("IP:" + qIP + "->lanzada-sin-pantalla");
+                    } else {
+                        traza.add("IP:saltada-" + qIP);
                     }
                     Intent vF = new Intent(Intent.ACTION_VIEW);
                     vF.setDataAndType(uri, "application/vnd.android.package-archive");
@@ -404,16 +396,28 @@ public class CdpCompartir extends CordovaPlugin {
                             cb.success("instalador-fp|" + qF);
                             return;
                         }
+                        traza.add("VFP:" + qF + "->lanzada-sin-pantalla");
+                    } else {
+                        traza.add("VFP:saltada-" + qF);
                     }
                     if (uriDescargas != null) {
                         Intent vD = new Intent(Intent.ACTION_VIEW);
                         vD.setDataAndType(uriDescargas, "application/vnd.android.package-archive");
                         vD.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        if (uiLanzar(ctx, vD)) { cb.success("instalador-descargas|" + quien(ctx, vD)); return; }
+                        String qD = quien(ctx, vD);
+                        if (qD.lastIndexOf("install") >= 0) {
+                            appPausadaEn = 0;
+                            if (uiLanzar(ctx, vD) && pantallaCambio(3000)) { cb.success("instalador-descargas|" + qD); return; }
+                            traza.add("DSC:" + qD + "->lanzada-sin-pantalla");
+                        } else {
+                            traza.add("DSC:saltada-" + qD);
+                        }
                     }
+                    traza.add("CLS:generico");
                     lanzarInstalador(ctx, uri);
-                    cb.success("instalador");
+                    cb.success("instalador|" + traza);
                 } catch (Throwable e) {
+                    try { estadoInstalador("fallo", "TRAZA " + traza + " \u2022 error: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage())); } catch (Throwable t) { }
                     cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
                 }
             }
