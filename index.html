@@ -1078,7 +1078,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.87</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.88</div></div>
 <div id="menutemas"></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
@@ -1504,7 +1504,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.87',APP_BUILD=88;
+var APP_VERSION='1.0.88',APP_BUILD=89;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -1522,7 +1522,8 @@ var PESTANYAS=[
  {v:'historial',i:'🏆',t:'Histórico',r:['superadmin','capitan','jugador']},
  {v:'obs',i:'📝',t:'Observaciones',r:['superadmin','capitan','jugador']},
  {v:'equipos',i:'👕',t:'Equipos',r:['superadmin','capitan']},
- {v:'usuarios',i:'🔑',t:'Admin',r:['superadmin']}];
+ {v:'usuarios',i:'🔑',t:'Admin',r:['superadmin']},
+ {v:'trazas',i:'🕵️',t:'Trazas',r:['superadmin']}];
 function porDefecto(){return{v:1,seq:1,capTs:0,ordenLugares:[],equipos:[],jornadas:[],historial:[],tema:'claro',usuarios:[],obs:[],sesion:null,ui:{vista:'dashboard',jor:1,ab:''}};}
 function cargar(){try{var j=localStorage.getItem(CLAVE);S=j?JSON.parse(j):porDefecto();}catch(e){S=porDefecto();}
  if(!S||typeof S!=='object')S=porDefecto();
@@ -1571,7 +1572,7 @@ function cargar(){try{var j=localStorage.getItem(CLAVE);S=j?JSON.parse(j):porDef
  for(i=0;i<S.jornadas.length;i++)for(var jm=0;jm<(S.jornadas[i].partidos||[]).length;jm++)if(asegurarIdsStats(S.jornadas[i].partidos[jm]))migro=true;
  if(migro)guardar();}
 function rol(){return S.sesion?S.sesion.r:null;}
-function permitida(v){if(v==='bases')return !!S.sesion;for(var i=0;i<PESTANYAS.length;i++)if(PESTANYAS[i].v===v)return PESTANYAS[i].r.indexOf(rol())>=0;return false;}
+function permitida(v){if(v==='trazas')return puedeTrazas();if(v==='bases')return !!S.sesion;for(var i=0;i<PESTANYAS.length;i++)if(PESTANYAS[i].v===v)return PESTANYAS[i].r.indexOf(rol())>=0;return false;}
 function bloqueoVista(v){
  if(v==='jornada'||v==='tabla'||v==='jugadores'||v==='fairplay'){
   if(S.equipos.length<4){
@@ -1768,7 +1769,7 @@ function puedeArbitrar(pid){
 function puedeEq(id){if(esAdmin())return true;if(!puede('equipos'))return false;if(rol()!=='capitan')return false;return equiposCapitan().indexOf(+id)>=0;}
 function plantillaCapLista(){if(rol()!=='capitan')return true;var ids=equiposCapitan(),i,e;if(!ids.length)return true;
  for(i=0;i<ids.length;i++){e=eq(ids[i]);if(!e||activos(e)<5)return false;}return true;}
-function capBloqueo(v){if(rol()!=='capitan'||plantillaCapLista())return '';if(v==='equipos'||v==='bases')return '';
+function capBloqueo(v){if(rol()!=='capitan'||plantillaCapLista())return '';if(v==='equipos'||v==='bases'||v==='trazas')return '';
  return 'Completa tu plantilla (mínimo 5 jugadores activos) para entrar aquí';}
 function leerPermisos(id){var box=document.getElementById(id);if(!box)return null;var o={},ins=box.querySelectorAll('input[type=checkbox]'),i;
  for(i=0;i<ins.length;i++)o[ins[i].getAttribute('data-k')]=ins[i].checked;return o;}
@@ -1853,7 +1854,68 @@ function aplicarTema(){
  var mapa={'rojo':'#4A0508','azul':'#10244F','verde':'#07331D','negro':'#000000'};
  var mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.setAttribute('content',mapa[S.tema]||'#07331D');
  var bs=document.querySelectorAll('[data-a="tema"]'),bi;for(bi=0;bi<bs.length;bi++)bs[bi].innerHTML='&#127912;';}
-function guardar(){try{localStorage.setItem(CLAVE,JSON.stringify(S));}catch(e){toast('⚠️ No se pudo guardar: almacén lleno o bloqueado');}if(nubeAuto&&!nubeBatch)nubeAutoProgramar();}
+function guardar(){var tzs=null;try{tzs=JSON.stringify(S);localStorage.setItem(CLAVE,tzs);}catch(e){toast('⚠️ No se pudo guardar: almacén lleno o bloqueado');}if(nubeAuto&&!nubeBatch)nubeAutoProgramar();if(tzs)tzComparar(tzs);}
+/* ===== v1.0.88 Trazas: auditoría de cambios (solo superadmin y yoyo) ===== */
+var TZS_KEY='mtp_copa_cd_trazas',TZ=[],tzUltJson=null,TZ_MAX=400,TZ_PUB=150;
+function leerTrazas(){try{var a=JSON.parse(localStorage.getItem(TZS_KEY)||'[]');if(a instanceof Array)TZ=a.filter(function(x){return x&&typeof x==='object'&&x.t&&x.id&&x.c;});}catch(e){TZ=[];}}
+function guardarTrazas(){try{localStorage.setItem(TZS_KEY,JSON.stringify(TZ));}catch(e){}}
+function puedeTrazas(){return !!S.sesion&&(S.sesion.r==='superadmin'||String(S.sesion.u||'').toLowerCase()==='yoyo');}
+function tzId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function tzNorm(x){return {id:x.id,t:+x.t,u:String(x.u||'-').slice(0,24),r:String(x.r||'-').slice(0,12),c:(x.c||[]).slice(0,10).map(function(l){return String(l).slice(0,90);})};}
+function tzRegistrar(u,r,lineas){TZ.push(tzNorm({id:tzId(),t:Date.now(),u:u,r:r,c:lineas}));if(TZ.length>TZ_MAX)TZ=TZ.slice(-TZ_MAX);guardarTrazas();}
+function unificarTrazas(arr){
+ var i,x,m={},add=0;if(!(arr instanceof Array))return;
+ for(i=0;i<TZ.length;i++)if(TZ[i].id)m[TZ[i].id]=1;
+ for(i=0;i<arr.length;i++){x=arr[i];if(!x||!x.t||!x.id||!x.c||!(x.c instanceof Array)||!x.c.length||m[x.id])continue;m[x.id]=1;TZ.push(tzNorm(x));add++;}
+ if(add){TZ.sort(function(a,b){return a.t-b.t;});if(TZ.length>TZ_MAX)TZ=TZ.slice(-TZ_MAX);guardarTrazas();}}
+function tzVer(v){if(v===null||v===undefined||v==='')return '(vacio)';var s=String(v);if(s.length>34)s=s.slice(0,32)+'\u2026';return s;}
+function tzDiff(a,b,out,pre,dep){
+ if(dep>5||out.length>=12)return;
+ var ta=typeof a,tb=typeof b,i,k;
+ if(ta!=='object'||tb!=='object'||a===null||b===null){
+  if(a!==b)out.push(pre+': '+tzVer(a)+' \u2192 '+tzVer(b));
+  return;}
+ if(Array.isArray(a)!==Array.isArray(b)){out.push(pre+': (tipo cambiado)');return;}
+ if(Array.isArray(a)){
+  if(a.length!==b.length)out.push(pre+': '+a.length+' \u2192 '+b.length+' elementos');
+  var n=Math.min(a.length,b.length);for(i=0;i<n;i++)tzDiff(a[i],b[i],out,pre+'['+i+']',dep+1);
+  return;}
+ var ks={};for(k in a)if(a.hasOwnProperty(k))ks[k]=1;for(k in b)if(b.hasOwnProperty(k))ks[k]=1;
+ for(k in ks){
+  if(k==='ui'||k==='sesion')continue;
+  if(!(k in a)){out.push('+ '+(pre?pre+'.':'')+k);if(out.length>=12)return;continue;}
+  if(!(k in b)){out.push('- '+(pre?pre+'.':'')+k);if(out.length>=12)return;continue;}
+  tzDiff(a[k],b[k],out,pre?pre+'.'+k:k,dep+1);}}
+function tzSesion(out,A,B){
+ var ua=A&&A.sesion?A.sesion.u:null,ra=A&&A.sesion?A.sesion.r:null,ub=B&&B.sesion?B.sesion.u:null,rb=B&&B.sesion?B.sesion.r:null;
+ if(ua===ub)return;
+ if(!ua&&ub)out.push('\uD83D\uDD11 Sesi\u00f3n: entr\u00f3 '+ub+' ('+(rb||'-')+')');
+ else if(ua&&!ub)out.push('\uD83D\uDEAA Sesi\u00f3n: cerr\u00f3 '+ua);
+ else out.push('\uD83D\uDD01 Sesi\u00f3n: '+ua+' \u2192 '+ub);}
+function tzComparar(jsNuevo){
+ if(tzUltJson===null||nubeBatch){tzUltJson=jsNuevo;return;}
+ if(tzUltJson===jsNuevo)return;
+ var A,B;
+ try{A=JSON.parse(tzUltJson);B=JSON.parse(jsNuevo);}catch(e){tzUltJson=jsNuevo;return;}
+ tzUltJson=jsNuevo;
+ if(!A||!B)return;
+ var out=[];tzSesion(out,A,B);
+ tzDiff(A,B,out,'',0);
+ if(out.length)tzRegistrar(S.sesion?S.sesion.u:'-',rol()||'-',out);}
+function fmtTz(t){var d=new Date(t),p=function(n){return (n<10?'0':'')+n;};return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());}
+function vistaTrazas(){
+ var h='',i,t,k,fin=Math.max(-1,TZ.length-301);
+ h+='<h2 class="v">Trazas de actividad ('+TZ.length+')</h2>';
+ h+='<div class="tar"><div class="nota" style="margin-top:0">Registro de lo que se anota o cambia en la copa: fecha y hora, qui\u00e9n y qu\u00e9 cambi\u00f3. Se sincroniza entre m\u00f3viles y guarda los \u00faltimos '+TZ_MAX+' registros.</div>';
+ if(rol()==='superadmin')h+='<div style="text-align:right;margin-top:8px"><button class="btn" data-a="trazas-vaciar">\uD83D\uDDD1\uD83C\uDFFB Vaciar trazas</button></div>';
+ h+='</div>';
+ if(!TZ.length)h+='<div class="tar"><div class="nota">A\u00fan no hay cambios registrados en este sistema.</div></div>';
+ for(i=TZ.length-1;i>fin;i--){t=TZ[i];
+  h+='<div class="tar"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:12.5px">'+esc(fmtTz(t.t))+'</b><span class="badge ff" style="padding:2px 8px">'+esc(t.u)+'</span><small style="color:var(--gris2);font-weight:800">'+esc(t.r)+'</small></div>';
+  for(k=0;k<t.c.length;k++)h+='<div style="font-size:12px;color:var(--chip-txt);margin-top:4px;word-break:break-word">\u2022 '+esc(t.c[k])+'</div>';
+  h+='</div>';}
+ return h;}
+
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];});}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.className='on';if(toastT)clearTimeout(toastT);toastT=setTimeout(function(){t.className='';},2400);}
 function eq(id){for(var i=0;i<S.equipos.length;i++)if(S.equipos[i].id===id)return S.equipos[i];return null;}
@@ -4267,11 +4329,12 @@ function render(){
   case 'asistente':h=vistaAsistente();break;
   case 'obs':h=vistaObs();break;
   case 'bases':h=vistaBases();break;
+  case 'trazas':h=vistaTrazas();break;
   default:h=vistaJornada();
  }
  var nh='<div class="nav-hd"><img src="assets/logo.png" alt=""><div><b>COPA CD</b><small>'+(r==='superadmin'?'Super Admin':r==='capitan'?'Capitán':'Jugador')+' · '+esc(S.sesion.u)+'</small></div></div><div class="nav-lbl">Secciones</div>';
  for(i=0;i<PESTANYAS.length;i++){var p=PESTANYAS[i];
-   if(p.r.indexOf(r)<0)continue;
+   if(p.r.indexOf(r)<0&&!(p.v==='trazas'&&puedeTrazas()))continue;
    var blq=bloqueoVista(p.v)||capBloqueo(p.v),cls=(S.ui.vista===p.v?'on ':'')+(blq?'bloq':'');
   nh+='<button data-a="vista" data-v="'+p.v+'"'+(cls?' class="'+cls+'"':'')+' style="animation-delay:'+(0.03+i*0.05).toFixed(2)+'s" title="'+esc(blq||p.t)+'"><b>'+p.i+'</b>'+p.t+(blq?'<span class="lk">🔒</span>':'')+'</button>';}
  nh+='<button data-a="voz-toggle" class="voz-toggle"><b>'+(vozOn?'🔊':'🔇')+'</b>Voz de anuncios: '+(vozOn?'activada':'desactivada')+'</button>';
@@ -4282,7 +4345,7 @@ function render(){
  if(bnav){bnav.innerHTML=barraInferior(r);bnav.className='bnav on';}
  ses.hidden=false;
  ses.innerHTML='<b>'+esc(S.sesion.u)+'</b><span class="rol'+(r==='jugador'?' jugador':'')+'">'+(r==='superadmin'?'Super Admin':r==='capitan'?'Capitán':'Jugador')+'</span>'
-  +'<span>'+PESTANYAS.filter(function(x){return x.r.indexOf(r)>=0;}).length+' secciones</span>'
+  +'<span>'+PESTANYAS.filter(function(x){return x.r.indexOf(r)>=0||(x.v==='trazas'&&puedeTrazas());}).length+' secciones</span>'
   +'<button data-a="salir">Salir</button>';
  app.innerHTML=h;
  var vKey=(S.ui.vista||'')+'|'+(S.ui.jor||1)+'|'+(S.ui.partido||'')+'|'+(S.ui.histAbierto||'');
@@ -4349,7 +4412,7 @@ function atras(){
 }
 function moverPestana(dir){
  if(S.ui.partido||cartaUI||syncUI||quitarUI||chalUI||cerrarUI)return;
-  var ps=[],i;for(i=0;i<PESTANYAS.length;i++)if(PESTANYAS[i].r.indexOf(rol())>=0&&!bloqueoVista(PESTANYAS[i].v)&&!capBloqueo(PESTANYAS[i].v))ps.push(PESTANYAS[i]);
+  var ps=[],i;for(i=0;i<PESTANYAS.length;i++)if((PESTANYAS[i].r.indexOf(rol())>=0||(PESTANYAS[i].v==='trazas'&&puedeTrazas()))&&!bloqueoVista(PESTANYAS[i].v)&&!capBloqueo(PESTANYAS[i].v))ps.push(PESTANYAS[i]);
  var idx=-1;for(i=0;i<ps.length;i++)if(ps[i].v===S.ui.vista)idx=i;
  if(idx<0)return;
  idx+=dir;if(idx<0||idx>=ps.length)return;
@@ -4410,6 +4473,7 @@ document.addEventListener('click',function(ev){
   case 'tema-set':S.tema=String(el.getAttribute('data-x')||'verde');aplicarTema();guardar();cerrarMenuTemas();navAbierto=false;render();toast('Tema: '+nombreTema(S.tema));break;
   case 'menu-cerrar':cerrarMenuTemas();break;
   case 'bases':S.ui.anterior=(S.ui.vista==='bases'?S.ui.anterior:S.ui.vista);navHist.push(S.ui.vista);S.ui.vista='bases';window.scrollTo(0,0);render();break;
+  case 'trazas-vaciar':if(rol()==='superadmin'){TZ=[];guardarTrazas();render();toast('Trazas vaciadas');}break;
     case 'volver':S.ui.vista=navHist.pop()||S.ui.anterior||'dashboard';window.scrollTo(0,0);render();break;
    case 'hist-abrir':var hid=+el.getAttribute('data-i');S.ui.histAbierto=(S.ui.histAbierto===hid?'':hid);render();break;
   case 'hist-del':if(!puede('historial')){toast('No tienes permiso para borrar del histórico');break;}if(confirm('¿Borrar este torneo del histórico? Se eliminarán sus estadísticas para siempre.')){S.historial.splice(+el.getAttribute('data-i'),1);S.ui.histAbierto='';render();toast('Torneo borrado del histórico');}break;
@@ -5088,7 +5152,7 @@ function b64dec(s){return decodeURIComponent(escape(atob(s)));}
 function clonar(x){return JSON.parse(JSON.stringify(x));}
 function paqueteSync(sinFotos){
 var zi,zp;for(zi=0;zi<S.jornadas.length;zi++)for(zp=0;zp<S.jornadas[zi].partidos.length;zp++)asegurarIdsStats(S.jornadas[zi].partidos[zp]);
-var d={equipos:clonar(S.equipos),jornadas:clonar(S.jornadas),seq:S.seq,usuarios:clonar(S.usuarios),obs:clonar(S.obs||[]),ordenLugares:clonar(S.ordenLugares||[]),nube:clonar(nubeConfig),githubRepo:githubRepo||''};
+var d={equipos:clonar(S.equipos),jornadas:clonar(S.jornadas),seq:S.seq,usuarios:clonar(S.usuarios),obs:clonar(S.obs||[]),ordenLugares:clonar(S.ordenLugares||[]),nube:clonar(nubeConfig),githubRepo:githubRepo||'',trazas:TZ.slice(-TZ_PUB)};
   if(sinFotos){var i,k;for(i=0;i<d.equipos.length;i++){d.equipos[i].foto=null;for(k=0;k<d.equipos[i].jugadores.length;k++)d.equipos[i].jugadores[k].foto=null;}}
  return {app:'copacd',v:1,idCopa:S.idCopa||'',ts:Date.now(),tsCap:S.capTs||0,datos:d};
 }
@@ -5671,6 +5735,7 @@ function mezclarAnotaciones(pl,pr,st){
 }
 function mezclar(d,tsCap){
  var st={jug:0,fotos:0,res:0,cart:0,usu:0,cap:0,sanc:0,ann:0,obs:0},i,k,t,q,w;
+ if(d.trazas&&d.trazas.length)unificarTrazas(d.trazas);
  if(d.nube&&(!nubeConfig.apiKey||!nubeConfig.databaseURL))guardarConfigNubeObj(d.nube);
  if(d.githubRepo&&!githubRepo)guardarConfigGithubObj(d.githubRepo);
  if(d.ordenLugares&&d.ordenLugares.length&&(!S.ordenLugares||!S.ordenLugares.length)){S.ordenLugares=clonar(d.ordenLugares);normalizarOrden();}
@@ -5772,6 +5837,7 @@ function aplicarSync(obj){
    S.idCopa=idRem||nuevoIdCopa();
    S.sesion=sesAct;S.tema=temAct||'claro';S.historial=hisAct||[];
    S.ui=uiAct||{vista:'equipos',jor:1,ab:''};
+   if(datos.trazas&&datos.trazas.length)unificarTrazas(datos.trazas);
    reasignarArbitrosPendientes();
    guardar();if(!nubeBatch){aplicarTema();render();}
    var msgA='Copa importada ✓ · ID '+S.idCopa+' · '+S.equipos.length+' equipos';
@@ -5956,6 +6022,7 @@ window.addEventListener('scroll',function(){
 cargarConfigNube();
 cargar();
 S.sesion=null;S.ui.vista='dashboard';
+leerTrazas();tzUltJson=JSON.stringify(S);
 if(S.equipos.length>=2&&S.jornadas.length<4)generar();
 render();
 nubeAutoIniciar();
