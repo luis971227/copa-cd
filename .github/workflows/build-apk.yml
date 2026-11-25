@@ -94,7 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.86: vuelve el tema Azul y el tema Rojo junto a Verde y Negro (4 temas). Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
+          body: 'v1.0.87: el escudo COPA CD ahora es rojo (la parte azul del escudo, splash e iconos pasa a rojo). Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
           files: |
             salida/CopaCD-*.apk
 
