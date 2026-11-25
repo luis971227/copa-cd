@@ -4,6 +4,7 @@ La Copa CD se reparte como APK sideloaded (sin Play Store).
 
 - **Actualizaciones de la APK** → **GitHub Releases** (público, sin token ni cuenta Firebase).
 - **Datos de la copa** → **Firebase** (Authentication + Realtime Database), con Auto-sync.
+- **La compilación es 100% automática con GitHub Actions** (`.github/workflows/build-apk.yml`): no se compila en Windows ni se genera APK a mano. Un tag `vX.Y.Z` dispara el build (~2-3 min) y publica el release con **firma estable** (`.github/debug.keystore.b64`, misma firma desde v1.0.4) y el body del release como notas que verá el usuario en el aviso.
 
 ## 1. GitHub Releases (actualizaciones de la APK)
 
@@ -21,17 +22,17 @@ La Copa CD se reparte como APK sideloaded (sin Play Store).
 
 El repo se guarda en `localStorage` (`mtp_copa_cd_github_repo`) y **viaja en el JSON manual** (`paqueteSync().datos.githubRepo`), así que los capitanes que reciban la copa por primera vez ya lo tienen. Para fijarlo en la APK, rellena `GITHUB_REPO='tunombre/copa-cd'` al inicio del `<script>` de `www/index.html` y recompila.
 
-### Publicar una versión nueva
+### Publicar una versión nueva (automático con GitHub Actions)
 
-1. Cambia `APP_VERSION` (ej. `1.0.2`) y sube `APP_BUILD` en `www/index.html`.
-2. Sube la versión en `config.xml` (`widget version="…"`) y, como no hay Cordova CLI en la máquina de build, incrementa a mano `android:versionCode` y `android:versionName` en `platforms/android/app/src/main/AndroidManifest.xml` (p. ej. `10000`/`1.0.0` → `10001`/`1.0.1`). Cordova calcula el `versionCode` a partir del manifest en `build.gradle`.
-3. Ejecuta los smokes, borra `www/smoke*.html`, copia `www/index.html` a `platforms/android/app/src/main/assets/www/index.html`, compila con `cmd /c build-reglamento.bat` y verifica el SHA con `verificar-apk.ps1`.
-4. En GitHub: **Releases → Draft a new release**:
-   - **Tag**: `v1.0.2` (debe empezar por `v`; la app compara `X.Y.Z` con `APP_VERSION`).
-   - **Title**: `Copa CD 1.0.2`.
-   - **Description**: las notas que verá el usuario en el aviso.
-   - **Attach binaries**: arrastra la APK de `platforms\android\app\build\outputs\apk\debug\app-debug.apk`. (Mejor renómbrala antes a `CopaCD-1.0.2.apk`.)
-   - **Publish release**.
+1. En `www/index.html` cambia `APP_VERSION` (ej. `'1.0.2'`) y sube `APP_BUILD` (ej. `3`); actualiza también la versión del splash (`a-ver`).
+2. En `config.xml` sube `version="1.0.2"` y `android-versionCode="10002"` (versionCode = `1000*mayor + 100*menor + parche`).
+3. En `.github/workflows/build-apk.yml` actualiza el `body:` del release (una sola línea, es lo que verán los móviles en el aviso de actualización).
+4. Commits, push a `main` y **crea el tag**: `git tag v1.0.2 && git push origin v1.0.2`.
+5. GitHub Actions compila y publica el release solo (~2-3 min, pestaña **Actions**). Deja 2 archivos: `CopaCD-1.0.2.apk` y `CopaCD-ultima.apk` (copia idéntica).
+6. Enlace fijo para invitados, siempre apunta al último release:
+   `https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk`
+
+> Si un build falla, corrige, y repite tag borrándolo antes: `git tag -d vX && git push origin :refs/tags/vX`, vuelve a taggear y empujar.
 
 Al abrir la app, cada móvil consulta:
 
@@ -39,7 +40,7 @@ Al abrir la app, cada móvil consulta:
 https://api.github.com/repos/tunombre/copa-cd/releases/latest
 ```
 
-Es **público, sin API key ni token** (límite: 60 peticiones/hora por IP, más que suficiente para unos pocos móviles). Si el tag es mayor que `APP_VERSION`, aparece el modal **⬆️ Hay una actualización** con versión y notas. **⬇️ Descargar e instalar** abre el `browser_download_url` del asset `.apk` con `window.open(..., '_system')`: Android abre el navegador/Descargas y el usuario acepta la instalación (no se pide `REQUEST_INSTALL_PACKAGES`). **⏰ Ahora no** solo cierra el modal: desde la v1.0.3 el aviso reaparece en la próxima apertura mientras exista una versión mayor (sin periodo de gracia de 24 h).
+Es **público, sin API key ni token** (límite: 60 peticiones/hora por IP, más que suficiente para unos pocos móviles). Si el tag es mayor que `APP_VERSION`, aparece el modal **⬆️ Hay una actualización** con versión y notas. Desde dentro de la app la descarga se hace con barra de progreso (plugin cdp-compartir) y al terminar lanza el instalador de Android; también existe el botón **📲 Invitar a la copa** que comparte el enlace fijo por WhatsApp.
 
 > Para el primer despliegue de esta APK (`1.0.1`) publica el Release `v1.0.1`: nadie verá el aviso, y cuando subas `v1.0.2` saltará.
 
