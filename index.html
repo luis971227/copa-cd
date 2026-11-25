@@ -1020,6 +1020,13 @@ body.en-login #toast{bottom:26px}
 
 [data-acento=verde] .login{background:radial-gradient(700px 340px at 50% 0%,rgba(21,154,87,.12),transparent 65%),linear-gradient(180deg,#04070D 0%,#070C16 55%,#04060C 100%)}
 
+[data-acento=rojo]{--rojo:#F52B27;--rojo2:#C81E1E;--hero1:#B31414;--hero2:#4A0505;--hero-s:rgba(245,43,39,.14);--hero-cta:#4A0508}
+[data-acento=rojo] .cab{box-shadow:0 3px 10px rgba(74,5,5,.4)}
+[data-acento=rojo] .carta-top.ttema{background:linear-gradient(135deg,#8C1614,#3A0808)}
+[data-acento=azul]{--rojo:#2E7CF6;--rojo2:#1E5ED0;--hero1:#2E7CF6;--hero2:#10244F;--hero-s:rgba(46,124,246,.16);--hero-cta:#0C2F66}
+[data-acento=azul] .cab{box-shadow:0 3px 10px rgba(16,36,79,.4)}
+[data-acento=azul] .carta-top.ttema{background:linear-gradient(135deg,#10244F,#020617)}
+
 #menutemas{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:92;display:none;align-items:center;justify-content:center}
 #menutemas.on{display:flex}
 #menutemas .mt-c{width:280px;max-width:88vw;background:var(--tar);border:1px solid var(--borde);border-radius:16px;padding:14px;box-shadow:0 22px 54px rgba(0,0,0,.35)}
@@ -1071,7 +1078,7 @@ body.en-login #toast{bottom:26px}
 <div id="actualiza"></div>
 <div id="descarga"></div>
 <div id="carganube"><div class="cn-c"><div class="cn-anillo"></div><div class="cn-msj" id="carganube-msj">Iniciando sesión…</div></div></div>
-<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.85</div></div>
+<div id="arranque"><img src="assets/logo.png" alt="Copa CD"><div class="a-tit">COPA CD</div><div class="a-anillo"></div><div class="a-est">Cargando…</div><div class="a-ver">v1.0.86</div></div>
 <div id="menutemas"></div>
 <div id="perm-usr"></div>
 <div id="quitar"></div>
@@ -1497,7 +1504,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.85',APP_BUILD=86;
+var APP_VERSION='1.0.86',APP_BUILD=87;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -1530,7 +1537,7 @@ function cargar(){try{var j=localStorage.getItem(CLAVE);S=j?JSON.parse(j):porDef
  if(typeof S.capTs!=='number'||S.capTs<0)S.capTs=0;
  if(!S.historial)S.historial=[];
  if(!S.ia||typeof S.ia!=='object')S.ia={url:'',model:'',key:''};
- if(S.tema!=='verde'&&S.tema!=='negro')S.tema='verde';
+ if(['rojo','azul','verde','negro'].indexOf(String(S.tema))<0)S.tema='verde';
  if(!S.tema)S.tema='verde';
  if(!S.usuarios)S.usuarios=[];
  if(S.sesion&&(!S.sesion.u||!S.sesion.r))S.sesion=null;
@@ -1840,10 +1847,10 @@ function vistaPorDefecto(){return 'dashboard';}
 function transicion(ms){var o=document.getElementById('carga');if(!o)return;o.classList.add('on');if(transT)clearTimeout(transT);transT=setTimeout(function(){o.classList.remove('on');},ms||380);}
 function nombreTema(t){return t==='azul'?'Azul':t==='verde'?'Verde':t==='negro'?'Negro':'Rojo';}
 function aplicarTema(){
- var TS=['verde','negro'];if(TS.indexOf(String(S.tema))<0)S.tema='verde';
+ var TS=['rojo','azul','verde','negro'];if(TS.indexOf(String(S.tema))<0)S.tema='verde';
  document.documentElement.setAttribute('data-tema','oscuro');
  document.documentElement.setAttribute('data-acento',S.tema);
- var mapa={'verde':'#07331D','negro':'#000000'};
+ var mapa={'rojo':'#4A0508','azul':'#10244F','verde':'#07331D','negro':'#000000'};
  var mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.setAttribute('content',mapa[S.tema]||'#07331D');
  var bs=document.querySelectorAll('[data-a="tema"]'),bi;for(bi=0;bi<bs.length;bi++)bs[bi].innerHTML='&#127912;';}
 function guardar(){try{localStorage.setItem(CLAVE,JSON.stringify(S));}catch(e){toast('⚠️ No se pudo guardar: almacén lleno o bloqueado');}if(nubeAuto&&!nubeBatch)nubeAutoProgramar();}
@@ -4309,7 +4316,7 @@ function irA(v){if(!v||!permitida(v))return;
 }
 function abrirMenuTemas(){
  var m=document.getElementById('menutemas');if(!m)return;
- var TS=[['verde','Verde','#159A57'],['negro','Negro','#C7CBD3']];
+ var TS=[['rojo','Rojo','#F52B27'],['azul','Azul','#2E7CF6'],['verde','Verde','#159A57'],['negro','Negro','#C7CBD3']];
  var h='<div class="mt-c"><div class="mt-t">Tema de la app</div>';
  for(var i=0;i<TS.length;i++){var t=TS[i];h+='<button data-a="tema-set" data-x="'+t[0]+'"'+(S.tema===t[0]?' class="on"':'')+'><i style="background:'+t[2]+'"></i>'+t[1]+(S.tema===t[0]?'<span class="chk">&#10003;</span>':'')+'</button>';}
  h+='<button class="mt-x" data-a="menu-cerrar">Cerrar</button></div>';
