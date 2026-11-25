@@ -94,7 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.84: interior de la app rediseñado con la paleta de noche del login — azules profundos, tarjetas de vidrio, aristas doradas. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
+          body: 'v1.0.85: verde esmeralda premium, cabecera negra en el tema Negro, y solo quedan los temas Verde y Negro. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
           files: |
             salida/CopaCD-*.apk
 
