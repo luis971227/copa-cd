@@ -1734,7 +1734,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.101',APP_BUILD=102;
+var APP_VERSION='1.0.102',APP_BUILD=103;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -5531,37 +5531,67 @@ function abrirDescargaActualizacion(){
    terminar, se lanza el instalador del sistema con ACTION_VIEW + FileProvider.
    Si el WebView no puede dar el stream o el plugin falla, se cae al navegador. */
 var descargaUI=null,descargaLista='',instaladorPendiente=false,avisoInst=false;
+var dmId='',dmCancelado=false;
 function abrirDescargaProgreso(){
  if(!actualizaUI||!/^https:\/\//i.test(actualizaUI.url||''))return;
  var nombre='CopaCD-'+(actualizaUI.version||APP_VERSION)+'.apk';
  cerrarDescarga();
- toast('\u2b07\ufe0f Descargando '+nombre+' con Android (progreso en las notificaciones)');
+ dmCancelado=false;
  if(window.cdpCompartir&&cdpCompartir.bajarDM){
-  cdpCompartir.bajarDM(actualizaUI.url,nombre,function(id){vigilarDM(String(id));},function(e){
+  var box=document.getElementById('descarga');
+  if(box){box.innerHTML='<div class="carta-c"><div class="carta-top" style="background:var(--rojo)">'
+   +'<div class="cn">Descargando actualizaci\u00f3n</div><div class="ci">\u2b07\ufe0f</div><div class="ct">'+esc(nombre)+'</div></div><div class="carta-b">'
+   +'<div class="barra"><i id="dz-barra"></i></div>'
+   +'<div class="nota" id="dz-estado">Conectando\u2026 (tambi\u00e9n ves el progreso en las notificaciones)</div>'
+   +'<div class="acciones"><button class="btn gh" data-a="dz-cancelar" style="flex:1">Cancelar</button></div>'
+   +'</div></div>';box.className='on';}
+  cdpCompartir.bajarDM(actualizaUI.url,nombre,function(id){dmId=String(id);vigilarDM(dmId,nombre);},function(e){
+   cerrarDescarga();
    toast('No se pudo iniciar la descarga de Android ('+String(e||'')+'). Usa \u00abPor navegador\u00bb.');
   });
  } else fallbackNavegador();
 }
-function vigilarDM(id){
+function vigilarDM(id,nombre){
  var intentos=0,detenido=false;
  var t=setInterval(function(){
   intentos++;
-  if(intentos>900||detenido){clearInterval(t);return;}
+  if(intentos>900||detenido||dmCancelado){clearInterval(t);return;}
   if(!window.cdpCompartir||!cdpCompartir.estadoDM){clearInterval(t);return;}
   cdpCompartir.estadoDM(id,function(x){
-   if(detenido)return;
-   if(x&&x.estado==='listo'){detenido=true;clearInterval(t);toast('\u2705 Descarga completa: abriendo el instalador de Android\u2026');instalarDM(id);}
-   else if(x&&x.estado==='fallo'){detenido=true;clearInterval(t);toast('\u26a0\ufe0f La descarga de Android fall\u00f3. Toca \u00ab\u2b07\ufe0f Descargar e instalar\u00bb otra vez, o usa \u00abPor navegador\u00bb.');}
+   if(detenido||dmCancelado)return;
+   if(!x)return;
+   if(x.estado==='listo'){
+    detenido=true;clearInterval(t);dmId='';
+    toast('\u2705 Descarga completa: abriendo el instalador\u2026');
+    instalarDM(id,nombre);
+   } else if(x.estado==='fallo'){
+    detenido=true;clearInterval(t);dmId='';
+    toast('\u26a0\ufe0f La descarga de Android fall\u00f3. Toca \u00ab\u2b07\ufe0f Descargar e instalar\u00bb otra vez, o usa \u00abPor navegador\u00bb.');
+    cerrarDescarga();
+   } else {
+    pintaBarra(x.leidos||0,x.total||0);
+   }
   },function(){});
- },2000);
+ },1500);
 }
-function instalarDM(id){
+function instalarDM(id,nombre){
  if(!window.cdpCompartir||!cdpCompartir.instalarDM)return;
- cdpCompartir.instalarDM(id,function(){
-  toast('\u2b07\ufe0f Cartel de instalaci\u00f3n abierto: toca INSTALAR. Si el cartel se cierra solo, desactiva el Bloqueo autom\u00e1tico (Ajustes \u2192 Seguridad y privacidad) o abre Mis archivos \u2192 Descargas \u2192 toca el APK.');
+ cdpCompartir.instalarDM(id,function(r){
+  if(r==='sin-cartel'){
+   abrirDescargasAuto(nombre);
+   return;
+  }
+  toast('\u2b07\ufe0f Cartel de instalaci\u00f3n abierto: toca INSTALAR. Si sale el aviso de Play Protect, \u00abInstalar sin analizar\u00bb.');
  },function(e){
-  toast('El instalador no respondi\u00f3 ('+String(e||'')+'). Abre Mis archivos \u2192 Descargas \u2192 toca el APK \u2192 Instalar.');
+  toast('El instalador no respondi\u00f3 ('+String(e||'')+').');
+  abrirDescargasAuto(nombre);
  });
+}
+function abrirDescargasAuto(nombre){
+ toast('\ud83d\udcc2 Abriendo Descargas: toca '+nombre+' \u2192 Instalar');
+ if(window.cdpCompartir&&cdpCompartir.abrirDescargas){
+  cdpCompartir.abrirDescargas(String(nombre||''),function(){},function(){});
+ }
 }
 function finalDescarga(msg){
  var d=descargaUI;if(!d)return;
@@ -5610,6 +5640,8 @@ function fallbackNavegador(){
 function cerrarDescarga(){
  var box=document.getElementById('descarga');
  if(descargaUI&&descargaUI.controlador)descargaUI.controlador.abort();
+ if(dmId&&window.cdpCompartir&&cdpCompartir.cancelarDM){cdpCompartir.cancelarDM(dmId,function(){},function(){});}
+ dmCancelado=true;dmId='';
  descargaUI=null;
  if(box){box.className='';box.innerHTML='';}
 }

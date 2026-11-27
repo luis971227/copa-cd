@@ -29,6 +29,9 @@ var CdpCompartir = {
   instalarDM: function(id, success, error) {
     exec(success, error, 'CdpCompartir', 'instalar-dm', [String(id || '')]);
   },
+  cancelarDM: function(id, success, error) {
+    exec(success, error, 'CdpCompartir', 'cancelar-dm', [String(id || '')]);
+  },
   instalar: function(nombre, texto, success, error) {
     exec(success, error, 'CdpCompartir', 'instalar', [nombre, texto || '']);
   },

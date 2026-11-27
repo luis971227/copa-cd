@@ -100,6 +100,7 @@ public class CdpCompartir extends CordovaPlugin {
             if ("bajar-dm".equals(accion)) { bajarDM(args, cb); return true; }
             if ("estado-dm".equals(accion)) { estadoDM(args, cb); return true; }
             if ("instalar-dm".equals(accion)) { instalarDM(args, cb); return true; }
+            if ("cancelar-dm".equals(accion)) { cancelarDM(args, cb); return true; }
             if ("http".equals(accion)) { http(args, cb); return true; }
             if ("instalar".equals(accion)) { instalar(args, cb); return true; }
             if ("descargas".equals(accion)) { abrirDescargas(args, cb); return true; }
@@ -318,23 +319,37 @@ public class CdpCompartir extends CordovaPlugin {
             final Uri uriFinal = uri;
             cordova.getActivity().runOnUiThread(new Runnable() {
                 public void run() {
-                    Throwable fallo = null;
-                    String[] acciones = { Intent.ACTION_VIEW, Intent.ACTION_INSTALL_PACKAGE };
-                    for (int i = 0; i < acciones.length; i++) {
-                        try {
-                            Intent v = new Intent(acciones[i]);
-                            v.setDataAndType(uriFinal, "application/vnd.android.package-archive");
-                            v.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                            ctx.startActivity(v);
-                            cb.success("instalador-dm");
-                            return;
-                        } catch (Throwable e) {
-                            fallo = e;
-                        }
+                    try {
+                        final long antes = appPausadaEn;
+                        Intent v = new Intent(Intent.ACTION_VIEW);
+                        v.setDataAndType(uriFinal, "application/vnd.android.package-archive");
+                        v.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        ctx.startActivity(v);
+                        new Thread(new Runnable() { public void run() {
+                            long t0 = System.currentTimeMillis();
+                            while (System.currentTimeMillis() - t0 < 4000) {
+                                if (appPausadaEn != antes) { cb.success("instalador-dm"); return; }
+                                try { Thread.sleep(200); } catch (InterruptedException e) { break; }
+                            }
+                            cb.success("sin-cartel");
+                        }}).start();
+                    } catch (Throwable e) {
+                        cb.error("No se pudo abrir el instalador: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
                     }
-                    cb.error("No se pudo abrir el instalador: " + (fallo == null ? "?" : fallo.getClass().getSimpleName() + " " + fallo.getMessage()));
                 }
             });
+        } catch (Throwable e) {
+            cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+        }
+    }
+
+    private void cancelarDM(CordovaArgs args, final CallbackContext cb) {
+        try {
+            long id = Long.parseLong(args.optString(0));
+            Context ctx = cordova.getContext();
+            DownloadManager dm = (DownloadManager) ctx.getSystemService(Context.DOWNLOAD_SERVICE);
+            dm.remove(id);
+            cb.success("cancelado");
         } catch (Throwable e) {
             cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
         }
