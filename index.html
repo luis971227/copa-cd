@@ -1734,7 +1734,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.128',APP_BUILD=129;
+var APP_VERSION='1.0.129',APP_BUILD=130;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -2148,6 +2148,7 @@ function vistaTrazas(){
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];});}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.className='on';if(toastT)clearTimeout(toastT);toastT=setTimeout(function(){t.className='';},2400);}
+function toastLargo(m){var t=document.getElementById('toast');t.textContent=m;t.className='on';if(toastT)clearTimeout(toastT);toastT=setTimeout(function(){t.className='';},7000);}
 function eq(id){for(var i=0;i<S.equipos.length;i++)if(S.equipos[i].id===id)return S.equipos[i];return null;}
 function corto(e){return e?(e.nombre||('Eq '+e.id)):'';}
 function iniciales(e){return String(corto(e)).split(/\s+/).slice(0,2).map(function(w){return w.charAt(0);}).join('').toUpperCase();}
@@ -4654,7 +4655,7 @@ document.addEventListener('keydown',function(ev){
 },false);
 document.addEventListener('backbutton',function(){atras();},false);
 document.addEventListener('visibilitychange',function(){if(document.hidden===false)comprobarActualizacion(true,true);});
-document.addEventListener('resume',function(){comprobarActualizacion(true,true);if(instaladorPendiente){instaladorPendiente=false;toast('✅ Permiso concedido: continúo la instalación…');setTimeout(function(){instalarYCerrar();},700);return;}if(esperandoNavegador){esperandoNavegador=false;cerrarDescarga();setTimeout(function(){elegirEInstalar();},900);}},false);
+document.addEventListener('resume',function(){if(descargaUI||descargaEnCurso){if(instaladorPendiente){instaladorPendiente=false;toast('\u2705 Permiso concedido: contin\u00fao la instalaci\u00f3n\u2026');setTimeout(function(){instalarYCerrar();},700);}return;}comprobarActualizacion(true,true);if(instaladorPendiente){instaladorPendiente=false;toast('\u2705 Permiso concedido: contin\u00fao la instalaci\u00f3n\u2026');setTimeout(function(){instalarYCerrar();},700);return;}if(esperandoNavegador){esperandoNavegador=false;cerrarDescarga();setTimeout(function(){elegirEInstalar();},900);}},false);
 document.addEventListener('touchstart',function(ev){
  if(!ev.touches||!ev.touches.length)return;
  var t=ev.touches[0];swX=t.clientX;swY=t.clientY;swT=Date.now();swEdge=(swX<46&&swY>60);
@@ -5575,8 +5576,11 @@ function abrirDescargaProgreso(){
    toast('\ud83d\udd11 Activa \u00abPermitir de esta fuente\u00bb en los Ajustes y al volver sigo con la instalaci\u00f3n');
    return;
   }
-  toast('\u26a0\ufe0f La descarga fall\u00f3 ('+me.slice(0,80)+').');
-  cerrarDescarga();
+  var st=document.getElementById('dz-estado');
+  if(st)st.textContent='\u26a0\ufe0f La descarga fall\u00f3: '+me.slice(0,120);
+  toastLargo('\u26a0\ufe0f La descarga fall\u00f3: '+me.slice(0,120));
+  var acc=document.querySelector('#descarga .carta-b .acciones');
+  if(acc&&!document.querySelector('#descarga [data-a="dz-reintentar"]')){var b=document.createElement('button');b.className='btn ro';b.setAttribute('data-a','dz-reintentar');b.style.flex='1';b.textContent='\u21bb Reintentar';acc.parentNode.insertBefore(b,acc);}
  });
 }
 function instaladorFallo(nombre,detalle){
@@ -5585,7 +5589,7 @@ function instaladorFallo(nombre,detalle){
  if(fallosInstalador<3){
   var ms=String(detalle||'').split(':')[1];
   if(st)st.textContent='El instalador se cerr\u00f3 solo'+(ms?' ('+ms+' ms)':'')+': toca \u2b07\ufe0f Abrir / Instalar otra vez (intento '+fallosInstalador+' de 2)';
-  toast('\u26a0\ufe0f El instalador no se qued\u00f3 abierto: toca \u2b07\ufe0f Abrir / Instalar otra vez');
+  toastLargo('\u26a0\ufe0f El instalador no se qued\u00f3 abierto: toca \u2b07\ufe0f Abrir / Instalar otra vez');
   return;
  }
  planBInstalador(nombre);
@@ -5595,7 +5599,7 @@ function planBInstalador(nombre){
  var st=document.getElementById('dz-estado');
  var msg='El instalador no se queda abierto en este tel\u00e9fono. En los Ajustes que se abren revisa que \u00abInstalar apps desconocidas\u00bb est\u00e9 activado para Copa CD. La copia del APK qued\u00f3 en Descargas por si acaso';
  if(st)st.textContent=msg;
- toast('\ud83d\udea8 El instalador no abre: revisa el permiso \u00abInstalar apps desconocidas\u00bb para Copa CD en los Ajustes');
+ toastLargo('\ud83d\udea8 El instalador no abre: revisa el permiso \u00abInstalar apps desconocidas\u00bb para Copa CD en los Ajustes');
  if(planBAbierto)return;
  planBAbierto=true;
  if(window.cdpCompartir&&cdpCompartir.planbCartel){cdpCompartir.planbCartel(String(nombre||''),function(){},function(){});}
