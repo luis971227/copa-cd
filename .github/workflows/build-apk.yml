@@ -94,7 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.108: actualizacion igual que misServicios: descarga interna con progreso en la app e instalacion directa al terminar. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
+          body: 'v1.0.109: prueba de la actualizacion estilo misServicios (descarga interna + instalador directo). Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
           files: |
             salida/CopaCD-*.apk
 
