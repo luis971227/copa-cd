@@ -1734,7 +1734,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.115',APP_BUILD=116;
+var APP_VERSION='1.0.116',APP_BUILD=117;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -4654,7 +4654,7 @@ document.addEventListener('keydown',function(ev){
 },false);
 document.addEventListener('backbutton',function(){atras();},false);
 document.addEventListener('visibilitychange',function(){if(document.hidden===false)comprobarActualizacion(true,true);});
-document.addEventListener('resume',function(){comprobarActualizacion(true,true);if(instaladorPendiente){instaladorPendiente=false;toast('✅ Permiso concedido: continúo la instalación…');setTimeout(function(){instalarYCerrar();},700);}},false);
+document.addEventListener('resume',function(){comprobarActualizacion(true,true);if(instaladorPendiente){instaladorPendiente=false;toast('✅ Permiso concedido: continúo la instalación…');setTimeout(function(){instalarYCerrar();},700);return;}if(esperandoNavegador){esperandoNavegador=false;cerrarDescarga();setTimeout(function(){var nm=actualizaUI&&actualizaUI.version?'CopaCD-'+actualizaUI.version+'.apk':'';toast('📁 En Descargas toca '+esc(nm||'el APK de Copa CD')+' → Instalar');if(window.cdpCompartir&&cdpCompartir.abrirDescargas)cdpCompartir.abrirDescargas(nm,function(){},function(){});},900);}},false);
 document.addEventListener('touchstart',function(ev){
  if(!ev.touches||!ev.touches.length)return;
  var t=ev.touches[0];swX=t.clientX;swY=t.clientY;swT=Date.now();swEdge=(swX<46&&swY>60);
@@ -5107,7 +5107,8 @@ document.addEventListener('click',function(ev){
    case 'sync-cerrar':syncUI=false;renderSync();break;
    case 'gh-repo-guardar':if(guardarConfigGithub())renderSync();break;
    case 'ver-actualizacion':comprobarActualizacion(false);break;
-   case 'act-descargar':cerrarDescarga();toast('\ud83c\udf10 Se abri\u00f3 tu navegador: cuando termine la descarga toca el aviso y luego INSTALAR');abrirDescargaActualizacion();break;
+   case 'act-descargar':cerrarDescarga();esperandoNavegador=true;toast('🌐 Descargando en tu navegador: al terminar vuelve a Copa CD y te llevo directo al APK');abrirDescargaActualizacion();break;
+   case 'act-descargas':(function(){var nm=actualizaUI&&actualizaUI.version?'CopaCD-'+actualizaUI.version+'.apk':'';if(window.cdpCompartir&&cdpCompartir.abrirDescargas){cdpCompartir.abrirDescargas(nm,function(){toast('📁 Toca '+esc(nm||'el APK de Copa CD')+' → Instalar');},function(){});}else toast('📁 Abre Mis archivos → Descargas y toca el APK de Copa CD');})();break;
    case 'act-recordar':descartarActualizacion();break;
    case 'dz-cancelar':cerrarDescarga();break;
    case 'dz-instalar':instalarYCerrar();break;
@@ -5513,6 +5514,7 @@ function renderActualiza(){
   +'<div class="nota">Al tocar <b>Descargar e instalar</b> se abre tu navegador y baja la APK con la barra de descargas de Android (la v\u00eda que siempre funciona). Al terminar, toca el aviso de descarga completa y luego <b>INSTALAR</b>. Tu copa no se borra.</div>'
   +'<div class="acciones"><button class="btn ro" data-a="act-descargar" style="flex:1">⬇️ Descargar e instalar</button>'
   +'<button class="btn gh" data-a="act-recordar">Ahora no</button></div>'
+  +'<div class="acciones"><button class="btn gh" data-a="act-descargas" style="flex:1">📁 Abrir Descargas (si ya la bajaste)</button></div>'
   +'</div></div>';
 }
 function descartarActualizacion(){
@@ -5530,7 +5532,7 @@ function abrirDescargaActualizacion(){
    GitHub Releases a un archivo binario del plugin (base64 por trozos) y, al
    terminar, se lanza el instalador del sistema con ACTION_VIEW + FileProvider.
    Si el WebView no puede dar el stream o el plugin falla, se cae al navegador. */
-var descargaUI=null,descargaLista='',instaladorPendiente=false,avisoInst=false;
+var descargaUI=null,descargaLista='',instaladorPendiente=false,avisoInst=false,esperandoNavegador=false;
 function abrirDescargaProgreso(){
  if(!actualizaUI||!/^https:\/\//i.test(actualizaUI.url||''))return;
  var nombre='CopaCD-'+(actualizaUI.version||APP_VERSION)+'.apk';

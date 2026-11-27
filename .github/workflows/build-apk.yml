@@ -94,7 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.115: prueba de la actualizacion via navegador. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
+          body: 'v1.0.116: al volver de descargar te lleva directo al APK en Descargas y el cartel no queda colgado. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
           files: |
             salida/CopaCD-*.apk
 
