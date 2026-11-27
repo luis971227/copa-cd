@@ -97,6 +97,7 @@ public class CdpCompartir extends CordovaPlugin {
             if ("abrir".equals(accion)) { abrir(args, cb); return true; }
             if ("anexar".equals(accion)) { anexar(args, cb); return true; }
             if ("bajar".equals(accion)) { bajar(args, cb); return true; }
+            if ("bajar-instalar".equals(accion)) { bajarInstalar(args, cb); return true; }
             if ("bajar-dm".equals(accion)) { bajarDM(args, cb); return true; }
             if ("estado-dm".equals(accion)) { estadoDM(args, cb); return true; }
             if ("instalar-dm".equals(accion)) { instalarDM(args, cb); return true; }
@@ -455,12 +456,25 @@ public class CdpCompartir extends CordovaPlugin {
                     Context ctx = cordova.getContext();
                     File f = archivoCompartible(nombre);
                     if (!f.exists() || f.length() == 0) throw new IOException("La descarga no est\u00e1 completa; toca Descargar otra vez");
-                    if (Build.VERSION.SDK_INT >= 26 && !puedeInstalar(ctx)) {
-                        pedirPermisoInstalar(ctx);
-                        cb.error("permiso-instalar: Android pide autorizar 'Instalar apps desconocidas' para Copa CD. Se abrieron los Ajustes: activa el permiso, vuelve a la app y toca Instalar otra vez");
-                        return;
-                    }
-                    final Uri uri = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".cdpfiles", f);
+                    instalarArchivo(ctx, f, cb);
+                } catch (Throwable e) {
+                    cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+                }
+            }
+        });
+    }
+
+    /* Instalacion con el mecanismo de misServicios: FileProvider + ACTION_VIEW
+       package-archive. Si Android exige el permiso de fuentes desconocidas se
+       abren los Ajustes y se avisa con permiso-instalar. */
+    private void instalarArchivo(final Context ctx, final File f, final CallbackContext cb) {
+        try {
+            if (Build.VERSION.SDK_INT >= 26 && !puedeInstalar(ctx)) {
+                pedirPermisoInstalar(ctx);
+                cb.error("permiso-instalar: Android pide autorizar 'Instalar apps desconocidas' para Copa CD. Se abrieron los Ajustes: activa el permiso, vuelve a la app y toca Instalar otra vez");
+                return;
+            }
+            final Uri uri = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".cdpfiles", f);
                     cordova.getActivity().runOnUiThread(new Runnable() {
                         public void run() {
                             try {
@@ -482,8 +496,64 @@ public class CdpCompartir extends CordovaPlugin {
                             }
                         }
                     });
+        } catch (Throwable e) {
+            cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+        }
+    }
+
+    /* Descarga e instalacion en una sola accion nativa (mecanismo de
+       misServicios): stream a archivo .part en files/compartir, renombrado al
+       terminar y arranque inmediato del instalador. Asi el aviso de
+       "descarga completa" no depende del puente hacia JavaScript. */
+    private void bajarInstalar(CordovaArgs args, final CallbackContext cb) {
+        final String url = args.optString(0);
+        final String nombre = args.optString(1);
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                HttpURLConnection cx = null;
+                try {
+                    if (url == null || url.length() == 0) throw new IOException("Falta la URL de descarga");
+                    Context ctx = cordova.getContext();
+                    File dir = new File(ctx.getFilesDir(), "compartir");
+                    if (!dir.exists() && !dir.mkdirs()) throw new IOException("No se pudo crear la carpeta de descarga");
+                    String limpio = nombre.replaceAll("[^A-Za-z0-9._-]", "_");
+                    File parte = new File(dir, limpio + ".part");
+                    File f = new File(dir, limpio);
+                    if (f.exists()) f.delete();
+                    cx = (HttpURLConnection) new URL(url).openConnection();
+                    cx.setConnectTimeout(15000);
+                    cx.setReadTimeout(30000);
+                    cx.setInstanceFollowRedirects(true);
+                    cx.setRequestProperty("User-Agent", "copa-cd-apk");
+                    int codigo = cx.getResponseCode();
+                    if (codigo < 200 || codigo >= 300) throw new IOException("El servidor respondi\u00f3 HTTP " + codigo);
+                    long total = cx.getContentLength();
+                    java.io.InputStream in = cx.getInputStream();
+                    FileOutputStream out = new FileOutputStream(parte, false);
+                    byte[] buf = new byte[65536];
+                    long leidos = 0;
+                    int n;
+                    int ultimoPct = -1;
+                    while ((n = in.read(buf)) > 0) {
+                        out.write(buf, 0, n);
+                        leidos += n;
+                        int pct = total > 0 ? (int) Math.round(leidos * 100 / total) : -1;
+                        if (pct != ultimoPct) {
+                            ultimoPct = pct;
+                            PluginResult pr = new PluginResult(PluginResult.Status.OK, progresoJson(leidos, total));
+                            pr.setKeepCallback(true);
+                            cb.sendPluginResult(pr);
+                        }
+                    }
+                    out.close();
+                    in.close();
+                    if (parte.length() == 0) throw new IOException("El archivo baj\u00f3 vac\u00edo");
+                    if (!parte.renameTo(f)) throw new IOException("No se pudo completar el archivo");
+                    instalarArchivo(ctx, f, cb);
                 } catch (Throwable e) {
                     cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+                } finally {
+                    if (cx != null) cx.disconnect();
                 }
             }
         });
