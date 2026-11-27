@@ -96,8 +96,9 @@ function bloquear(motivoPrevio){
  tarjeta.style.cssText='background:#fff;border-radius:14px;padding:22px;max-width:340px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.45);text-align:center';
  tarjeta.innerHTML='<div style="font-size:40px">🔐</div>'
   +'<h2 style="margin:8px 0 4px;font-size:20px;color:#151515">Licencia requerida</h2>'
-  +'<p id="gate-sub" style="margin:0 0 14px;font-size:12.5px;color:#7F7F7F">Esta aplicación necesita una clave de licencia válida para usarse.</p>'
-  +'<input id="gate-clave" type="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="SEYEAL-COPACD-20260101-XXXXXXXX" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid #E5E5E5;border-radius:9px;font-size:14px;text-align:center;text-transform:uppercase;margin-bottom:9px">'
+  +'<p id="gate-sub" style="margin:0 0 6px;font-size:12.5px;color:#7F7F7F">Esta aplicación necesita una clave de licencia válida para usarse.</p>'
+  +'<p style="margin:0 0 14px;font-size:12px;color:#151515">Código de esta app: <b style="color:#8C1614;letter-spacing:1px">'+APP_CODE+'</b> · cópialo en el generador para crear la clave.</p>'
+  +'<input id="gate-clave" type="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="SEYEAL-'+APP_CODE+'-20260101-XXXXXXXX" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid #E5E5E5;border-radius:9px;font-size:14px;text-align:center;text-transform:uppercase;margin-bottom:9px">'
   +'<button id="gate-btn" type="button" style="width:100%;padding:12px;border:none;border-radius:9px;background:#8C1614;color:#fff;font-size:15px;font-weight:800;cursor:pointer">Activar licencia</button>'
   +'<p id="gate-msg" style="margin:11px 0 0;font-size:12.5px;min-height:16px;font-weight:700"></p>';
  ov.appendChild(tarjeta);
