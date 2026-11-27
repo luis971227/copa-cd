@@ -463,21 +463,23 @@ public class CdpCompartir extends CordovaPlugin {
                     final Uri uri = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".cdpfiles", f);
                     cordova.getActivity().runOnUiThread(new Runnable() {
                         public void run() {
-                            Throwable fallo = null;
-                            String[] acciones = { Intent.ACTION_VIEW, Intent.ACTION_INSTALL_PACKAGE };
-                            for (int i = 0; i < acciones.length; i++) {
-                                try {
-                                    Intent v = new Intent(acciones[i]);
-                                    v.setDataAndType(uri, "application/vnd.android.package-archive");
-                                    v.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    ctx.startActivity(v);
-                                    cb.success(i == 0 ? "instalador-view" : "instalador-ip");
-                                    return;
-                                } catch (Throwable e) {
-                                    fallo = e;
-                                }
+                            try {
+                                final long antes = appPausadaEn;
+                                Intent v = new Intent(Intent.ACTION_VIEW);
+                                v.setDataAndType(uri, "application/vnd.android.package-archive");
+                                v.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                ctx.startActivity(v);
+                                new Thread(new Runnable() { public void run() {
+                                    long t0 = System.currentTimeMillis();
+                                    while (System.currentTimeMillis() - t0 < 4000) {
+                                        if (appPausadaEn != antes) { cb.success("instalador-view"); return; }
+                                        try { Thread.sleep(200); } catch (InterruptedException e) { break; }
+                                    }
+                                    cb.success("sin-cartel");
+                                }}).start();
+                            } catch (Throwable e) {
+                                cb.error("No se pudo abrir el instalador: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
                             }
-                            cb.error("No se pudo abrir el instalador: " + (fallo == null ? "?" : fallo.getClass().getSimpleName() + " " + fallo.getMessage()));
                         }
                     });
                 } catch (Throwable e) {

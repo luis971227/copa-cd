@@ -94,7 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.103: prueba completa de actualizacion desde la app. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
+          body: 'v1.0.104: si la descarga de Android se queda parada cambia a la interna; si el telefono cierra el instalador abre Descargas con el APK. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
           files: |
             salida/CopaCD-*.apk
 
