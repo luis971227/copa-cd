@@ -1,11 +1,12 @@
-/* Portero de licencia SEYEAL — bloquea la app hasta introducir una clave válida.
-   Misma lógica y secreto que LicenseManager.kt (repo luis971227/Licencia). */
+/* Portero de licencia SEYEAL — bloquea la app hasta introducir una clave válida
+   de ESTE teléfono. Misma lógica y secreto que LicenseManager.kt (repo luis971227/Licencia). */
 (function(){
 'use strict';
 var APP_CODE='COPACD';
 var SECRET='SEYEAL-0758pf1q5zq42eeablb3oss1-2026';
 var LS_KEY='seyeal_lic_'+APP_CODE;
 var B32='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+var DEVICE_ID=null;
 
 var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
 0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
@@ -64,23 +65,25 @@ function hmacSha256(keyBytes,msgBytes){
  var ih=sha256Bytes(inner);
  return sha256Bytes(opad.concat(ih));
 }
-function firmaLicencia(appCode,expiry){
- var mac=hmacSha256(utf8Bytes(SECRET),utf8Bytes(appCode.toUpperCase()+expiry));
+function firmaLicencia(appCode,deviceCode,expiry){
+ var mac=hmacSha256(utf8Bytes(SECRET),utf8Bytes(appCode.toUpperCase()+deviceCode+expiry));
  var bits=0,i;
  for(i=0;i<5;i++)bits=bits*256+mac[i];
  var s='';
  for(i=0;i<8;i++){s+=B32[Math.floor(bits/Math.pow(2,35-i*5))%32];}
  return s;
 }
-function validaClave(clave,appCode){
+function validaClave(clave,appCode,deviceCode){
  var p=String(clave||'').trim().toUpperCase().split('-');
- if(p.length!==4||p[0]!=='SEYEAL')return{ok:false,motivo:'Formato de clave incorrecto'};
+ if(p.length!==5||p[0]!=='SEYEAL')return{ok:false,motivo:'Formato de clave incorrecto'};
  if(p[1]!==appCode.toUpperCase())return{ok:false,motivo:'La clave no corresponde a esta app ('+appCode+')'};
- if(!/^\d{8}$/.test(p[2]))return{ok:false,motivo:'Fecha de caducidad inválida'};
- if(p[3]!==firmaLicencia(p[1],p[2]))return{ok:false,motivo:'Firma inválida: clave falsificada o mal copiada'};
- var y=+p[2].slice(0,4),mo=+p[2].slice(4,6),d=+p[2].slice(6,8);
+ if(!deviceCode)return{ok:false,motivo:'Preparando el teléfono, espera unos segundos…'};
+ if(p[2]!==deviceCode)return{ok:false,motivo:'Esta licencia es para OTRO teléfono'};
+ if(!/^\d{8}$/.test(p[3]))return{ok:false,motivo:'Fecha de caducidad inválida'};
+ if(p[4]!==firmaLicencia(p[1],p[2],p[3]))return{ok:false,motivo:'Firma inválida: clave falsificada o mal copiada'};
+ var y=+p[3].slice(0,4),mo=+p[3].slice(4,6),d=+p[3].slice(6,8);
  var exp=Date.UTC(y,mo-1,d)+24*3600*1000;
- if(Date.now()>exp)return{ok:false,motivo:'Licencia caducada el '+p[2]};
+ if(Date.now()>exp)return{ok:false,motivo:'Licencia caducada el '+p[3]};
  return{ok:true};
 }
 if(typeof module!=='undefined'&&module.exports){
@@ -88,29 +91,52 @@ if(typeof module!=='undefined'&&module.exports){
 }
 if(typeof document==='undefined')return;
 
+var ov=null,guardada=null;
+try{guardada=localStorage.getItem(LS_KEY);}catch(e){}
+
+function desbloquear(){
+ if(ov&&ov.parentNode)ov.parentNode.removeChild(ov);
+ ov=null;guardada=null;
+}
 function bloquear(motivoPrevio){
- var ov=document.createElement('div');
- ov.id='gate-licencia';
- ov.style.cssText='position:fixed;inset:0;z-index:999999;background:linear-gradient(160deg,#8C1614,#3d0a09);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Arial,Helvetica,sans-serif';
+ if(ov)return;
+ var el=document.createElement('div');
+ el.id='gate-licencia';
+ el.style.cssText='position:fixed;inset:0;z-index:999999;background:linear-gradient(160deg,#8C1614,#3d0a09);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Arial,Helvetica,sans-serif';
  var tarjeta=document.createElement('div');
  tarjeta.style.cssText='background:#fff;border-radius:14px;padding:22px;max-width:340px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.45);text-align:center';
  tarjeta.innerHTML='<div style="font-size:40px">🔐</div>'
   +'<h2 style="margin:8px 0 4px;font-size:20px;color:#151515">Licencia requerida</h2>'
-  +'<p id="gate-sub" style="margin:0 0 6px;font-size:12.5px;color:#7F7F7F">Esta aplicación necesita una clave de licencia válida para usarse.</p>'
-  +'<p style="margin:0 0 14px;font-size:12px;color:#151515">Código de esta app: <b style="color:#8C1614;letter-spacing:1px">'+APP_CODE+'</b> · cópialo en el generador para crear la clave.</p>'
-  +'<input id="gate-clave" type="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="SEYEAL-'+APP_CODE+'-20260101-XXXXXXXX" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid #E5E5E5;border-radius:9px;font-size:14px;text-align:center;text-transform:uppercase;margin-bottom:9px">'
+  +'<p style="margin:0 0 6px;font-size:12.5px;color:#7F7F7F">Esta licencia es para un solo teléfono.</p>'
+  +'<p style="margin:0 0 8px;font-size:12.5px;color:#151515">App: <b style="color:#8C1614;letter-spacing:1px">'+APP_CODE+'</b></p>'
+  +'<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 14px">'
+  +'<span style="font-size:12px;color:#151515">Teléfono: <b id="gate-dev" style="color:#8C1614;letter-spacing:1px">···</b></span>'
+  +'<button id="gate-copiar-cod" type="button" style="border:none;background:#8C1614;color:#fff;border-radius:6px;font-size:10.5px;font-weight:800;padding:5px 9px;cursor:pointer">COPIAR CÓDIGOS</button>'
+  +'</div>'
+  +'<input id="gate-clave" type="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="SEYEAL-'+APP_CODE+'-XXXX-20260101-XXXXXXXX" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid #E5E5E5;border-radius:9px;font-size:14px;text-align:center;text-transform:uppercase;margin-bottom:9px">'
   +'<button id="gate-btn" type="button" style="width:100%;padding:12px;border:none;border-radius:9px;background:#8C1614;color:#fff;font-size:15px;font-weight:800;cursor:pointer">Activar licencia</button>'
   +'<p id="gate-msg" style="margin:11px 0 0;font-size:12.5px;min-height:16px;font-weight:700"></p>';
- ov.appendChild(tarjeta);
- document.body.appendChild(ov);
+ el.appendChild(tarjeta);
+ document.body.appendChild(el);
+ ov=el;
  var msg=tarjeta.querySelector('#gate-msg');
  var inp=tarjeta.querySelector('#gate-clave');
  if(motivoPrevio){msg.style.color='#C81E1E';msg.textContent=motivoPrevio;}
+ tarjeta.querySelector('#gate-copiar-cod').addEventListener('click',function(){
+  var cod=APP_CODE+(DEVICE_ID?'-'+DEVICE_ID:'');
+  try{
+   var ta=document.createElement('textarea');
+   ta.value=cod;ta.style.cssText='position:fixed;opacity:0';
+   document.body.appendChild(ta);ta.select();document.execCommand('copy');
+   document.body.removeChild(ta);
+   msg.style.color='#1E7B4F';msg.textContent='Códigos copiados: '+cod;
+  }catch(e){msg.style.color='#C81E1E';msg.textContent=cod;}
+ });
  function intentar(){
-  var r=validaClave(inp.value,APP_CODE);
+  var r=validaClave(inp.value,APP_CODE,DEVICE_ID);
   if(r.ok){
    try{localStorage.setItem(LS_KEY,inp.value.trim().toUpperCase());}catch(e){}
-   ov.parentNode.removeChild(ov);
+   desbloquear();
   }else{
    msg.style.color='#C81E1E';
    msg.textContent=r.motivo;
@@ -120,14 +146,44 @@ function bloquear(motivoPrevio){
  inp.addEventListener('keydown',function(ev){if(ev.key==='Enter')intentar();});
  setTimeout(function(){inp.focus();},300);
 }
-
-var guardada=null;
-try{guardada=localStorage.getItem(LS_KEY);}catch(e){}
-if(guardada){
- var r=validaClave(guardada,APP_CODE);
- if(r.ok)return;
- bloquear(r.motivo);
-}else{
- bloquear(null);
+function decidirConDevice(){
+ var dev=document.getElementById('gate-dev');
+ if(dev&&DEVICE_ID)dev.textContent=DEVICE_ID;
+ if(!guardada)return;
+ var r=validaClave(guardada,APP_CODE,DEVICE_ID);
+ if(r.ok){desbloquear();}
+ else if(ov){
+  var m=ov.querySelector('#gate-msg');
+  if(m){m.style.color='#C81E1E';m.textContent=r.motivo;}
+ }
 }
+function usarId(id){
+ if(!id)return;
+ DEVICE_ID=String(id).toUpperCase();
+ decidirConDevice();
+}
+function idFallback(){
+ if(DEVICE_ID)return;
+ try{DEVICE_ID=localStorage.getItem('seyeal_dev_id');}catch(e){}
+ if(!DEVICE_ID){
+  var s='',i;
+  for(i=0;i<16;i++)s+='0123456789ABCDEF'[Math.floor(Math.random()*16)];
+  DEVICE_ID=s;
+  try{localStorage.setItem('seyeal_dev_id',DEVICE_ID);}catch(e){}
+ }
+ decidirConDevice();
+}
+function pedirIdNativo(){
+ if(typeof cdpCompartir!=='undefined'&&cdpCompartir&&cdpCompartir.idTelefono){
+  try{cdpCompartir.idTelefono(usarId,idFallback);return true;}catch(e){}
+ }
+ return false;
+}
+if(!pedirIdNativo()){
+ document.addEventListener('deviceready',function(){
+  if(!DEVICE_ID&&!pedirIdNativo())idFallback();
+ },false);
+ setTimeout(function(){if(!DEVICE_ID)idFallback();},3000);
+}
+bloquear(null);
 })();

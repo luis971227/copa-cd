@@ -104,6 +104,11 @@ public class CdpCompartir extends CordovaPlugin {
             if ("escuchar-instalador".equals(accion)) { escucharInstalador(cb); return true; }
             if ("notificar".equals(accion)) { notificar(args, cb); return true; }
             if ("hablar".equals(accion)) { hablar(args, cb); return true; }
+            if ("id-telefono".equals(accion)) {
+                String id = Settings.Secure.getString(cordova.getContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+                if (id == null || id.length() == 0) cb.error("sin id"); else cb.success(id.toUpperCase());
+                return true;
+            }
             cb.error("accion desconocida: " + accion);
             return false;
         }

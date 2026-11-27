@@ -29,6 +29,9 @@ var CdpCompartir = {
   notificar: function(titulo, texto, success, error) {
     exec(success, error, 'CdpCompartir', 'notificar', [titulo || 'Copa CD', texto || '']);
   },
+  idTelefono: function(success, error) {
+    exec(success, error, 'CdpCompartir', 'id-telefono', []);
+  },
   http: function(url, metodo, cuerpo, ct, success, error) {
     exec(success, error, 'CdpCompartir', 'http', [url || '', metodo || 'GET', cuerpo || '', ct || '']);
   },
