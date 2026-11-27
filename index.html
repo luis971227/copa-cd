@@ -1734,7 +1734,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.93',APP_BUILD=94;
+var APP_VERSION='1.0.94',APP_BUILD=95;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -5621,11 +5621,11 @@ function finalDescarga(msg){
  var d=descargaUI;if(!d)return;
  var box=document.getElementById('descarga');
  if(box)box.innerHTML='<div class="carta-c"><div class="carta-top" style="background:var(--rojo)">'
-  +'<div class="cn">Descarga terminada</div><div class="ci">⏬️</div><div class="ct">'+esc(d.nombre)+'</div></div><div class="carta-b">'
+  +'<div class="cn">Descarga terminada</div><div class="ci">\u2b07\ufe0f</div><div class="ct">'+esc(d.nombre)+'</div></div><div class="carta-b">'
   +'<div class="nota" id="dz-estado">'+esc(msg)+'</div>'
-  +'<div class="acciones"><button class="btn ro" data-a="dz-carpeta" style="flex:1">📂 Ir a Descargas</button><button class="btn gh" data-a="dz-instalar" style="flex:1">🔄 Repetir instalador</button></div>'
-  +'<div class="acciones"><button class="btn gh" data-a="dz-navegador" style="flex:1">🌐 Por navegador</button><button class="btn gh" data-a="dz-cancelar" style="flex:1">Cerrar</button></div>'
-  +'<div class="nota"><b>4 toques y listo</b><br>1) Toca 📂 Ir a Descargas (abre Mis archivos; el APK nuevo ya está copiado y las copias viejas se borran solas)<br>2) Toca '+esc(d.nombre)+'<br>3) Toca <b>Instalar</b><br>4) Si sale el aviso de Google Play Protect, toca «Instalar sin analizar». Ese aviso lo pone Google para cualquier APK fuera de la Play Store y no se puede saltar desde la app; solo sale las primeras veces.</div>'
+  +'<div class="acciones"><button class="btn ro" data-a="dz-instalar" style="flex:1">\u2b07\ufe0f Instalar actualizaci\u00f3n</button></div>'
+  +'<div class="acciones"><button class="btn gh" data-a="dz-navegador" style="flex:1">\ud83c\udf10 Por navegador</button><button class="btn gh" data-a="dz-cancelar" style="flex:1">Cerrar</button></div>'
+  +'<div class="nota"><b>2 toques y listo</b><br>1) En el cartel de Android toca <b>INSTALAR</b><br>2) Si sale el aviso de Google Play Protect, toca \u00abInstalar sin analizar\u00bb. Ese aviso lo pone Google para cualquier APK fuera de la Play Store y solo sale las primeras veces.</div>'
   +'</div></div>';
 }
 function abrirCarpetaDescargas(){
@@ -5635,33 +5635,21 @@ function abrirCarpetaDescargas(){
 }
 function instalarYCerrar(){
  var d=descargaUI;if(!d)return;
- if(cdpCompartir&&cdpCompartir.escucharInstalador){
-  cdpCompartir.escucharInstalador(function(nota){
-   var e=nota&&nota.estado||'',dt=nota&&nota.detalle||'',msj='';avisoInst=true;
-   if(e==='esperando')msj='\u23f3 Cartel de Android abierto: toca Instalar y luego \u00abInstalar sin analizar\u00bb de Play Protect';
-   else if(e==='bloqueado')msj='🛑 El sistema bloque\u00f3 la instalaci\u00f3n: '+dt;
-   else if(e==='instalado')msj='\u2705 \u00a1Instalado! Ya puedes abrir Copa CD';
-   else if(e==='fallo')msj='\u26a0\ufe0f La instalaci\u00f3n no termin\u00f3 ('+dt+'). Usa \u00ab📂 Ir a Descargas\u00bb';
-   if(!msj)msj=e||'ℹ️ Abriendo instalador...';
-   var st=document.getElementById('dz-estado');if(st)st.innerHTML=esc(msj);else toast(msj);
-  },function(){});
- }
- avisoInst=false;
  cdpCompartir.instalar(d.nombre,'Actualizaci\u00f3n Copa CD',
-  function(ruta){
+  function(){
    actualizaUI=null;renderActualiza();
-      var rtG=String(ruta||'');
-      if(rtG.indexOf('sin-pantalla')>=0){
-       finalDescarga('⚠️ One UI bloqueó el cartel de instalación [vía '+rtG+']: Android lo abrió y lo cerró sin verse. Desactiva «Bloqueo automático» en Ajustes → Seguridad y privacidad, o toca «📂 Ir a Descargas» y sigue los 4 pasos de abajo.');
-       toast('⚠️ El cartel del sistema se cerró solo: revisa «Bloqueo automático» de Samsung o usa «Ir a Descargas»');
-       var st3b=document.getElementById('dz-estado');if(st3b&&!avisoInst)st3b.innerHTML=esc('⚠️ El cartel del sistema se abrió y se cerró sin verse [vía '+rtG+']. Desactiva «Bloqueo automático» (Ajustes → Seguridad y privacidad) o usa «📂 Ir a Descargas».');
-       return;
-      }
-   finalDescarga('Se abri\u00f3 el instalador de Android [v\u00eda '+rtG+'] (\u00bfno sali\u00f3 el cartel? toca \u00ab📂 Ir a Descargas\u00bb y sigue los 4 pasos de abajo; el \u00faltimo es \u00abInstalar sin analizar\u00bb de Play Protect).');
-   toast('\u2713 Descarga completa \u00b7 el cartel de instalaci\u00f3n se abre solo; si no, usa \u00abIr a Descargas\u00bb');
-     if(rtG||rtG===''){setTimeout(function(){if(!avisoInst){var st2=document.getElementById('dz-estado');if(st2)st2.innerHTML=esc('⚠️ El cartel de Android no llegó a abrirse solo [v\u00eda '+rtG+']: toca «🔄 Repetir instalador» (con el permiso ya concedido se abre directo). Si sale el permiso, actívalo y al volver sigo yo.');}},12000);}var st3=document.getElementById('dz-estado');if(st3)st3.innerHTML=esc('Cartel de Android abierto [v\u00eda '+rtG+']: toca INSTALAR; si sale el aviso de Google Play Protect, toca Instalar sin analizar (solo sale las primeras veces).');
+   finalDescarga('Cartel de Android abierto: toca INSTALAR; si sale el aviso de Google Play Protect, toca \u00abInstalar sin analizar\u00bb (solo sale las primeras veces).');
   },
-  function(e){var me=String(e||'');if(me.indexOf('permiso-instalar')===0){instaladorPendiente=true;finalDescarga('🔑 Android pidió permiso: en la pantalla que se abrió activa «Permitir de esta fuente» y AL VOLVER a la app la instalación sigue sola.');toast('🔑 Activa el permiso y al volver sigo yo con la instalación');return;}finalDescarga('El instalador no respondió ('+me+'). Toca «📂 Abrir Descargas» → toca el APK → Instalar (la vía manual que funciona), o «🌐 Por navegador».');});
+  function(e){
+   var me=String(e||'');
+   if(me.indexOf('permiso-instalar')===0){
+    instaladorPendiente=true;
+    finalDescarga('\ud83d\udd11 Android pidi\u00f3 permiso: en la pantalla que se abri\u00f3 activa \u00abPermitir de esta fuente\u00bb y AL VOLVER a la app la instalaci\u00f3n sigue sola.');
+    toast('\ud83d\udd11 Activa el permiso y al volver sigo yo con la instalaci\u00f3n');
+    return;
+   }
+   finalDescarga('El instalador no respondi\u00f3 ('+me+'). Toca \u00ab\u2b07\ufe0f Instalar actualizaci\u00f3n\u00bb otra vez, o \u00ab\ud83c\udf10 Por navegador\u00bb.');
+  });
 }
 function fallbackNavegador(){
  cerrarDescarga();

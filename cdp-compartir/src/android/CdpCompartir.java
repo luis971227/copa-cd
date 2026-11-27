@@ -350,80 +350,30 @@ public class CdpCompartir extends CordovaPlugin {
         final String nombre = args.optString(0);
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
-                final java.util.List<String> traza = new java.util.ArrayList<String>();
                 try {
                     Context ctx = cordova.getContext();
                     File f = archivoCompartible(nombre);
-                    if (!f.exists() || f.length() == 0) throw new IOException("La descarga no está completa");
-                    uriDescargas = copiarADescargas(f);
-                    Uri uri = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".cdpfiles", f);
+                    if (!f.exists() || f.length() == 0) throw new IOException("La descarga no est\u00e1 completa");
                     if (Build.VERSION.SDK_INT >= 26 && !puedeInstalar(ctx)) {
                         pedirPermisoInstalar(ctx);
                         cb.error("permiso-instalar: Android pide autorizar 'Instalar apps desconocidas' para Copa CD. Se abrieron los Ajustes: activa el permiso, vuelve a la app y toca Instalar otra vez");
                         return;
                     }
-                    /* v1.0.71: SESION PackageInstaller PRIMERO (la via del sistema:
-                       Android mismo arma y muestra el cartel) y TRAZA COMPLETA de
-                       todas las vias intentadas. La traza sale en el dialog para
-                       ver en una sola captura que se intento y que paso. */
-                    sesionConfirmada = false;
-                    ctxSesion = ctx; uriSesion = uri;
-                    estadoInstalador("info", "Abriendo la instalacion del sistema (sesion)...");
-                    traza.add("SESION:iniciando");
-                    if (instalarSesionApi(ctx, f, cb)) {
-                        esperarInstaladorSesion(ctx, uri, cb);
-                        return;
-                    }
-                    traza.add("SESION:no-disponible");
-                    /* Sigue la cadena de intents, cada uno GATEADO con quien() y con
-                       comprobacion real de que el cartel se puso en pantalla. */
-                    Intent vIP = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-                    vIP.setDataAndType(uri, "application/vnd.android.package-archive");
-                    vIP.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    String qIP = quien(ctx, vIP);
-                    boolean esInst = qIP.lastIndexOf("install") >= 0;
-                    if (esInst) {
-                        appPausadaEn = 0;
-                        if (uiLanzar(ctx, vIP) && pantallaCambio(3000)) {
-                            cb.success("instalador-directo|" + qIP);
-                            return;
+                    final Uri uri = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".cdpfiles", f);
+                    cordova.getActivity().runOnUiThread(new Runnable() {
+                        public void run() {
+                            try {
+                                Intent v = new Intent(Intent.ACTION_VIEW);
+                                v.setDataAndType(uri, "application/vnd.android.package-archive");
+                                v.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                ctx.startActivity(v);
+                                cb.success("instalador");
+                            } catch (Throwable e) {
+                                cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+                            }
                         }
-                        traza.add("IP:" + qIP + "->lanzada-sin-pantalla");
-                    } else {
-                        traza.add("IP:saltada-" + qIP);
-                    }
-                    Intent vF = new Intent(Intent.ACTION_VIEW);
-                    vF.setDataAndType(uri, "application/vnd.android.package-archive");
-                    vF.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    String qF = quien(ctx, vF);
-                    if (qF.lastIndexOf("install") >= 0) {
-                        appPausadaEn = 0;
-                        if (uiLanzar(ctx, vF) && pantallaCambio(3000)) {
-                            cb.success("instalador-fp|" + qF);
-                            return;
-                        }
-                        traza.add("VFP:" + qF + "->lanzada-sin-pantalla");
-                    } else {
-                        traza.add("VFP:saltada-" + qF);
-                    }
-                    if (uriDescargas != null) {
-                        Intent vD = new Intent(Intent.ACTION_VIEW);
-                        vD.setDataAndType(uriDescargas, "application/vnd.android.package-archive");
-                        vD.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        String qD = quien(ctx, vD);
-                        if (qD.lastIndexOf("install") >= 0) {
-                            appPausadaEn = 0;
-                            if (uiLanzar(ctx, vD) && pantallaCambio(3000)) { cb.success("instalador-descargas|" + qD); return; }
-                            traza.add("DSC:" + qD + "->lanzada-sin-pantalla");
-                        } else {
-                            traza.add("DSC:saltada-" + qD);
-                        }
-                    }
-                    traza.add("CLS:generico");
-                    lanzarInstalador(ctx, uri);
-                    cb.success("instalador|" + traza);
+                    });
                 } catch (Throwable e) {
-                    try { estadoInstalador("fallo", "TRAZA " + traza + " \u2022 error: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage())); } catch (Throwable t) { }
                     cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
                 }
             }
