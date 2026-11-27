@@ -94,7 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.111: prueba de la descarga e instalacion en una sola accion nativa. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
+          body: 'v1.0.112: al llegar al 100% instala al instante sin esperar al servidor; si la red se corta reanuda desde donde iba (no repite desde cero). Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
           files: |
             salida/CopaCD-*.apk
 

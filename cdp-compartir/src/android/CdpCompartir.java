@@ -520,40 +520,56 @@ public class CdpCompartir extends CordovaPlugin {
                     File parte = new File(dir, limpio + ".part");
                     File f = new File(dir, limpio);
                     if (f.exists()) f.delete();
-                    cx = (HttpURLConnection) new URL(url).openConnection();
-                    cx.setConnectTimeout(15000);
-                    cx.setReadTimeout(30000);
-                    cx.setInstanceFollowRedirects(true);
-                    cx.setRequestProperty("User-Agent", "copa-cd-apk");
-                    int codigo = cx.getResponseCode();
-                    if (codigo < 200 || codigo >= 300) throw new IOException("El servidor respondi\u00f3 HTTP " + codigo);
-                    long total = cx.getContentLength();
-                    java.io.InputStream in = cx.getInputStream();
-                    FileOutputStream out = new FileOutputStream(parte, false);
-                    byte[] buf = new byte[65536];
-                    long leidos = 0;
-                    int n;
+                    long leidos = parte.exists() ? parte.length() : 0;
+                    long total = -1;
                     int ultimoPct = -1;
-                    while ((n = in.read(buf)) > 0) {
-                        out.write(buf, 0, n);
-                        leidos += n;
-                        int pct = total > 0 ? (int) Math.round(leidos * 100 / total) : -1;
-                        if (pct != ultimoPct) {
-                            ultimoPct = pct;
-                            PluginResult pr = new PluginResult(PluginResult.Status.OK, progresoJson(leidos, total));
-                            pr.setKeepCallback(true);
-                            cb.sendPluginResult(pr);
+                    for (int intento = 0; intento < 5; intento++) {
+                        try {
+                            cx = (HttpURLConnection) new URL(url).openConnection();
+                            cx.setConnectTimeout(15000);
+                            cx.setReadTimeout(20000);
+                            cx.setInstanceFollowRedirects(true);
+                            cx.setRequestProperty("User-Agent", "copa-cd-apk");
+                            if (leidos > 0) cx.setRequestProperty("Range", "bytes=" + leidos + "-");
+                            int codigo = cx.getResponseCode();
+                            if (codigo < 200 || codigo >= 300) throw new IOException("El servidor respondi\u00f3 HTTP " + codigo);
+                            boolean continua = codigo == 206 && leidos > 0;
+                            if (!continua && leidos > 0) leidos = 0;
+                            long cabecera = cx.getContentLength();
+                            total = cabecera > 0 ? (continua ? leidos + cabecera : cabecera) : -1;
+                            java.io.InputStream in = cx.getInputStream();
+                            FileOutputStream out = new FileOutputStream(parte, continua);
+                            byte[] buf = new byte[65536];
+                            int n;
+                            while ((n = in.read(buf)) > 0) {
+                                out.write(buf, 0, n);
+                                leidos += n;
+                                int pct = total > 0 ? (int) Math.round(leidos * 100 / total) : -1;
+                                if (pct != ultimoPct) {
+                                    ultimoPct = pct;
+                                    PluginResult pr = new PluginResult(PluginResult.Status.OK, progresoJson(leidos, total));
+                                    pr.setKeepCallback(true);
+                                    cb.sendPluginResult(pr);
+                                }
+                                if (total > 0 && leidos >= total) break;
+                            }
+                            out.close();
+                            in.close();
+                            if (total > 0 && leidos < total) throw new IOException("Descarga incompleta (" + leidos + " de " + total + ")");
+                            break;
+                        } catch (IOException ie) {
+                            if (intento == 4) throw ie;
+                            leidos = parte.length();
+                            try { Thread.sleep(1200); } catch (InterruptedException i2) { throw ie; }
+                        } finally {
+                            if (cx != null) { cx.disconnect(); cx = null; }
                         }
                     }
-                    out.close();
-                    in.close();
                     if (parte.length() == 0) throw new IOException("El archivo baj\u00f3 vac\u00edo");
                     if (!parte.renameTo(f)) throw new IOException("No se pudo completar el archivo");
                     instalarArchivo(ctx, f, cb);
                 } catch (Throwable e) {
                     cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
-                } finally {
-                    if (cx != null) cx.disconnect();
                 }
             }
         });
