@@ -94,7 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.105: prueba de la descarga con reserva interna y apertura de Descargas. Enlace igual: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
+          body: 'v1.0.106: el aviso de la descarga desaparece solo al terminar (ya no se queda atascado en la barra). Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
           files: |
             salida/CopaCD-*.apk
 

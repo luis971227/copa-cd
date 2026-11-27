@@ -267,7 +267,7 @@ public class CdpCompartir extends CordovaPlugin {
             req.setTitle(nombre);
             req.setDescription("Actualizaci\u00f3n de Copa CD");
             req.setMimeType("application/vnd.android.package-archive");
-            req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
             req.setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS, nombre);
             DownloadManager dm = (DownloadManager) ctx.getSystemService(Context.DOWNLOAD_SERVICE);
             long id = dm.enqueue(req);
