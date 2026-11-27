@@ -1521,20 +1521,25 @@ function bloquear(motivoPrevio){
  if(ov)return;
  var el=document.createElement('div');
  el.id='gate-licencia';
- el.style.cssText='position:fixed;inset:0;z-index:999999;background:linear-gradient(160deg,#8C1614,#3d0a09);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Arial,Helvetica,sans-serif';
+ el.style.cssText='position:fixed;inset:0;z-index:999999;background:radial-gradient(circle at 50% 18%,#571015 0%,#2A0709 45%,#120304 100%);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Arial,Helvetica,sans-serif';
  var tarjeta=document.createElement('div');
- tarjeta.style.cssText='background:#fff;border-radius:14px;padding:22px;max-width:340px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.45);text-align:center';
- tarjeta.innerHTML='<div style="font-size:40px">🔐</div>'
-  +'<h2 style="margin:8px 0 4px;font-size:20px;color:#151515">Licencia requerida</h2>'
-  +'<p style="margin:0 0 6px;font-size:12.5px;color:#7F7F7F">Esta licencia es para un solo teléfono.</p>'
-  +'<p style="margin:0 0 8px;font-size:12.5px;color:#151515">App: <b style="color:#8C1614;letter-spacing:1px">'+APP_CODE+'</b></p>'
-  +'<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 14px">'
-  +'<span style="font-size:12px;color:#151515">Teléfono: <b id="gate-dev" style="color:#8C1614;letter-spacing:1px">···</b></span>'
-  +'<button id="gate-copiar-cod" type="button" style="border:none;background:#8C1614;color:#fff;border-radius:6px;font-size:10.5px;font-weight:800;padding:5px 9px;cursor:pointer">COPIAR CÓDIGOS</button>'
+ tarjeta.style.cssText='background:#131318;border:1px solid #2A2A31;border-radius:20px;padding:26px 24px;max-width:350px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.7),0 0 0 1px rgba(229,57,53,.08);text-align:center;font-family:Arial,Helvetica,sans-serif';
+ tarjeta.innerHTML='<div style="width:64px;height:64px;margin:0 auto 12px;border-radius:50%;background:linear-gradient(135deg,#E53935,#7A0C14);display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 8px 24px rgba(229,57,53,.35)">🔐</div>'
+  +'<h2 style="margin:0 0 6px;font-size:18px;color:#FFFFFF;letter-spacing:2px;font-weight:900">LICENCIA REQUERIDA</h2>'
+  +'<p style="margin:0 0 16px;font-size:12px;color:#8E8E96;line-height:1.5">Esta licencia es para un solo teléfono.<br>Copia los códigos y pídele la clave al administrador.</p>'
+  +'<div style="background:#0E0E12;border:1px solid #33333B;border-radius:12px;padding:12px 14px;margin:0 0 12px">'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0">'
+  +'<span style="font-size:10px;color:#8E8E96;letter-spacing:1.5px;font-weight:800">APP</span>'
+  +'<b style="font-size:14px;color:#F2B8B5;letter-spacing:1.5px">'+APP_CODE+'</b></div>'
+  +'<div style="height:1px;background:#26262B;margin:6px 0"></div>'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0">'
+  +'<span style="font-size:10px;color:#8E8E96;letter-spacing:1.5px;font-weight:800">TELÉFONO</span>'
+  +'<b id="gate-dev" style="font-size:14px;color:#F2B8B5;letter-spacing:1.5px">···</b></div>'
   +'</div>'
-  +'<input id="gate-clave" type="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="SEYEAL-'+APP_CODE+'-XXXX-20260101-XXXXXXXX" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid #E5E5E5;border-radius:9px;font-size:14px;text-align:center;text-transform:uppercase;margin-bottom:9px">'
-  +'<button id="gate-btn" type="button" style="width:100%;padding:12px;border:none;border-radius:9px;background:#8C1614;color:#fff;font-size:15px;font-weight:800;cursor:pointer">Activar licencia</button>'
-  +'<p id="gate-msg" style="margin:11px 0 0;font-size:12.5px;min-height:16px;font-weight:700"></p>';
+  +'<button id="gate-copiar-cod" type="button" style="width:100%;border:1px solid #5A1620;background:#1B1114;color:#F2B8B5;border-radius:10px;font-size:11.5px;font-weight:800;letter-spacing:1px;padding:10px;cursor:pointer;margin:0 0 14px">⧉ COPIAR CÓDIGOS</button>'
+  +'<input id="gate-clave" type="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="SEYEAL-…-20260101-XXXXXXXX" style="width:100%;box-sizing:border-box;padding:12px;background:#0E0E12;border:1px solid #33333B;border-radius:10px;color:#FFFFFF;font-size:14px;text-align:center;text-transform:uppercase;margin-bottom:10px;outline:none">'
+  +'<button id="gate-btn" type="button" style="width:100%;padding:13px;border:none;border-radius:10px;background:linear-gradient(135deg,#E53935,#7A0C14);color:#fff;font-size:14px;font-weight:800;letter-spacing:1.5px;cursor:pointer;box-shadow:0 6px 20px rgba(229,57,53,.30)">ACTIVAR LICENCIA</button>'
+  +'<p id="gate-msg" style="margin:12px 0 0;font-size:12px;min-height:15px;font-weight:700;line-height:1.4"></p>';
  el.appendChild(tarjeta);
  document.body.appendChild(el);
  ov=el;
@@ -1696,7 +1701,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.91',APP_BUILD=92;
+var APP_VERSION='1.0.92',APP_BUILD=93;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
