@@ -638,7 +638,7 @@ public class CdpCompartir extends CordovaPlugin {
                         try {
                             cx = (HttpURLConnection) new URL(url).openConnection();
                             cx.setConnectTimeout(15000);
-                            cx.setReadTimeout(20000);
+                            cx.setReadTimeout(60000);
                             cx.setInstanceFollowRedirects(true);
                             cx.setRequestProperty("User-Agent", "copa-cd-apk");
                             if (leidos > 0) cx.setRequestProperty("Range", "bytes=" + leidos + "-");

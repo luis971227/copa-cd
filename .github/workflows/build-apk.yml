@@ -94,7 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Copa CD ${{ env.VER }}
-          body: 'v1.0.124: detecta cuando el instalador parpadea (lo bloquea el Bloqueo automatico) y abre los Ajustes para desactivarlo; al volver reintenta solo. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
+          body: 'v1.0.125: descarga igual que misServicios (60s de espera de red) y el boton Abrir / Instalar aparece cuando el archivo esta cargado. Enlace: https://github.com/luis971227/copa-cd/releases/latest/download/CopaCD-ultima.apk'
           files: |
             salida/CopaCD-*.apk
 
