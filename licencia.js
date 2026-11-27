@@ -191,4 +191,37 @@ if(!pedirIdNativo()){
  setTimeout(function(){if(!DEVICE_ID)idFallback();},3000);
 }
 bloquear(null);
+
+/* Mantener pulsado el texto de versión del menú lateral quita la licencia
+   de este teléfono y vuelve a mostrar la pantalla de licencia. */
+function vigilarVersion(){
+ var timer=null;
+ function buscar(t){
+  while(t&&t!==document&&!(t.classList&&t.classList.contains('nav-ver')))t=t.parentNode;
+  return (t&&t!==document)?t:null;
+ }
+ function inicio(ev){
+  if(!buscar(ev.target))return;
+  timer=setTimeout(function(){
+   timer=null;
+   var clave=null;
+   try{clave=localStorage.getItem(LS_KEY);}catch(e){}
+   if(!clave)return;
+   if(confirm('¿Quitar la licencia de este teléfono?\nLa app volverá a pedir la licencia para poder activarla de nuevo.')){
+    try{localStorage.removeItem(LS_KEY);}catch(e){}
+    guardada=null;
+    bloquear(null);
+    var dev=document.getElementById('gate-dev');
+    if(dev&&DEVICE_ID)dev.textContent=DEVICE_ID;
+   }
+  },700);
+ }
+ function cancelar(){if(timer){clearTimeout(timer);timer=null;}}
+ document.addEventListener('touchstart',inicio,{passive:true});
+ document.addEventListener('touchend',cancelar,{passive:true});
+ document.addEventListener('touchmove',cancelar,{passive:true});
+ document.addEventListener('mousedown',inicio);
+ document.addEventListener('mouseup',cancelar);
+}
+vigilarVersion();
 })();
