@@ -578,38 +578,57 @@ public class CdpCompartir extends CordovaPlugin {
                 return;
             }
             final Uri uri = FileProvider.getUriForFile(ctx, ctx.getPackageName() + ".cdpfiles", f);
-                    cordova.getActivity().runOnUiThread(new Runnable() {
-                        public void run() {
-                            try {
-                                final long antes = appPausadaEn;
-                                Intent v = new Intent(Intent.ACTION_VIEW);
-                                v.setDataAndType(uri, "application/vnd.android.package-archive");
-                                v.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                                ctx.startActivity(v);
-                                new Thread(new Runnable() { public void run() {
-                                    long t0 = System.currentTimeMillis();
-                                    boolean pauso = false;
-                                    while (System.currentTimeMillis() - t0 < 5000) {
-                                        if (appPausadaEn != antes) { pauso = true; break; }
-                                        try { Thread.sleep(200); } catch (InterruptedException e) { break; }
-                                    }
-                                    if (!pauso) { cb.success("sin-cartel"); return; }
-                                    long pausaMs = appPausadaEn;
-                                    long t1 = System.currentTimeMillis();
-                                    while (System.currentTimeMillis() - t1 < 3000) {
-                                        if (appResumidaEn > pausaMs) { cb.success("sin-cartel"); return; }
-                                        try { Thread.sleep(250); } catch (InterruptedException e) { break; }
-                                    }
-                                    cb.success("instalador-view");
-                                }}).start();
-                            } catch (Throwable e) {
-                                cb.error("No se pudo abrir el instalador: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
-                            }
-                        }
-                    });
+            intentarInstalar(ctx, uri, 0, cb);
         } catch (Throwable e) {
             cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
         }
+    }
+
+    /* Lanza el instalador y vigila la actividad: si no se queda en pantalla
+       (parpadeo o ni aparece) reintenta automaticamente con el instalador de
+       Google y con el AOSP antes de rendirse con sin-cartel. */
+    private void intentarInstalar(final Context ctx, final Uri uri, final int intento, final CallbackContext cb) {
+        if (intento > 2) { cb.success("sin-cartel"); return; }
+        cordova.getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                try {
+                    final long antes = appPausadaEn;
+                    Intent v = new Intent(Intent.ACTION_VIEW);
+                    v.setDataAndType(uri, "application/vnd.android.package-archive");
+                    if (intento == 1) v.setPackage("com.google.android.packageinstaller");
+                    if (intento == 2) v.setPackage("com.android.packageinstaller");
+                    v.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    ctx.startActivity(v);
+                    new Thread(new Runnable() { public void run() {
+                        long t0 = System.currentTimeMillis();
+                        boolean pauso = false;
+                        while (System.currentTimeMillis() - t0 < 5000) {
+                            if (appPausadaEn != antes) { pauso = true; break; }
+                            try { Thread.sleep(200); } catch (InterruptedException e) { break; }
+                        }
+                        if (!pauso) {
+                            if (intento < 2) intentarInstalar(ctx, uri, intento + 1, cb);
+                            else cb.success("sin-cartel");
+                            return;
+                        }
+                        long pausaMs = appPausadaEn;
+                        long t1 = System.currentTimeMillis();
+                        while (System.currentTimeMillis() - t1 < 3000) {
+                            if (appResumidaEn > pausaMs) {
+                                if (intento < 2) intentarInstalar(ctx, uri, intento + 1, cb);
+                                else cb.success("sin-cartel:" + (pausaMs - antes));
+                                return;
+                            }
+                            try { Thread.sleep(250); } catch (InterruptedException e) { break; }
+                        }
+                        cb.success("instalador-view");
+                    }}).start();
+                } catch (Throwable e) {
+                    if (intento < 2) intentarInstalar(ctx, uri, intento + 1, cb);
+                    else cb.error("No se pudo abrir el instalador: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
+                }
+            }
+        });
     }
 
     /* Descarga e instalacion en una sola accion nativa (mecanismo de

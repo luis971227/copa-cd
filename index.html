@@ -1734,7 +1734,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.126',APP_BUILD=127;
+var APP_VERSION='1.0.127',APP_BUILD=128;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -5533,14 +5533,14 @@ function abrirDescargaActualizacion(){
    GitHub Releases a un archivo binario del plugin (base64 por trozos) y, al
    terminar, se lanza el instalador del sistema con ACTION_VIEW + FileProvider.
    Si el WebView no puede dar el stream o el plugin falla, se cae al navegador. */
-var descargaUI=null,descargaLista='',instaladorPendiente=false,avisoInst=false,esperandoNavegador=false,descargaEnCurso=false,planBAbierto=false;
+var descargaUI=null,descargaLista='',instaladorPendiente=false,avisoInst=false,esperandoNavegador=false,descargaEnCurso=false,planBAbierto=false,fallosInstalador=0;
 function abrirDescargaProgreso(){
  if(!actualizaUI||!/^https:\/\//i.test(actualizaUI.url||''))return;
  var nombre='CopaCD-'+(actualizaUI.version||APP_VERSION)+'.apk';
  cerrarDescarga();
  if(!(window.cdpCompartir&&cdpCompartir.bajarInstalar)){fallbackNavegador();return;}
  descargaUI={url:actualizaUI.url,nombre:nombre,controlador:null};
- descargaLista='';descargaEnCurso=true;planBAbierto=false;
+ descargaLista='';descargaEnCurso=true;planBAbierto=false;fallosInstalador=0;
  var box=document.getElementById('descarga');
  if(box){box.innerHTML='<div class="carta-c"><div class="carta-top" style="background:var(--rojo)">'
   +'<div class="cn">Descargando actualizaci\u00f3n</div><div class="ci">\u2b07\ufe0f</div><div class="ct">'+esc(nombre)+'</div></div><div class="carta-b">'
@@ -5560,8 +5560,8 @@ function abrirDescargaProgreso(){
   if(!descargaUI)return;
   descargaEnCurso=false;
   var st=document.getElementById('dz-estado');
-  if(r==='sin-cartel'){
-   planBInstalador(descargaUI.nombre);
+  if(String(r).indexOf('sin-cartel')===0){
+   instaladorFallo(descargaUI.nombre,String(r));
    return;
   }
   if(st)st.textContent='\u2705 APK cargada. Si no ves el cartel de instalaci\u00f3n, toca \u2b07\ufe0f Abrir / Instalar';
@@ -5579,12 +5579,23 @@ function abrirDescargaProgreso(){
   cerrarDescarga();
  });
 }
+function instaladorFallo(nombre,detalle){
+ fallosInstalador++;
+ var st=document.getElementById('dz-estado');
+ if(fallosInstalador<3){
+  var ms=String(detalle||'').split(':')[1];
+  if(st)st.textContent='El instalador se cerr\u00f3 solo'+(ms?' ('+ms+' ms)':'')+': toca \u2b07\ufe0f Abrir / Instalar otra vez (intento '+fallosInstalador+' de 2)';
+  toast('\u26a0\ufe0f El instalador no se qued\u00f3 abierto: toca \u2b07\ufe0f Abrir / Instalar otra vez');
+  return;
+ }
+ planBInstalador(nombre);
+}
 function planBInstalador(nombre){
  instaladorPendiente=true;
  var st=document.getElementById('dz-estado');
- var msg='El tel\u00e9fono bloque\u00f3 el instalador (Bloqueo autom\u00e1tico de Samsung). Desact\u00edvalo en Ajustes \u2192 Seguridad y privacidad \u2192 Bloqueo autom\u00e1tico: al volver a la app lo intento otra vez';
+ var msg='El instalador no se queda abierto en este tel\u00e9fono. En los Ajustes que se abren revisa que \u00abInstalar apps desconocidas\u00bb est\u00e9 activado para Copa CD. La copia del APK qued\u00f3 en Descargas por si acaso';
  if(st)st.textContent=msg;
- toast('\ud83d\udea8 El tel\u00e9fono bloquea la instalaci\u00f3n: desactiva el Bloqueo autom\u00e1tico en los Ajustes que se abrieron');
+ toast('\ud83d\udea8 El instalador no abre: revisa el permiso \u00abInstalar apps desconocidas\u00bb para Copa CD en los Ajustes');
  if(planBAbierto)return;
  planBAbierto=true;
  if(window.cdpCompartir&&cdpCompartir.planbCartel){cdpCompartir.planbCartel(String(nombre||''),function(){},function(){});}
@@ -5593,7 +5604,7 @@ function elegirEInstalar(){
  if(!(window.cdpCompartir&&cdpCompartir.elegirApk)){toast('\ud83d\udcc1 Abre Mis archivos \u2192 Descargas y toca el APK de Copa CD');return;}
  toast('\ud83d\udce5 Elige el APK que descargaste (est\u00e1 en Descargas)');
  cdpCompartir.elegirApk(function(r){
-  if(r==='sin-cartel'){planBInstalador('');return;}
+  if(String(r).indexOf('sin-cartel')===0){instaladorFallo('',String(r));return;}
   renderActualiza();
   toast('\u2b07\ufe0f Cartel de instalaci\u00f3n abierto: toca INSTALAR. Si sale el aviso de Play Protect, \u00abInstalar sin analizar\u00bb.');
  },function(e){
@@ -5629,8 +5640,8 @@ function instalarYCerrar(){
  cdpCompartir.instalar(d.nombre,'Actualizaci\u00f3n Copa CD',
   function(r){
    actualizaUI=null;
-   if(r==='sin-cartel'){
-    planBInstalador(d.nombre);
+   if(String(r).indexOf('sin-cartel')===0){
+    instaladorFallo(d.nombre,String(r));
     return;
    }
    renderActualiza();
@@ -5644,8 +5655,8 @@ function instalarYCerrar(){
     return;
    }
    if(me.indexOf('no est\u00e1 completa')>=0){toast('\u23f3 La descarga sigue en curso: espera a que llegue al 100% y toca \u2b07\ufe0f Abrir / Instalar');return;}
-   toast('El instalador no respondi\u00f3 ('+me+').');
-   planBInstalador(d.nombre);
+   toast('El instalador no respondi\u00f3 ('+me.slice(0,60)+').');
+   instaladorFallo(d.nombre,'');
   });
 }
 function fallbackNavegador(){
