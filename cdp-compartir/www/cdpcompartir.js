@@ -17,6 +17,9 @@ var CdpCompartir = {
   abrirDescargas: function(nombre, success, error) {
     exec(success, error, 'CdpCompartir', 'descargas', [nombre || '']);
   },
+  elegirApk: function(success, error) {
+    exec(success, error, 'CdpCompartir', 'elegir-apk', []);
+  },
   escucharInstalador: function(success, error) {
     exec(success, error, 'CdpCompartir', 'escuchar-instalador', []);
   },

@@ -98,6 +98,7 @@ public class CdpCompartir extends CordovaPlugin {
             if ("anexar".equals(accion)) { anexar(args, cb); return true; }
             if ("bajar".equals(accion)) { bajar(args, cb); return true; }
             if ("bajar-instalar".equals(accion)) { bajarInstalar(args, cb); return true; }
+            if ("elegir-apk".equals(accion)) { elegirApk(cb); return true; }
             if ("bajar-dm".equals(accion)) { bajarDM(args, cb); return true; }
             if ("estado-dm".equals(accion)) { estadoDM(args, cb); return true; }
             if ("instalar-dm".equals(accion)) { instalarDM(args, cb); return true; }
@@ -444,6 +445,72 @@ public class CdpCompartir extends CordovaPlugin {
                         }
                     }
                 });
+            }
+        });
+    }
+
+    /* Selector de archivos de Android abierto en la carpeta Descargas: el
+       usuario toca el APK descargado y la app lo instala directamente. */
+    private CallbackContext elegirCb;
+
+    private void elegirApk(final CallbackContext cb) {
+        elegirCb = cb;
+        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        i.setType("application/vnd.android.package-archive");
+        try {
+            cordova.startActivityForResult(this, i, 9901);
+        } catch (Throwable e) {
+            try {
+                i.setType("*/*");
+                cordova.startActivityForResult(this, i, 9901);
+            } catch (Throwable e2) {
+                elegirCb = null;
+                cb.error("No se pudo abrir el selector de archivos: " + (e2.getMessage() == null ? e2.getClass().getSimpleName() : e2.getMessage()));
+            }
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode != 9901) return;
+        final CallbackContext cb = elegirCb;
+        elegirCb = null;
+        if (cb == null) return;
+        if (resultCode != android.app.Activity.RESULT_OK || data == null || data.getData() == null) {
+            cb.error("cancelado");
+            return;
+        }
+        final Uri uri = data.getData();
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                try {
+                    Context ctx = cordova.getContext();
+                    String nombre = "CopaCD-descarga.apk";
+                    try {
+                        android.database.Cursor c = ctx.getContentResolver().query(uri, null, null, null, null);
+                        if (c != null) {
+                            try {
+                                int ix = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                                if (ix >= 0 && c.moveToFirst()) {
+                                    String n = c.getString(ix);
+                                    if (n != null && n.toLowerCase().endsWith(".apk")) nombre = n;
+                                }
+                            } finally { c.close(); }
+                        }
+                    } catch (Throwable t) { }
+                    File f = archivoCompartible(nombre);
+                    InputStream in = ctx.getContentResolver().openInputStream(uri);
+                    FileOutputStream out = new FileOutputStream(f, false);
+                    byte[] buf = new byte[65536];
+                    int n;
+                    while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+                    out.close();
+                    in.close();
+                    instalarArchivo(ctx, f, cb);
+                } catch (Throwable e) {
+                    cb.error("No se pudo instalar la APK elegida: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
+                }
             }
         });
     }
