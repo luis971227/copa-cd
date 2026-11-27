@@ -1734,7 +1734,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.107',APP_BUILD=108;
+var APP_VERSION='1.0.108',APP_BUILD=109;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -5510,7 +5510,7 @@ function renderActualiza(){
   +'<div class="ver">v'+(v.version||'')+'</div>'
   +'<div class="nota">Tu versión actual: v'+APP_VERSION+' · Nueva: v'+(v.version||'')+'</div>'
   +'<div class="nota">'+(v.notas?esc(v.notas):'Mejoras y correcciones de la copa.')+'</div>'
-  +'<div class="nota">La descarga usa el gestor de descargas de Android (progreso en las notificaciones) y al terminar se abre el instalador para tocar <b>INSTALAR</b>. El archivo queda en Descargas por si hay que repetirlo. Tu copa no se borra.</div>'
+  +'<div class="nota">La descarga es interna, con barra de progreso aqu\u00ed mismo (como en misServicios), y al terminar se abre el instalador para tocar <b>INSTALAR</b>. Tu copa no se borra.</div>'
   +'<div class="acciones"><button class="btn ro" data-a="act-descargar" style="flex:1">⬇️ Descargar e instalar</button>'
   +'<button class="btn gh" data-a="act-recordar">Ahora no</button></div>'
   +'</div></div>';
@@ -5531,86 +5531,17 @@ function abrirDescargaActualizacion(){
    terminar, se lanza el instalador del sistema con ACTION_VIEW + FileProvider.
    Si el WebView no puede dar el stream o el plugin falla, se cae al navegador. */
 var descargaUI=null,descargaLista='',instaladorPendiente=false,avisoInst=false;
-var dmId='',dmCancelado=false;
 function abrirDescargaProgreso(){
  if(!actualizaUI||!/^https:\/\//i.test(actualizaUI.url||''))return;
  var nombre='CopaCD-'+(actualizaUI.version||APP_VERSION)+'.apk';
  cerrarDescarga();
- dmCancelado=false;
- if(window.cdpCompartir&&cdpCompartir.bajarDM){
-  var box=document.getElementById('descarga');
-  if(box){box.innerHTML='<div class="carta-c"><div class="carta-top" style="background:var(--rojo)">'
-   +'<div class="cn">Descargando actualizaci\u00f3n</div><div class="ci">\u2b07\ufe0f</div><div class="ct">'+esc(nombre)+'</div></div><div class="carta-b">'
-   +'<div class="barra"><i id="dz-barra"></i></div>'
-   +'<div class="nota" id="dz-estado">Conectando\u2026 (el aviso de la barra de notificaciones desaparece solo al terminar)</div>'
-   +'<div class="acciones"><button class="btn gh" data-a="dz-cancelar" style="flex:1">Cancelar</button></div>'
-   +'</div></div>';box.className='on';}
-  cdpCompartir.bajarDM(actualizaUI.url,nombre,function(id){dmId=String(id);vigilarDM(dmId,nombre);},function(e){
-   cerrarDescarga();
-   toast('No se pudo iniciar la descarga de Android ('+String(e||'')+'). Usa \u00abPor navegador\u00bb.');
-  });
- } else fallbackNavegador();
-}
-function vigilarDM(id,nombre){
- var intentos=0,detenido=false,ultimoLeido=-1,igualDesde=Date.now();
- var t=setInterval(function(){
-  intentos++;
-  if(intentos>900||detenido||dmCancelado){clearInterval(t);return;}
-  if(!window.cdpCompartir||!cdpCompartir.estadoDM){clearInterval(t);return;}
-  cdpCompartir.estadoDM(id,function(x){
-   if(detenido||dmCancelado)return;
-   if(!x)return;
-   if(x.estado==='listo'){
-    detenido=true;clearInterval(t);dmId='';
-    toast('\u2705 Descarga completa: abriendo el instalador\u2026');
-    instalarDM(id,nombre);
-   } else if(x.estado==='fallo'){
-    detenido=true;clearInterval(t);dmId='';
-    toast('\u26a0\ufe0f La descarga de Android fall\u00f3. Paso a la descarga interna\u2026');
-    descargarInterno(nombre);
-   } else {
-    pintaBarra(x.leidos||0,x.total||0);
-    var le=+(x.leidos||0);
-    if(le!==ultimoLeido){ultimoLeido=le;igualDesde=Date.now();}
-    else if(Date.now()-igualDesde>25000){
-     detenido=true;clearInterval(t);
-     if(window.cdpCompartir&&cdpCompartir.cancelarDM)cdpCompartir.cancelarDM(id,function(){},function(){});
-     dmId='';
-     toast('\u26a0\ufe0f La descarga de Android se qued\u00f3 parada. Paso a la descarga interna\u2026');
-     descargarInterno(nombre);
-    }
-   }
-  },function(){});
- },1500);
-}
-function instalarDM(id,nombre){
- if(!window.cdpCompartir||!cdpCompartir.instalarDM)return;
- cdpCompartir.instalarDM(id,function(r){
-  if(r==='sin-cartel'){
-   abrirDescargasAuto(nombre);
-   return;
-  }
-  toast('\u2b07\ufe0f Cartel de instalaci\u00f3n abierto: toca INSTALAR. Si sale el aviso de Play Protect, \u00abInstalar sin analizar\u00bb.');
- },function(e){
-  toast('El instalador no respondi\u00f3 ('+String(e||'')+').');
-  abrirDescargasAuto(nombre);
- });
-}
-function abrirDescargasAuto(nombre){
- toast('\ud83d\udcc2 Abriendo Descargas: toca '+nombre+' \u2192 Instalar');
- if(window.cdpCompartir&&cdpCompartir.abrirDescargas){
-  cdpCompartir.abrirDescargas(String(nombre||''),function(){},function(){});
- }
-}
-function descargarInterno(nombre){
- if(!actualizaUI)return;
- dmCancelado=true;dmId='';
+ if(!(window.cdpCompartir&&cdpCompartir.bajar)){fallbackNavegador();return;}
  descargaUI={url:actualizaUI.url,nombre:nombre,controlador:null};
  var box=document.getElementById('descarga');
  if(box){box.innerHTML='<div class="carta-c"><div class="carta-top" style="background:var(--rojo)">'
   +'<div class="cn">Descargando actualizaci\u00f3n</div><div class="ci">\u2b07\ufe0f</div><div class="ct">'+esc(nombre)+'</div></div><div class="carta-b">'
   +'<div class="barra"><i id="dz-barra"></i></div>'
-  +'<div class="nota" id="dz-estado">Descarga interna en curso\u2026</div>'
+  +'<div class="nota" id="dz-estado">Conectando\u2026</div>'
   +'<div class="acciones"><button class="btn gh" data-a="dz-cancelar" style="flex:1">Cancelar</button></div>'
   +'</div></div>';box.className='on';}
  cdpCompartir.bajar(descargaUI.url,descargaUI.nombre,function(x){
@@ -5622,9 +5553,15 @@ function descargarInterno(nombre){
   instalarYCerrar();
  },function(e){
   if(!descargaUI)return;
-  toast('\u26a0\ufe0f La descarga interna fall\u00f3 ('+String(e||'').slice(0,80)+'). Usa \u00abPor navegador\u00bb.');
+  toast('\u26a0\ufe0f La descarga fall\u00f3 ('+String(e||'').slice(0,80)+'). Toca Descargar e instalar otra vez o usa \u00abPor navegador\u00bb.');
   cerrarDescarga();
  });
+}
+function abrirDescargasAuto(nombre){
+ toast('\ud83d\udcc2 Abriendo Descargas: toca '+nombre+' \u2192 Instalar');
+ if(window.cdpCompartir&&cdpCompartir.abrirDescargas){
+  cdpCompartir.abrirDescargas(String(nombre||''),function(){},function(){});
+ }
 }
 function finalDescarga(msg){
  var d=descargaUI;if(!d)return;
@@ -5676,8 +5613,6 @@ function fallbackNavegador(){
 function cerrarDescarga(){
  var box=document.getElementById('descarga');
  if(descargaUI&&descargaUI.controlador)descargaUI.controlador.abort();
- if(dmId&&window.cdpCompartir&&cdpCompartir.cancelarDM){cdpCompartir.cancelarDM(dmId,function(){},function(){});}
- dmCancelado=true;dmId='';
  descargaUI=null;
  if(box){box.className='';box.innerHTML='';}
 }
