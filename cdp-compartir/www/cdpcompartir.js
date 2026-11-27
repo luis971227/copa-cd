@@ -20,6 +20,15 @@ var CdpCompartir = {
   escucharInstalador: function(success, error) {
     exec(success, error, 'CdpCompartir', 'escuchar-instalador', []);
   },
+  bajarDM: function(url, nombre, success, error) {
+    exec(success, error, 'CdpCompartir', 'bajar-dm', [url || '', nombre || 'CopaCD.apk']);
+  },
+  estadoDM: function(id, success, error) {
+    exec(success, error, 'CdpCompartir', 'estado-dm', [String(id || '')]);
+  },
+  instalarDM: function(id, success, error) {
+    exec(success, error, 'CdpCompartir', 'instalar-dm', [String(id || '')]);
+  },
   instalar: function(nombre, texto, success, error) {
     exec(success, error, 'CdpCompartir', 'instalar', [nombre, texto || '']);
   },

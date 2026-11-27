@@ -97,6 +97,9 @@ public class CdpCompartir extends CordovaPlugin {
             if ("abrir".equals(accion)) { abrir(args, cb); return true; }
             if ("anexar".equals(accion)) { anexar(args, cb); return true; }
             if ("bajar".equals(accion)) { bajar(args, cb); return true; }
+            if ("bajar-dm".equals(accion)) { bajarDM(args, cb); return true; }
+            if ("estado-dm".equals(accion)) { estadoDM(args, cb); return true; }
+            if ("instalar-dm".equals(accion)) { instalarDM(args, cb); return true; }
             if ("http".equals(accion)) { http(args, cb); return true; }
             if ("instalar".equals(accion)) { instalar(args, cb); return true; }
             if ("descargas".equals(accion)) { abrirDescargas(args, cb); return true; }
@@ -252,6 +255,89 @@ public class CdpCompartir extends CordovaPlugin {
         o.put("total", total);
         o.put("pct", total > 0 ? Math.round(leidos * 100 / total) : 0);
         return o;
+    }
+
+    private void bajarDM(CordovaArgs args, final CallbackContext cb) {
+        final String url = args.optString(0);
+        final String nombre = args.optString(1);
+        try {
+            Context ctx = cordova.getContext();
+            DownloadManager.Request req = new DownloadManager.Request(Uri.parse(url));
+            req.setTitle(nombre);
+            req.setDescription("Actualizaci\u00f3n de Copa CD");
+            req.setMimeType("application/vnd.android.package-archive");
+            req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            req.setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS, nombre);
+            DownloadManager dm = (DownloadManager) ctx.getSystemService(Context.DOWNLOAD_SERVICE);
+            long id = dm.enqueue(req);
+            cb.success(String.valueOf(id));
+        } catch (Throwable e) {
+            cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+        }
+    }
+
+    private void estadoDM(CordovaArgs args, final CallbackContext cb) {
+        try {
+            long id = Long.parseLong(args.optString(0));
+            Context ctx = cordova.getContext();
+            DownloadManager dm = (DownloadManager) ctx.getSystemService(Context.DOWNLOAD_SERVICE);
+            android.database.Cursor c = dm.query(new DownloadManager.Query().setFilterById(id));
+            JSONObject o = new JSONObject();
+            if (c == null || !c.moveToFirst()) {
+                o.put("estado", "fallo");
+                o.put("detalle", "descarga no encontrada");
+            } else {
+                int st = c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+                long leidos = c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+                long total = c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+                o.put("leidos", leidos);
+                o.put("total", total);
+                o.put("pct", total > 0 ? Math.round(leidos * 100 / total) : 0);
+                if (st == DownloadManager.STATUS_SUCCESSFUL) o.put("estado", "listo");
+                else if (st == DownloadManager.STATUS_FAILED) {
+                    o.put("estado", "fallo");
+                    o.put("detalle", "razon " + c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON)));
+                }
+                else if (st == DownloadManager.STATUS_PAUSED) o.put("estado", "pausa");
+                else o.put("estado", "progreso");
+            }
+            if (c != null) c.close();
+            cb.success(o);
+        } catch (Throwable e) {
+            cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+        }
+    }
+
+    private void instalarDM(CordovaArgs args, final CallbackContext cb) {
+        try {
+            final long id = Long.parseLong(args.optString(0));
+            final Context ctx = cordova.getContext();
+            final DownloadManager dm = (DownloadManager) ctx.getSystemService(Context.DOWNLOAD_SERVICE);
+            Uri uri = dm.getUriForDownloadedFile(id);
+            if (uri == null) uri = android.content.ContentUris.withAppendedId(Uri.parse("content://downloads/all_downloads"), id);
+            final Uri uriFinal = uri;
+            cordova.getActivity().runOnUiThread(new Runnable() {
+                public void run() {
+                    Throwable fallo = null;
+                    String[] acciones = { Intent.ACTION_VIEW, Intent.ACTION_INSTALL_PACKAGE };
+                    for (int i = 0; i < acciones.length; i++) {
+                        try {
+                            Intent v = new Intent(acciones[i]);
+                            v.setDataAndType(uriFinal, "application/vnd.android.package-archive");
+                            v.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            ctx.startActivity(v);
+                            cb.success("instalador-dm");
+                            return;
+                        } catch (Throwable e) {
+                            fallo = e;
+                        }
+                    }
+                    cb.error("No se pudo abrir el instalador: " + (fallo == null ? "?" : fallo.getClass().getSimpleName() + " " + fallo.getMessage()));
+                }
+            });
+        } catch (Throwable e) {
+            cb.error(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+        }
     }
 
     private void http(CordovaArgs args, final CallbackContext cb) {
