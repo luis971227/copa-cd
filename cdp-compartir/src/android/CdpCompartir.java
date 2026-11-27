@@ -44,6 +44,7 @@ public class CdpCompartir extends CordovaPlugin {
        el instalador la app NO baja a segundo plano, es que el cartel NUNCA se
        puso en pantalla (One UI lo descarta) y hay que saltar a otra via. */
     private static volatile long appPausadaEn = 0;
+    private static volatile long appResumidaEn = 0;
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -53,7 +54,9 @@ public class CdpCompartir extends CordovaPlugin {
                 @Override public void onActivityPaused(android.app.Activity a) {
                     if (a == cordova.getActivity()) appPausadaEn = System.currentTimeMillis();
                 }
-                @Override public void onActivityResumed(android.app.Activity a) { }
+                @Override public void onActivityResumed(android.app.Activity a) {
+                    if (a == cordova.getActivity()) appResumidaEn = System.currentTimeMillis();
+                }
                 @Override public void onActivityCreated(android.app.Activity a, android.os.Bundle b) { }
                 @Override public void onActivityStarted(android.app.Activity a) { }
                 @Override public void onActivityStopped(android.app.Activity a) { }
@@ -585,11 +588,19 @@ public class CdpCompartir extends CordovaPlugin {
                                 ctx.startActivity(v);
                                 new Thread(new Runnable() { public void run() {
                                     long t0 = System.currentTimeMillis();
-                                    while (System.currentTimeMillis() - t0 < 4000) {
-                                        if (appPausadaEn != antes) { cb.success("instalador-view"); return; }
+                                    boolean pauso = false;
+                                    while (System.currentTimeMillis() - t0 < 5000) {
+                                        if (appPausadaEn != antes) { pauso = true; break; }
                                         try { Thread.sleep(200); } catch (InterruptedException e) { break; }
                                     }
-                                    cb.success("sin-cartel");
+                                    if (!pauso) { cb.success("sin-cartel"); return; }
+                                    long pausaMs = appPausadaEn;
+                                    long t1 = System.currentTimeMillis();
+                                    while (System.currentTimeMillis() - t1 < 3000) {
+                                        if (appResumidaEn > pausaMs) { cb.success("sin-cartel"); return; }
+                                        try { Thread.sleep(250); } catch (InterruptedException e) { break; }
+                                    }
+                                    cb.success("instalador-view");
                                 }}).start();
                             } catch (Throwable e) {
                                 cb.error("No se pudo abrir el instalador: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
