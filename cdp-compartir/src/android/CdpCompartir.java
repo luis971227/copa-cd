@@ -99,6 +99,7 @@ public class CdpCompartir extends CordovaPlugin {
             if ("bajar".equals(accion)) { bajar(args, cb); return true; }
             if ("bajar-instalar".equals(accion)) { bajarInstalar(args, cb); return true; }
             if ("elegir-apk".equals(accion)) { elegirApk(cb); return true; }
+            if ("planb-cartel".equals(accion)) { planBCartel(args, cb); return true; }
             if ("bajar-dm".equals(accion)) { bajarDM(args, cb); return true; }
             if ("estado-dm".equals(accion)) { estadoDM(args, cb); return true; }
             if ("instalar-dm".equals(accion)) { instalarDM(args, cb); return true; }
@@ -511,6 +512,38 @@ public class CdpCompartir extends CordovaPlugin {
                 } catch (Throwable e) {
                     cb.error("No se pudo instalar la APK elegida: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
                 }
+            }
+        });
+    }
+
+    /* Plan B cuando el telefono bloquea el instalador (Bloqueo automatico de
+       Samsung): copia el APK a Descargas como reserva y abre Ajustes para que
+       el usuario desactive el bloqueo. */
+    private void planBCartel(CordovaArgs args, final CallbackContext cb) {
+        final String nombre = args.optString(0);
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                try {
+                    if (nombre != null && nombre.length() > 0) {
+                        File f = archivoCompartible(nombre);
+                        if (f != null && f.exists()) copiarADescargas(f);
+                    }
+                } catch (Throwable t) {
+                    Log.w(TAG, "copiarADescargas fallo", t);
+                }
+                cordova.getActivity().runOnUiThread(new Runnable() {
+                    public void run() {
+                        try {
+                            Context ctx = cordova.getContext();
+                            Intent s = new Intent(Settings.ACTION_SECURITY_SETTINGS);
+                            s.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            ctx.startActivity(s);
+                            cb.success("ajustes");
+                        } catch (Throwable e) {
+                            cb.success("sin-ajustes");
+                        }
+                    }
+                });
             }
         });
     }

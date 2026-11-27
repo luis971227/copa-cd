@@ -20,6 +20,9 @@ var CdpCompartir = {
   elegirApk: function(success, error) {
     exec(success, error, 'CdpCompartir', 'elegir-apk', []);
   },
+  planbCartel: function(nombre, success, error) {
+    exec(success, error, 'CdpCompartir', 'planb-cartel', [nombre || '']);
+  },
   escucharInstalador: function(success, error) {
     exec(success, error, 'CdpCompartir', 'escuchar-instalador', []);
   },
