@@ -1734,7 +1734,7 @@ var cartaUI=null,syncUI=false,navAbierto=false,navHist=[],swX=0,swY=0,swT=0,swEd
 /* Versión de la APK. El aviso se consulta a GitHub Releases (usuario/repo):
    el tag vX.Y.Z se compara con APP_VERSION y el asset .apk es la descarga.
    Firebase queda solo para sincronizar datos. */
-var APP_VERSION='1.0.113',APP_BUILD=114;
+var APP_VERSION='1.0.114',APP_BUILD=115;
 var GITHUB_REPO='luis971227/copa-cd',githubRepo=GITHUB_REPO;
 var NUBE_DEFAULT={apiKey:'',databaseURL:'https://copa-cd-2026-default-rtdb.europe-west1.firebasedatabase.app'};var NUBE_ID_DEFECTO='CD-VDF5J9';
 var nubeConfig={apiKey:'',databaseURL:''},nubeSesion=null,nubeBatch=false,nubeAuto=false,nubePoll=null,nubePublicarPendiente=null,nubeConfirmado=false,nubeAutoFallos=0,nubeBajarFallos=0,nubeUsuariosBloq=false,nubeUltEstado=null,nubeIntentos=0;
@@ -5107,7 +5107,7 @@ document.addEventListener('click',function(ev){
    case 'sync-cerrar':syncUI=false;renderSync();break;
    case 'gh-repo-guardar':if(guardarConfigGithub())renderSync();break;
    case 'ver-actualizacion':comprobarActualizacion(false);break;
-   case 'act-descargar':abrirDescargaProgreso();break;
+   case 'act-descargar':cerrarDescarga();toast('\ud83c\udf10 Se abri\u00f3 tu navegador: cuando termine la descarga toca el aviso y luego INSTALAR');abrirDescargaActualizacion();break;
    case 'act-recordar':descartarActualizacion();break;
    case 'dz-cancelar':cerrarDescarga();break;
    case 'dz-instalar':instalarYCerrar();break;
@@ -5510,7 +5510,7 @@ function renderActualiza(){
   +'<div class="ver">v'+(v.version||'')+'</div>'
   +'<div class="nota">Tu versión actual: v'+APP_VERSION+' · Nueva: v'+(v.version||'')+'</div>'
   +'<div class="nota">'+(v.notas?esc(v.notas):'Mejoras y correcciones de la copa.')+'</div>'
-  +'<div class="nota">La descarga es interna, con barra de progreso aqu\u00ed mismo (como en misServicios), y al terminar se abre el instalador para tocar <b>INSTALAR</b>. Tu copa no se borra.</div>'
+  +'<div class="nota">Al tocar <b>Descargar e instalar</b> se abre tu navegador y baja la APK con la barra de descargas de Android (la v\u00eda que siempre funciona). Al terminar, toca el aviso de descarga completa y luego <b>INSTALAR</b>. Tu copa no se borra.</div>'
   +'<div class="acciones"><button class="btn ro" data-a="act-descargar" style="flex:1">⬇️ Descargar e instalar</button>'
   +'<button class="btn gh" data-a="act-recordar">Ahora no</button></div>'
   +'</div></div>';
